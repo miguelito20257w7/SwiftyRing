@@ -1,0 +1,237 @@
+// ============================================================
+// Sistema de Timbre Escolar Inteligente
+// Modelo de datos - Swifty Devs - 2026  (v5)
+// Cambio v5: profesores gana jornada (enum) y director_de_grupo
+//            (varchar nullable + unique).
+// ============================================================
+
+// ---------- Enums ----------
+Enum rol_usuario {
+  admin
+  operador
+  profesor
+}
+
+Enum tipo_activacion {
+  automatico
+  manual_app
+  manual_fisico
+  sismico
+}
+
+Enum dia_semana {
+  lunes
+  martes
+  miercoles
+  jueves
+  viernes
+  sabado
+}
+
+Enum plataforma {
+  ios
+  android
+  web      // incluye Windows via PWA / FCM Web Push
+}
+
+Enum jornada {
+  manana
+  tarde
+  completa
+}
+
+// ---------- Identidad ----------
+Table usuarios {
+  id varchar [pk, note: 'UUID generado por el backend']
+  nombre varchar [not null]
+  email varchar [not null, unique]
+  password_hash varchar [not null, note: 'Hash bcrypt']
+  rol rol_usuario [not null]
+  activo boolean [not null, default: true]
+  creado_at timestamptz [not null, default: `now()`]
+  actualizado_at timestamptz [not null, default: `now()`]
+}
+
+// Un usuario puede tener N dispositivos (celular, tablet, navegador).
+// El push se manda a TODOS los dispositivos activos del usuario.
+Table dispositivos {
+  id varchar [pk]
+  usuario_id varchar [not null, ref: > usuarios.id]
+  plataforma plataforma [not null]
+  fcm_token varchar [not null, unique, note: 'Token FCM del dispositivo']
+  nombre_dispositivo varchar [note: 'Ej: iPhone de Andrea, Tablet sala profes']
+  activo boolean [not null, default: true]
+  registrado_at timestamptz [not null, default: `now()`]
+  ultimo_uso_at timestamptz [note: 'Actualizar en cada refresh de token / login']
+
+  indexes {
+    usuario_id [name: 'idx_disp_usuario']
+  }
+}
+
+// Extension 1:1 de usuario para el rol profesor.
+Table profesores {
+  usuario_id varchar [pk, ref: - usuarios.id, note: '1:1 con usuarios']
+  jornada jornada [not null]
+  director_de_grupo varchar [unique, note: 'Ej: 11B. NULL si no es director']
+  creado_at timestamptz [not null, default: `now()`]
+}
+
+// ---------- Catalogo de materias ----------
+Table materias {
+  id varchar [pk]
+  nombre varchar [not null, unique]
+  activo boolean [not null, default: true]
+}
+
+Table profesor_materias {
+  profesor_id varchar [not null, ref: > profesores.usuario_id]
+  materia_id varchar [not null, ref: > materias.id]
+
+  indexes {
+    (profesor_id, materia_id) [pk]
+  }
+}
+
+// ---------- Salones ----------
+Table salones {
+  id varchar [pk]
+  nombre varchar [not null, unique, note: 'Ej: Salon 201']
+  bloque varchar [note: 'Ej: Bloque A']
+  piso int
+  capacidad int
+  activo boolean [not null, default: true]
+}
+
+// ---------- Horario habitual de timbres (RF-07..RF-09) ----------
+Table horario_timbres {
+  id varchar [pk]
+  etiqueta varchar [not null, note: 'Ej: Inicio de clases']
+  hora time [not null]
+  duracion_seg int [not null, default: 5]
+  activo boolean [not null, default: true]
+  creado_at timestamptz [not null, default: `now()`]
+}
+
+Table timbre_dias {
+  timbre_id varchar [not null, ref: > horario_timbres.id]
+  dia dia_semana [not null]
+
+  indexes {
+    (timbre_id, dia) [pk]
+  }
+}
+
+// ---------- Horarios especiales (RF-10..RF-13) ----------
+Table horario_especial {
+  id varchar [pk]
+  nombre varchar [not null, note: 'Ej: Semana de examenes']
+  fecha_inicio date [not null]
+  fecha_fin date [not null]
+  activo boolean [not null, default: true]
+  creado_por varchar [not null, ref: > usuarios.id]
+  creado_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (activo, fecha_inicio, fecha_fin) [name: 'idx_especial_vigencia']
+  }
+}
+
+Table timbres_especiales {
+  id varchar [pk]
+  horario_especial_id varchar [not null, ref: > horario_especial.id]
+  etiqueta varchar [not null]
+  hora time [not null]
+  duracion_seg int [not null, default: 5]
+}
+
+Table timbre_especial_dias {
+  timbre_especial_id varchar [not null, ref: > timbres_especiales.id]
+  dia dia_semana [not null]
+
+  indexes {
+    (timbre_especial_id, dia) [pk]
+  }
+}
+
+// ---------- Horario academico por salon ----------
+Table horario_salon {
+  id varchar [pk]
+  salon_id varchar [not null, ref: > salones.id]
+  dia dia_semana [not null]
+  activo boolean [not null, default: true]
+
+  indexes {
+    (salon_id, dia) [unique, name: 'uq_salon_dia']
+  }
+}
+
+Table bloques {
+  id varchar [pk]
+  horario_salon_id varchar [not null, ref: > horario_salon.id]
+  numero int [not null, note: 'Orden del bloque en el dia: 1, 2, 3...']
+  hora_inicio time [not null]
+  hora_fin time [not null]
+  materia_id varchar [not null, ref: > materias.id]
+  profesor_id varchar [not null, ref: > profesores.usuario_id]
+
+  indexes {
+    profesor_id [name: 'idx_bloques_profesor']
+    horario_salon_id [name: 'idx_bloques_horario']
+  }
+}
+
+// ---------- Activaciones de timbre (RF-17) ----------
+Table activaciones_timbre {
+  id varchar [pk]
+  tipo tipo_activacion [not null]
+  origen_usuario_id varchar [ref: > usuarios.id, note: 'Null si es automatico/sismico']
+  ocurrido_at timestamptz [not null]
+  horario_timbre_id varchar [ref: > horario_timbres.id]
+  duracion_seg int
+
+  indexes {
+    ocurrido_at [name: 'idx_activaciones_fecha']
+  }
+}
+
+// ---------- Eventos sismicos (RF-18..RF-23) ----------
+Table eventos_sismicos {
+  id varchar [pk]
+  activacion_id varchar [ref: > activaciones_timbre.id, note: 'Activacion generada por el evento (RF-22)']
+  intensidad_g float [not null, note: 'Aceleracion en g detectada']
+  duracion_ms int [not null]
+  ocurrido_at timestamptz [not null]
+  timbre_activado boolean [not null, default: true]
+  notificacion_enviada boolean [not null, default: false]
+
+  indexes {
+    ocurrido_at [name: 'idx_sismos_fecha']
+  }
+}
+
+// ---------- Notificaciones a profesores (RF-36..RF-38) ----------
+Table notificaciones_profesores {
+  id varchar [pk]
+  activacion_id varchar [not null, ref: > activaciones_timbre.id]
+  profesor_id varchar [not null, ref: > profesores.usuario_id]
+  bloque_id varchar [not null, ref: > bloques.id, note: 'Solo existe si hay clase siguiente (RF-38)']
+  mensaje varchar [not null]
+  enviada boolean [not null, default: false]
+  enviada_at timestamptz
+
+  indexes {
+    profesor_id [name: 'idx_notif_profesor']
+    activacion_id [name: 'idx_notif_activacion']
+  }
+}
+
+// ---------- Configuracion (fila unica) ----------
+Table configuracion_sistema {
+  id varchar [pk, default: 'config', note: "CHECK (id = 'config') para forzar fila unica"]
+  nombre_colegio varchar
+  umbral_sismico_g float [not null, default: 1.2]
+  sismo_duracion_min_ms int [not null, default: 800]
+  modo_offline boolean [not null, default: false]
+  ultima_sync timestamptz
+}
