@@ -14,6 +14,7 @@ import 'package:swiftyring/modules/timbre_escolar/presentation/pages/editar_timb
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/especiales_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/historial_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/mi_horario_page.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/widgets/enganche_push.dart';
 
 /// Rutas del módulo Sistema de Timbre Escolar.
 abstract class RutasTimbre {
@@ -92,14 +93,20 @@ final ModuloApp timbreEscolarModulo = ModuloApp(
 
 /// La puerta del módulo reparte por rol (P-01): el profesor va directo a su
 /// horario (RF-40); administrador y operador, al control de timbres (F-02).
+///
+/// Es también donde se engancha el push: al entrar al módulo se registra el
+/// token de este teléfono para poder recibir los avisos de próxima clase
+/// (RF-37) y de sismo (RF-20).
 class _EntradaTimbre extends ConsumerWidget {
   const _EntradaTimbre();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rol = ref.watch(authProvider).session?.rol;
-    return rol == RolUsuario.profesor
-        ? const MiHorarioPage()
-        : const ControlTimbresPage();
+    return EnganchePush(
+      child: rol == RolUsuario.profesor
+          ? const MiHorarioPage()
+          : const ControlTimbresPage(),
+    );
   }
 }

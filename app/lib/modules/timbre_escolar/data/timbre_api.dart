@@ -180,6 +180,22 @@ class TimbreApi {
     ],
   });
 
+  // ---- Dispositivos y push (RF-32, RF-37) ----
+
+  /// Registra (o refresca) el token FCM de este teléfono para que el backend
+  /// sepa a dónde mandarle los avisos de próxima clase. Es idempotente: si el
+  /// token ya existía, el servidor actualiza el dueño y el último uso en vez
+  /// de duplicarlo.
+  Future<void> registrarDispositivo({
+    required String plataforma,
+    required String fcmToken,
+    String? nombreDispositivo,
+  }) => _post('/dispositivos', {
+    'plataforma': plataforma,
+    'fcmToken': fcmToken,
+    'nombreDispositivo': ?nombreDispositivo,
+  });
+
   // ---- Vista del profesor (RF-40..42, F-09) ----
 
   Future<MiHorario> miHorario() async =>

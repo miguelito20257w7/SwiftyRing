@@ -261,6 +261,68 @@ cd app && flutter analyze && flutter test && ./tool/check_module_isolation.sh
 
 ---
 
+## Receta 7 · Encender las notificaciones push (FCM)
+
+El código de las notificaciones ya está completo en los dos lados: cuando suena
+el timbre, el backend calcula la próxima clase de cada profesor, la guarda y
+trata de enviarla al teléfono. Lo único que falta es **crear el proyecto de
+Firebase**, porque eso necesita tu cuenta de Google y no se puede automatizar.
+
+Mientras no lo hagas, todo funciona igual: las notificaciones se calculan y se
+registran, y en el historial aparecen con "enviada: false". El timbre nunca
+depende de que Google responda.
+
+### Paso 1 · Crear el proyecto
+
+En [console.firebase.google.com](https://console.firebase.google.com): crear un
+proyecto (por ejemplo `swiftyring-santasofia`). No hace falta Google Analytics.
+
+### Paso 2 · Conectar la app
+
+```bash
+dart pub global activate flutterfire_cli
+cd app && flutterfire configure
+```
+
+Elegí el proyecto y marcá Android e iOS. El comando genera
+`lib/firebase_options.dart`, `android/app/google-services.json` y
+`ios/Runner/GoogleService-Info.plist`. Con eso la app ya consigue su token y lo
+registra sola al entrar al módulo.
+
+Para iOS hace falta además una llave de APNs (Apple Push Notification service)
+cargada en la consola de Firebase: se genera en la cuenta de desarrollador de
+Apple, en Certificates > Keys. Sin eso Android recibe avisos y iOS no.
+
+### Paso 3 · Darle la credencial al backend
+
+En la consola de Firebase: **Configuración del proyecto > Cuentas de servicio >
+Generar nueva clave privada**. Se descarga un `.json`. Guardalo así:
+
+```bash
+mv ~/Downloads/swiftyring-*.json backend/SwiftyRing/keys/fcm-cuenta-servicio.json
+```
+
+Y en `backend/SwiftyRing/.env.development`:
+
+```
+FCM_CREDENTIALS_PATH=keys/fcm-cuenta-servicio.json
+```
+
+Ese archivo **es un secreto**: quien lo tenga puede mandar notificaciones en
+nombre del colegio. Ya está en `.gitignore`, igual que la llave privada RS256.
+
+Al reiniciar el servidor el log tiene que decir
+`FCM: credencial cargada para el proyecto …`. Si dice
+`sin FCM_CREDENTIALS_PATH`, la ruta está mal.
+
+### Paso 4 · Probar que llega
+
+Con un profesor que tenga clase más tarde hoy, entrá a la app con su usuario
+(para que registre el token), y desde el admin tocá **TIMBRAR**. El aviso debe
+llegar al teléfono y, en el historial, esa notificación pasa a "enviada: true".
+
+---
+
 ## Qué NO tocar
 
 | No toques | Por qué |

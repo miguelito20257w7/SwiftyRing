@@ -9,6 +9,14 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    # Artefactos de compilación. Desde que la app usa Firebase, aquí dentro
+    # quedan las fuentes de los paquetes que resuelve Swift Package Manager, y
+    # el analizador las revisaba como si fueran código del proyecto: 170
+    # hallazgos que no son nuestros y que no podemos corregir.
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

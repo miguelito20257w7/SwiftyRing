@@ -37,6 +37,26 @@
       "program": "lib/main.dart",
       "cwd": "app",
       "deviceId": "chrome"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:SwiftyRing}/backend/SwiftyRing",
+      "name": "Debug SwiftyRing (backend/SwiftyRing)",
+      "target": "SwiftyRing",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug SwiftyRing (backend/SwiftyRing)"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:SwiftyRing}/backend/SwiftyRing",
+      "name": "Release SwiftyRing (backend/SwiftyRing)",
+      "target": "SwiftyRing",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release SwiftyRing (backend/SwiftyRing)"
     }
   ]
 }
