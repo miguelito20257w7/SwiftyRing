@@ -97,6 +97,9 @@ struct DispositivoController: RouteCollection {
     /// horas (sincronización tardía) sería ruido, no información (RF-36).
     private static let ventanaNotificacionesSeg = 120
 
+    /// Hasta cuándo sigue teniendo sentido avisar de un sismo (15 minutos).
+    private static let ventanaAvisoSismoSeg = 900
+
     func boot(routes: any RoutesBuilder) throws {
         let dispositivo = routes.grouped("api", "dispositivo")
             .grouped(DispositivoAuthMiddleware())
@@ -204,7 +207,7 @@ struct DispositivoController: RouteCollection {
         if haceSeg <= Self.ventanaNotificacionesSeg {
             _ = try await NotificadorProximaClase.generar(
                 activacionID: activacion.requireID(),
-                on: req.db
+                on: req
             )
         }
 
@@ -241,9 +244,18 @@ struct DispositivoController: RouteCollection {
             try await evento.create(on: db)
         }
 
+        // RF-20: el administrador se entera aunque el sismo no haya activado el
+        // timbre. La ventana es más ancha que la de las clases porque tres
+        // minutos de retraso no vuelven irrelevante una emergencia; pero
+        // tampoco es infinita, para que un módulo que estuvo días sin conexión
+        // no despierte a nadie con una ráfaga de alarmas viejas.
+        if haceSeg <= Self.ventanaAvisoSismoSeg {
+            await NotificadorSismo.avisar(evento, on: req)
+        }
+
         if timbreActivado, haceSeg <= Self.ventanaNotificacionesSeg,
            let activacionID = evento.activacionID {
-            _ = try await NotificadorProximaClase.generar(activacionID: activacionID, on: req.db)
+            _ = try await NotificadorProximaClase.generar(activacionID: activacionID, on: req)
         }
 
         return .created

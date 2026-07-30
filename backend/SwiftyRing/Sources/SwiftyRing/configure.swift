@@ -44,6 +44,11 @@ func configure(_ app: Application) async throws {
 
     app.passwords.use(.bcrypt)
 
+    // Canal de entrega de las notificaciones push (RF-20, RF-37). Si no hay
+    // credencial de Firebase, el sistema opera igual: las notificaciones se
+    // registran en la base y quedan sin enviar. El timbre no depende de Google.
+    await EnviadorFCM.compartido.configurar(logger: app.logger)
+
     // ---- Migraciones ----
     // Del núcleo: la identidad, que es lo que este backend ofrece como servidor
     // de autenticación al resto de la aplicación institucional.

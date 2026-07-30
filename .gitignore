@@ -9,6 +9,10 @@
 backend/SwiftyRing/keys/*.pem
 !backend/SwiftyRing/keys/jwt_public.pem
 
+# La cuenta de servicio de Firebase: quien la tenga puede enviar notificaciones
+# en nombre del colegio. Nunca al repositorio.
+backend/SwiftyRing/keys/*.json
+
 # Artefactos de compilación del backend Vapor.
 # OJO: esta línea decía `backend/SwiftyRing/`, que dejaba TODO el backend fuera
 # de git — el proyecto Vapor entero estaba sin versionar. El código fuente sí se

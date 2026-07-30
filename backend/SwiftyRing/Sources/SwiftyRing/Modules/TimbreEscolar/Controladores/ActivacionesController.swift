@@ -90,7 +90,7 @@ struct ActivacionesController: RouteCollection {
 
         let notificadas = try await NotificadorProximaClase.generar(
             activacionID: activacion.requireID(),
-            on: req.db
+            on: req
         )
 
         return ActivacionDTO(
@@ -188,7 +188,9 @@ struct ActivacionesController: RouteCollection {
             try await evento.create(on: db)
         }
 
-        _ = try await NotificadorProximaClase.generar(activacionID: activacion.requireID(), on: req.db)
+        // RF-20/RF-21: el administrador se entera del evento por push.
+        await NotificadorSismo.avisar(evento, on: req)
+        _ = try await NotificadorProximaClase.generar(activacionID: activacion.requireID(), on: req)
 
         return SismoDTO(
             id: try evento.requireID(),
