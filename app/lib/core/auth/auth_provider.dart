@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftyring/core/auth/data/auth_remote_datasource.dart';
 import 'package:swiftyring/core/auth/data/auth_repository_impl.dart';
@@ -99,6 +101,10 @@ class AuthNotifier extends Notifier<AuthState> {
       storage: ref.watch(sessionStorageProvider),
     );
 
+    // El cliente HTTP avisa cuando el servidor rechaza el token; quien sabe
+    // qué hacer con eso es este notifier.
+    ref.read(apiProvider).alVencerSesion = () => unawaited(sesionVencida());
+
     // No se puede esperar dentro de `build`, así que la restauración arranca
     // aquí y actualiza el estado cuando termina. El router observa ese cambio.
     Future.microtask(_restaurarSesion);
@@ -137,6 +143,22 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> cerrarSesion() async {
     await _repositorio.cerrarSesion();
     _aplicar(null);
+  }
+
+  /// El servidor rechazó el token: venció (dura 24 h por RNF-08) o la cuenta
+  /// fue suspendida mientras la app estaba abierta.
+  ///
+  /// Antes esto no se atendía y el resultado era desconcertante: el usuario
+  /// seguía "dentro", pero cada pantalla mostraba un error distinto y no había
+  /// forma de saber que solo había que volver a entrar.
+  Future<void> sesionVencida() async {
+    if (!state.autenticado) return;
+
+    // El estado se cierra **antes** de tocar el disco, y no después: cuando
+    // vence el token suelen fallar varias peticiones a la vez, y si la guarda
+    // de arriba esperara a que termine el borrado, todas pasarían de largo.
+    _aplicar(null, error: 'Tu sesión expiró. Vuelve a iniciar sesión.');
+    await _repositorio.cerrarSesion();
   }
 
   /// Punto único donde cambia la sesión. Mantiene sincronizados el estado que

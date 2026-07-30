@@ -19,7 +19,35 @@ import 'package:dio/dio.dart';
 class ApiClient {
   final Dio dio;
 
-  ApiClient({required String origen}) : dio = Dio(_opciones(baseUrlDe(origen)));
+  /// Qué hacer cuando el servidor dice que el token ya no vale.
+  ///
+  /// Lo pone `AuthNotifier`, igual que el token: el cliente HTTP avisa, pero no
+  /// sabe qué es una sesión ni cómo cerrarla. Si en vez de este gancho el
+  /// cliente leyera el provider de sesión, el grafo se cerraría sobre sí mismo
+  /// —quien produce el token necesita al cliente— que es justo el ciclo que
+  /// costó un objeto intermedio en su día.
+  void Function()? alVencerSesion;
+
+  ApiClient({required String origen}) : dio = Dio(_opciones(baseUrlDe(origen))) {
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        // El 401 llega por aquí y no por `onError` porque `validateStatus`
+        // deja pasar los 4xx para poder leer el `reason` de Vapor.
+        onResponse: (respuesta, handler) {
+          if (respuesta.statusCode == 401 &&
+              !_esInicioDeSesion(respuesta.requestOptions.path)) {
+            alVencerSesion?.call();
+          }
+          handler.next(respuesta);
+        },
+      ),
+    );
+  }
+
+  /// En el login, un 401 significa "esa contraseña no es" y no "tu sesión
+  /// venció". Confundirlos haría que un error de tecleo se anunciara como una
+  /// sesión expirada.
+  static bool _esInicioDeSesion(String ruta) => ruta.endsWith('/auth/login');
 
   /// Dónde viven los endpoints, a partir del origen del servidor.
   static String baseUrlDe(String origen) => '$origen/api';

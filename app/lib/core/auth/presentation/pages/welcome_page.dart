@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:swiftyring/core/auth/auth_provider.dart';
 import 'package:swiftyring/core/router/rutas.dart';
 import 'package:swiftyring/core/shared_widgets/boton_principal.dart';
 import 'package:swiftyring/core/shared_widgets/fondo_decorado.dart';
@@ -162,14 +165,22 @@ class _BloqueLogo extends StatelessWidget {
 }
 
 /// nodos 1:813 – 1:829
-class _BloqueAcciones extends StatelessWidget {
+class _BloqueAcciones extends ConsumerWidget {
   const _BloqueAcciones();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final error = ref.watch(authProvider).error;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Aquí aterriza quien fue expulsado por un token vencido. Sin este
+        // aviso, la app parecería haberse cerrado sola sin motivo.
+        if (error != null) ...[
+          _AvisoSesion(mensaje: error),
+          SizedBox(height: context.espacioVertical(24)),
+        ],
         BotonPrincipal(
           texto: 'Iniciar Sesión',
           onPressed: () => context.push(Rutas.login),
@@ -214,6 +225,46 @@ class _BloqueAcciones extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Por qué la app te devolvió aquí.
+///
+/// Se muestra en la bienvenida y no solo en el formulario de login porque el
+/// router deja aquí a quien pierde la sesión: si el aviso viviera únicamente
+/// en el login, habría que adivinar que hay que entrar para leerlo.
+class _AvisoSesion extends StatelessWidget {
+  final String mensaje;
+
+  const _AvisoSesion({required this.mensaje});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.blanco,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.chipFondo),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.info_outline, size: 20, color: AppColors.dorado),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              mensaje,
+              style: GoogleFonts.workSans(
+                fontSize: 14,
+                height: 20 / 14,
+                color: AppColors.textoApoyo,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

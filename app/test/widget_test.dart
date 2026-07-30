@@ -133,6 +133,59 @@ void main() {
     expect(find.text('BIENVENIDO'), findsOneWidget);
   });
 
+  group('Sesión vencida', () {
+    testWidgets('El token rechazado devuelve a la bienvenida con el motivo', (
+      tester,
+    ) async {
+      await montarApp(
+        tester,
+        sesionGuardada: const AuthSession(
+          token: 'token-vencido',
+          nombre: 'Andrea Ramírez',
+          email: 'andrea@santasofia.edu.co',
+          rol: RolUsuario.admin,
+        ),
+      );
+      expect(find.text('Hola, Andrea'), findsOneWidget);
+
+      // Lo que haría el interceptor al recibir un 401 del servidor.
+      final contenedor = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      contenedor.read(apiProvider).alVencerSesion!();
+      await tester.pumpAndSettle();
+
+      expect(find.text('BIENVENIDO'), findsOneWidget);
+      expect(find.textContaining('sesión expiró'), findsOneWidget);
+    });
+
+    testWidgets('El token deja de mandarse en las peticiones siguientes', (
+      tester,
+    ) async {
+      await montarApp(
+        tester,
+        sesionGuardada: const AuthSession(
+          token: 'token-vencido',
+          nombre: 'Andrea Ramírez',
+          email: 'andrea@santasofia.edu.co',
+          rol: RolUsuario.admin,
+        ),
+      );
+
+      final contenedor = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      final cliente = contenedor.read(apiProvider);
+      expect(cliente.dio.options.headers['Authorization'], isNotNull);
+
+      cliente.alVencerSesion!();
+      await tester.pumpAndSettle();
+
+      // Seguir mandando un token muerto solo produce más 401.
+      expect(cliente.dio.options.headers['Authorization'], isNull);
+    });
+  });
+
   group('Ajustes de red', () {
     testWidgets('El chip de la bienvenida lleva a elegir el servidor', (
       tester,
