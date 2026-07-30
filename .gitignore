@@ -1,3 +1,25 @@
 .DS_Store
+
+# Secretos: nunca al repositorio.
 .env
-backend/SwiftyRing/
+.env.*
+!.env.example
+# La llave PRIVADA de firma RS256 nunca se sube (RNF-13). La pública sí: es
+# la que se entrega al equipo de Control Baños para verificar tokens.
+backend/SwiftyRing/keys/*.pem
+!backend/SwiftyRing/keys/jwt_public.pem
+
+# Artefactos de compilación del backend Vapor.
+# OJO: esta línea decía `backend/SwiftyRing/`, que dejaba TODO el backend fuera
+# de git — el proyecto Vapor entero estaba sin versionar. El código fuente sí se
+# versiona; solo se ignora lo generado.
+backend/SwiftyRing/.build/
+backend/SwiftyRing/.swiftpm/
+
+# Artefactos de la app Flutter.
+app/build/
+app/.dart_tool/
+
+# Configuracion real del firmware ESP32 (WiFi + llave del dispositivo).
+# La plantilla config.example.h SI se versiona.
+firmware/SwiftyRingTimbre/config.h
