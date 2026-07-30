@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftyRing — Documento de Requerimientos v4.0 · Swifty Devs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --carbon:#0A0A0A; --obsidian:#1C1C1E; --swift-orange:#FF6B35; --glow:#FF8C5A;
+  --ivory:#F2F2F7; --white:#FFFFFF; --gray-1:#3A3A3C; --gray-2:#6E6E73; --gray-3:#A1A1A6; --hairline:#E5E5EA;
+  --sr-yellow:#F5B301; --sr-orange:#DB712F; --sr-graphite:#3B3B30; --sr-ivory:#FAF8F2;
+  --font-display:'Playfair Display', Georgia, serif;
+  --font-body:'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+  --radius-card:16px; --radius-sm:10px; --shadow-xs:0 2px 8px rgba(0,0,0,0.05);
+  --page-w:210mm; --page-pad:20mm;
+}
+*{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+html{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+body{ margin:0; background:#d8d8dc; color:var(--carbon); font-family:var(--font-body); font-weight:300; font-size:11pt; line-height:1.7; }
+.doc{ max-width:calc(var(--page-w) + 40px); margin:0 auto; padding:24px 0 60px; }
+.page{ background:var(--white); width:var(--page-w); min-height:297mm; margin:0 auto 22px; padding:var(--page-pad); box-shadow:0 10px 40px rgba(0,0,0,0.16); position:relative; overflow:hidden; }
+h1,h2,h3,h4{ font-family:var(--font-display); font-weight:500; color:var(--carbon); margin:0; }
+p{ margin:0 0 12px; } strong{ font-weight:500; color:var(--carbon); } em{ font-style:italic; }
+a{ color:var(--swift-orange); text-decoration:none; }
+.eyebrow{ font-family:var(--font-body); font-weight:500; font-size:9pt; letter-spacing:0.34em; text-transform:uppercase; color:var(--swift-orange); margin:0 0 10px; display:block; }
+.mono{ font-family:var(--font-mono); }
+.runhead{ display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline); padding-bottom:10px; margin-bottom:26px; }
+.runhead .rh-brand{ font-family:var(--font-display); font-size:15pt; letter-spacing:-0.3px; }
+.runhead .rh-brand .dot{ color:var(--swift-orange); }
+.runhead .rh-meta{ font-family:var(--font-mono); font-size:8pt; color:var(--gray-3); letter-spacing:0.05em; text-transform:uppercase;}
+.sec-head{ margin:0 0 22px; }
+.sec-head .num{ font-family:var(--font-mono); font-size:10pt; color:var(--swift-orange); font-weight:500; letter-spacing:0.1em; }
+.sec-head h2{ font-size:27pt; line-height:1.08; letter-spacing:-0.8px; margin-top:4px; }
+.sec-head .sub{ color:var(--gray-2); font-size:11.5pt; margin-top:8px; max-width:62ch;}
+h3.block{ font-size:16pt; letter-spacing:-0.4px; margin:26px 0 10px; padding-left:14px; border-left:3px solid var(--swift-orange); }
+h4.mini{ font-family:var(--font-body); font-weight:500; font-size:11.5pt; margin:16px 0 6px; }
+.card{ background:var(--white); border:1px solid var(--hairline); border-radius:var(--radius-card); padding:20px 22px; box-shadow:var(--shadow-xs); margin:14px 0; }
+.card.tint{ background:var(--ivory); border-color:transparent; }
+.card.dark{ background:var(--obsidian); border-color:transparent; color:var(--ivory); }
+.card.dark h3,.card.dark h4,.card.dark strong{ color:var(--white); }
+.callout{ border-left:3px solid var(--swift-orange); background:linear-gradient(90deg, rgba(255,107,53,0.06), rgba(255,107,53,0)); padding:14px 18px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:16px 0; }
+.callout .lbl{ font-weight:500; color:var(--swift-orange); font-size:9pt; letter-spacing:0.2em; text-transform:uppercase; display:block; margin-bottom:4px;}
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.stat{ background:var(--ivory); border-radius:var(--radius-card); padding:16px 18px; }
+.stat .big{ font-family:var(--font-display); font-size:24pt; line-height:1; letter-spacing:-1px; }
+.stat .big .u{ font-size:12pt; color:var(--swift-orange); }
+.stat .lbl{ font-size:9.5pt; color:var(--gray-2); margin-top:6px; }
+table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:10pt; }
+thead th{ background:var(--carbon); color:var(--white); text-align:left; font-weight:500; padding:9px 12px; font-size:9pt; letter-spacing:0.04em; text-transform:uppercase; }
+thead th:first-child{ border-radius:8px 0 0 0; } thead th:last-child{ border-radius:0 8px 0 0; }
+tbody td{ padding:8px 12px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+tbody tr:nth-child(even){ background:var(--ivory); }
+.rf{ font-family:var(--font-mono); font-size:8.5pt; color:var(--swift-orange); font-weight:500; white-space:nowrap;}
+.new{ display:inline-block; font-family:var(--font-mono); font-size:7pt; padding:1px 6px; border-radius:999px; background:var(--swift-orange); color:#fff; letter-spacing:0.05em; vertical-align:middle; margin-left:6px;}
+.chip{ display:inline-block; font-family:var(--font-mono); font-size:8pt; padding:2px 9px; border-radius:999px; background:var(--ivory); color:var(--gray-1); border:1px solid var(--hairline); margin:2px 4px 2px 0;}
+.chip.o{ background:rgba(255,107,53,0.1); color:var(--swift-orange); border-color:transparent;}
+ul.clean{ list-style:none; padding:0; margin:8px 0; }
+ul.clean li{ position:relative; padding-left:22px; margin-bottom:7px; }
+ul.clean li::before{ content:''; position:absolute; left:2px; top:9px; width:6px; height:6px; border-radius:2px; background:var(--swift-orange); }
+
+/* Cover */
+.cover{ min-height:297mm; display:flex; flex-direction:column; background:var(--white); padding:var(--page-pad); position:relative; overflow:hidden; }
+.cover::before{ content:''; position:absolute; top:0; left:0; width:12px; height:100%; background:linear-gradient(180deg, var(--swift-orange), var(--glow)); }
+.cover-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+.cover-studio{ font-family:var(--font-display); font-size:16pt; letter-spacing:-0.3px; }
+.cover-studio .dot{ color:var(--swift-orange); }
+.cover-studio .tag{ display:block; font-family:var(--font-mono); font-size:7.5pt; letter-spacing:0.18em; text-transform:uppercase; color:var(--gray-3); margin-top:2px;}
+.cover-badge{ text-align:right; font-family:var(--font-mono); font-size:8pt; color:var(--gray-2); letter-spacing:0.06em; line-height:1.7; text-transform:uppercase;}
+.cover-hero{ flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+.cover-logo{ width:150px; height:150px; margin-bottom:18px; }
+.cover-eyebrow{ font-family:var(--font-body); font-weight:500; font-size:10pt; letter-spacing:0.32em; text-transform:uppercase; color:var(--swift-orange); margin-bottom:12px; }
+.cover-title{ font-family:var(--font-display); font-weight:600; font-size:44pt; line-height:0.98; letter-spacing:-1.5px; }
+.cover-title .ring{ color:var(--sr-orange); }
+.cover-sub{ font-family:var(--font-display); font-style:italic; font-weight:400; font-size:16pt; color:var(--gray-1); margin-top:12px; }
+.cover-line{ width:64px; height:3px; background:var(--swift-orange); border-radius:2px; margin:20px auto 14px;}
+.cover-desc{ max-width:56ch; color:var(--gray-2); font-size:10.5pt; }
+.cover-meta{ border-top:1px solid var(--hairline); padding-top:18px; }
+.cover-meta .mrow{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px 30px; }
+.meta-item .k{ font-family:var(--font-mono); font-size:7.5pt; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-3); }
+.meta-item .v{ font-size:10.5pt; margin-top:2px; }
+.cover-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-family:var(--font-mono); font-size:8pt; color:var(--gray-3); letter-spacing:0.06em; text-transform:uppercase;}
+.endorse{ font-family:var(--font-display); font-size:11pt; letter-spacing:-0.2px;}
+.endorse .dot{ color:var(--swift-orange); }
+
+/* TOC */
+.toc-row{ display:flex; align-items:baseline; padding:11px 0; border-bottom:1px solid var(--hairline); }
+.toc-row .tn{ font-family:var(--font-mono); font-size:11pt; color:var(--swift-orange); width:44px; font-weight:500;}
+.toc-row .tt{ font-family:var(--font-display); font-size:14pt; }
+.toc-sub{ display:flex; align-items:baseline; padding:5px 0 5px 44px; }
+.toc-sub .sn{ font-family:var(--font-mono); font-size:9pt; color:var(--gray-3); width:40px;}
+.toc-sub .st{ font-size:10.5pt; color:var(--gray-1);}
+
+/* Arch */
+.arch{ display:flex; flex-direction:column; gap:12px; margin:16px 0; }
+.arch-row{ display:flex; gap:12px; align-items:stretch; justify-content:center; flex-wrap:wrap;}
+.node{ border:1.5px solid var(--hairline); border-radius:12px; padding:12px 14px; background:var(--white); min-width:150px; text-align:center; box-shadow:var(--shadow-xs); }
+.node .nt{ font-weight:500; font-size:10.5pt; }
+.node .nd{ font-size:8.5pt; color:var(--gray-2); margin-top:3px; line-height:1.4;}
+.node.accent{ border-color:var(--swift-orange); background:rgba(255,107,53,0.05);}
+.node.dark{ background:var(--carbon); border-color:var(--carbon);} .node.dark .nt{ color:var(--white);} .node.dark .nd{ color:var(--gray-3);}
+.node.sr{ border-color:var(--sr-yellow); background:rgba(245,179,1,0.08);}
+.arch-arrow{ text-align:center; color:var(--gray-3); font-size:9.5pt;}
+.footnote{ font-size:8.5pt; color:var(--gray-3); border-top:1px solid var(--hairline); padding-top:8px; margin-top:20px;}
+
+/* Closing */
+.closing{ min-height:297mm; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; background:var(--carbon); color:var(--ivory); padding:var(--page-pad);}
+.closing .big{ font-family:var(--font-display); font-size:32pt; line-height:1.1; letter-spacing:-1.2px; color:var(--white);}
+.closing .sig{ font-family:var(--font-display); font-size:16pt; margin-top:26px;}
+.closing .sig .dot{ color:var(--swift-orange);}
+.closing .meta{ font-family:var(--font-mono); font-size:8.5pt; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray-3); margin-top:8px;}
+.closing .line{ width:60px; height:3px; background:var(--swift-orange); border-radius:2px; margin:24px auto;}
+
+.toolbar{ position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--carbon); color:#fff; border-radius:999px; padding:8px 10px 8px 18px; display:flex; align-items:center; gap:14px; box-shadow:0 8px 30px rgba(0,0,0,0.3); z-index:99; font-size:10pt; }
+.toolbar b{ font-weight:500;}
+.toolbar button{ font-family:var(--font-body); font-weight:500; font-size:10pt; cursor:pointer; background:var(--swift-orange); color:#fff; border:none; border-radius:999px; padding:8px 16px; }
+
+@media print{
+  @page{ size:A4; margin:14mm 15mm; }
+  @page cover{ margin:0; }
+  @page closing{ margin:0; }
+  body{ background:#fff; } .doc{ padding:0; margin:0; max-width:none; } .toolbar{ display:none !important; }
+  .runhead{ display:none; }
+  .page{ width:auto; min-height:0; margin:0; padding:0; box-shadow:none; overflow:visible; }
+  .sec-head{ padding-top:3mm; }
+  .cover{ page:cover; height:296mm; min-height:0; margin:0; padding:20mm; box-shadow:none; overflow:hidden; break-after:page; }
+  .closing{ page:closing; height:296mm; min-height:0; margin:0; padding:20mm; box-shadow:none; overflow:hidden; break-before:page; }
+  .card,.node,.stat,.callout,.toc-row,.arch{ break-inside:avoid; }
+  table,tr,thead,ul.clean li{ break-inside:avoid; }
+  h3.block,h4.mini,.sec-head{ break-after:avoid; }
+}
+@media screen and (max-width:760px){
+  .page,.cover,.closing{ width:auto; padding:22px; }
+  .grid-2,.grid-3,.grid-4,.cover-meta .mrow{ grid-template-columns:1fr; }
+  .cover-title{ font-size:34pt; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span><b>SwiftyRing</b> · Requerimientos v4.0</span>
+  <button onclick="window.print()">Descargar PDF</button>
+</div>
+
+<div class="doc">
+
+<!-- ===================== PORTADA ===================== -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="cover-studio">Swifty<span class="dot">.</span>Devs
+      <span class="tag">Built for Apple. Day 0.</span>
+    </div>
+    <div class="cover-badge">
+      Documento de Requerimientos<br>
+      Versión 4.0 · Julio 2026<br>
+      Cliente: I.E. Santa Sofía
+    </div>
+  </div>
+
+  <div class="cover-hero">
+    <img class="cover-logo" src="../01-Marca/SwiftyRing/Logo con texto.svg" alt="Logo de SwiftyRing">
+    <div class="cover-eyebrow">Sistema de Timbre Escolar Inteligente</div>
+    <div class="cover-title">Swifty<span class="ring">Ring</span></div>
+    <div class="cover-sub">Documento de requerimientos · v4.0</div>
+    <div class="cover-line"></div>
+    <p class="cover-desc">Aplicación móvil Flutter + módulo físico ESP32 · Backend propio con Vapor
+      (Swift) + PostgreSQL. Especificación funcional y técnica del sistema.</p>
+  </div>
+
+  <div class="cover-meta">
+    <div class="mrow">
+      <div class="meta-item"><div class="k">Cliente</div><div class="v">I.E. Santa Sofía — Dosquebradas, Colombia</div></div>
+      <div class="meta-item"><div class="k">Desarrollado por</div><div class="v">Swifty Devs</div></div>
+      <div class="meta-item"><div class="k">Versión</div><div class="v">4.0</div></div>
+      <div class="meta-item"><div class="k">Fecha</div><div class="v">Julio de 2026</div></div>
+      <div class="meta-item"><div class="k">Plataforma</div><div class="v">Flutter · Vapor · PostgreSQL · ESP32</div></div>
+      <div class="meta-item"><div class="k">Cambios v4.0</div><div class="v">Backend migrado de FastAPI/Python a Vapor (Swift).</div></div>
+    </div>
+    <div class="cover-foot">
+      <span class="endorse">Un producto de Swifty<span class="dot">.</span>Devs</span>
+      <span>Requerimientos · v4.0</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ÍNDICE ===================== -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">Swifty<span class="dot">.</span>Devs</div><div class="rh-meta">SwiftyRing · Requerimientos v4.0</div></div>
+  <div class="sec-head"><span class="eyebrow">Contenido</span><h2>Índice</h2></div>
+  <div class="toc-list">
+    <div class="toc-row"><span class="tn">01</span><span class="tt">Visión general</span></div>
+    <div class="toc-row"><span class="tn">02</span><span class="tt">Arquitectura del sistema</span></div>
+    <div class="toc-row"><span class="tn">03</span><span class="tt">Requerimientos funcionales</span></div>
+    <div class="toc-sub"><span class="sn">3.1</span><span class="st">Gestión de usuarios y autenticación</span></div>
+    <div class="toc-sub"><span class="sn">3.2</span><span class="st">Módulo de horarios</span></div>
+    <div class="toc-sub"><span class="sn">3.3</span><span class="st">Timbre manual</span></div>
+    <div class="toc-sub"><span class="sn">3.4</span><span class="st">Módulo de detección de sismos</span></div>
+    <div class="toc-sub"><span class="sn">3.5</span><span class="st">Pantalla OLED en módulo físico</span></div>
+    <div class="toc-sub"><span class="sn">3.6</span><span class="st">Operación offline</span></div>
+    <div class="toc-sub"><span class="sn">3.7</span><span class="st">Módulo de profesores y notificaciones de clase</span></div>
+    <div class="toc-row"><span class="tn">04</span><span class="tt">Requerimientos no funcionales</span></div>
+    <div class="toc-row"><span class="tn">05</span><span class="tt">Stack tecnológico</span></div>
+    <div class="toc-row"><span class="tn">06</span><span class="tt">Plan de desarrollo por fases</span></div>
+    <div class="toc-row"><span class="tn">07</span><span class="tt">Entregables esperados</span></div>
+  </div>
+</section>
+
+<!-- ===================== 01 VISIÓN GENERAL ===================== -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">Swifty<span class="dot">.</span>Devs</div><div class="rh-meta">01 · Visión general</div></div>
+  <div class="sec-head"><span class="num">01</span><h2>Visión general</h2></div>
+  <p>Sistema integrado de control de timbre escolar compuesto por una aplicación móvil Flutter y un
+  módulo físico basado en ESP32. El backend es propio: <strong>Vapor + PostgreSQL</strong> alojado en
+  un servidor dedicado, lo que garantiza control total sobre los datos, independencia de plataformas
+  externas y escalabilidad a largo plazo. Las notificaciones push se entregan mediante FCM (Firebase
+  Cloud Messaging) únicamente como canal de entrega, sin depender de ningún otro servicio de
+  Firebase.</p>
+</section>
+
+<!-- ===================== 02 ARQUITECTURA ===================== -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">Swifty<span class="dot">.</span>Devs</div><div class="rh-meta">02 · Arquitectura del sistema</div></div>
+  <div class="sec-head"><span class="num">02</span><h2>Arquitectura del sistema</h2></div>
+
+  <p>El <strong>backend Vapor</strong> es el centro del sistema: la app y el módulo ESP32 se comunican
+  con él, guarda todo en PostgreSQL y despacha las notificaciones a los profesores por FCM.</p>
+
+  <div class="arch">
+    <svg viewBox="0 0 840 360" width="100%" style="max-width:720px; display:block; margin:6px auto 0;" font-family="'DM Sans', -apple-system, sans-serif">
+      <defs>
+        <marker id="arh" markerWidth="8" markerHeight="8" refX="6.4" refY="3" orient="auto-start-reverse" markerUnits="strokeWidth">
+          <path d="M0,0 L6.4,3 L0,6 Z" fill="#6E6E73"/>
+        </marker>
+      </defs>
+
+      <!-- Conexiones -->
+      <line x1="206" y1="112" x2="329" y2="112" stroke="#6E6E73" stroke-width="1.6" marker-start="url(#arh)" marker-end="url(#arh)"/>
+      <text x="267" y="100" text-anchor="middle" font-size="11.5" fill="#6E6E73">JWT · HTTPS / REST</text>
+
+      <line x1="516" y1="112" x2="639" y2="112" stroke="#6E6E73" stroke-width="1.6" marker-start="url(#arh)" marker-end="url(#arh)"/>
+      <text x="577" y="100" text-anchor="middle" font-size="11.5" fill="#6E6E73">datos · Fluent</text>
+
+      <path d="M422,166 V214 H515 V257" fill="none" stroke="#6E6E73" stroke-width="1.6" marker-end="url(#arh)"/>
+      <text x="470" y="208" text-anchor="middle" font-size="11.5" fill="#6E6E73">notifica</text>
+
+      <line x1="576" y1="294" x2="644" y2="294" stroke="#6E6E73" stroke-width="1.6" marker-end="url(#arh)"/>
+      <text x="610" y="283" text-anchor="middle" font-size="11.5" fill="#6E6E73">push</text>
+
+      <path d="M206,292 H360 V167" fill="none" stroke="#6E6E73" stroke-width="1.6" marker-end="url(#arh)"/>
+      <text x="250" y="283" text-anchor="middle" font-size="11.5" fill="#6E6E73">HTTP REST</text>
+
+      <!-- Cajas -->
+      <rect x="31" y="72" width="175" height="80" rx="12" fill="#FFFFFF" stroke="#FF6B35" stroke-width="1.6"/>
+      <text x="118" y="106" text-anchor="middle" font-size="15" font-weight="600" fill="#0A0A0A">App Flutter</text>
+      <text x="118" y="126" text-anchor="middle" font-size="10.5" fill="#6E6E73">Admin / Operador / Profesor</text>
+
+      <rect x="330" y="58" width="185" height="108" rx="14" fill="#FFF3EE" stroke="#FF6B35" stroke-width="2.2"/>
+      <text x="422" y="94" text-anchor="middle" font-size="18" font-weight="700" fill="#0A0A0A">Vapor</text>
+      <text x="422" y="116" text-anchor="middle" font-size="10.5" fill="#6E6E73">Backend propio · Swift</text>
+      <text x="422" y="134" text-anchor="middle" font-size="10.5" fill="#6E6E73">Lógica de negocio · JWT</text>
+
+      <rect x="640" y="72" width="170" height="80" rx="12" fill="#0A0A0A"/>
+      <text x="725" y="106" text-anchor="middle" font-size="15" font-weight="600" fill="#FFFFFF">PostgreSQL</text>
+      <text x="725" y="126" text-anchor="middle" font-size="10.5" fill="#A1A1A6">Datos · Fluent ORM</text>
+
+      <rect x="31" y="252" width="175" height="86" rx="12" fill="#FEF7E6" stroke="#F5B301" stroke-width="1.6"/>
+      <text x="118" y="285" text-anchor="middle" font-size="15" font-weight="600" fill="#0A0A0A">Módulo ESP32</text>
+      <text x="118" y="305" text-anchor="middle" font-size="10.5" fill="#6E6E73">Timbre · OLED · sismo</text>
+      <text x="118" y="321" text-anchor="middle" font-size="10.5" fill="#6E6E73">opera sin internet</text>
+
+      <rect x="455" y="258" width="121" height="72" rx="12" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1.6"/>
+      <text x="515" y="290" text-anchor="middle" font-size="14" font-weight="600" fill="#0A0A0A">FCM</text>
+      <text x="515" y="309" text-anchor="middle" font-size="10" fill="#6E6E73">entrega push</text>
+
+      <rect x="645" y="258" width="165" height="72" rx="12" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1.6"/>
+      <text x="727" y="290" text-anchor="middle" font-size="14" font-weight="600" fill="#0A0A0A">Profesores</text>
+      <text x="727" y="309" text-anchor="middle" font-size="10" fill="#6E6E73">reciben el aviso de clase</text>
+    </svg>
+    <p class="footnote" style="text-align:center; max-width:640px; margin:12px auto 0;">El módulo ESP32 llama a Vapor
+    cada vez que el timbre suena —automático, manual o sísmico— y opera de forma autónoma aunque pierda la conexión.</p>
+  </div>
+</section>
+
+<!-- ===================== 03 REQUERIMIENTOS FUNCIONALES ===================== -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">Swifty<span class="dot">.</span>Devs</div><div class="rh-meta">03 · Requerimientos funcionales</div></div>
+  <div class="sec-head"><span class="num">03</span><h2>Requerimientos funcionales</h2></div>
+
+  <h3 class="block">3.1 · Gestión de usuarios y autenticación</h3>
+  <table>
+    <thead><tr><th style="width:66px;">ID</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF-01</td><td>El sistema contará con autenticación propia mediante JWT (JSON Web Tokens) gestionada desde el backend <strong>Vapor</strong>.</td></tr>
+      <tr><td class="rf">RF-02</td><td>Existirá una cuenta de Administrador Principal (Doña Andrea) creada en la inicialización del sistema, no eliminable.</td></tr>
+      <tr><td class="rf">RF-03</td><td>El administrador principal podrá crear, editar, suspender y eliminar usuarios secundarios.</td></tr>
+      <tr><td class="rf">RF-04</td><td>El sistema manejará tres roles: Administrador, Operador y Profesor.</td></tr>
+      <tr><td class="rf">RF-05</td><td>Los operadores podrán consultar horarios y activar el timbre manual, pero no modificar horarios ni gestionar usuarios.</td></tr>
+      <tr><td class="rf">RF-06</td><td>El administrador podrá asignar y revocar permisos individuales por usuario.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">3.2 · Módulo de horarios</h3>
+  <table>
+    <thead><tr><th style="width:66px;">ID</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF-07</td><td>El sistema permitirá definir un horario habitual semanal con múltiples timbres por día.</td></tr>
+      <tr><td class="rf">RF-08</td><td>Cada timbre tendrá: hora, días activos (L-S), etiqueta descriptiva (ej. Inicio de clases) y duración del sonido.</td></tr>
+      <tr><td class="rf">RF-09</td><td>El administrador podrá crear, editar y eliminar timbres del horario habitual.</td></tr>
+      <tr><td class="rf">RF-10</td><td>El sistema soportará horarios especiales que suspenden temporalmente el horario habitual.</td></tr>
+      <tr><td class="rf">RF-11</td><td>Al activar un horario especial, se habilitará un date picker para definir el rango de días de vigencia.</td></tr>
+      <tr><td class="rf">RF-12</td><td>Al vencer el rango del horario especial, el sistema retomará automáticamente el horario habitual.</td></tr>
+      <tr><td class="rf">RF-13</td><td>Solo el administrador podrá activar, modificar y desactivar horarios especiales.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">3.3 · Timbre manual</h3>
+  <table>
+    <thead><tr><th style="width:66px;">ID</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF-14</td><td>La app contará con un botón de timbre manual visible en la pantalla principal.</td></tr>
+      <tr><td class="rf">RF-15</td><td>El módulo ESP32 contará con un botón físico de timbre manual.</td></tr>
+      <tr><td class="rf">RF-16</td><td>Ambos botones ejecutarán el timbre de forma inmediata, independientemente del horario activo.</td></tr>
+      <tr><td class="rf">RF-17</td><td>Cada activación manual quedará registrada en PostgreSQL con usuario, timestamp y origen (app / físico).</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">3.4 · Módulo de detección de sismos</h3>
+  <table>
+    <thead><tr><th style="width:66px;">ID</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF-18</td><td>El ESP32 contará con un acelerómetro (MPU-6050) para detección de vibraciones sísmicas.</td></tr>
+      <tr><td class="rf">RF-19</td><td>El algoritmo de detección deberá distinguir entre sismos y vibraciones de vehículos, usando análisis de frecuencia y duración de la vibración.</td></tr>
+      <tr><td class="rf">RF-20</td><td>Un evento sísmico confirmado enviará una notificación push FCM al dispositivo del administrador.</td></tr>
+      <tr><td class="rf">RF-21</td><td>La notificación incluirá: hora del evento, intensidad estimada (en g) y duración de la vibración.</td></tr>
+      <tr><td class="rf">RF-22</td><td>Al confirmarse un evento sísmico, el módulo ESP32 activará el timbre de forma inmediata y autónoma. Simultáneamente <strong>Vapor</strong> enviará la notificación push al administrador como registro del evento.</td></tr>
+      <tr><td class="rf">RF-23</td><td>El historial de eventos sísmicos detectados será consultable desde la app.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">3.5 · Pantalla OLED en módulo físico</h3>
+  <table>
+    <thead><tr><th style="width:66px;">ID</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF-24</td><td>El módulo incluirá una pantalla OLED de 1.3" (SH1106).</td></tr>
+      <tr><td class="rf">RF-25</td><td>La pantalla mostrará en tiempo real: hora actual, nombre del próximo timbre y tiempo restante.</td></tr>
+      <tr><td class="rf">RF-26</td><td>Al activarse el timbre, la pantalla mostrará un indicador visual de timbre activo.</td></tr>
+      <tr><td class="rf">RF-27</td><td>Si no hay conexión a internet, la pantalla indicará el modo offline con un ícono visible.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">3.6 · Operación offline</h3>
+  <table>
+    <thead><tr><th style="width:66px;">ID</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF-28</td><td>El ESP32 almacenará localmente el horario activo en memoria flash (SPIFFS / LittleFS).</td></tr>
+      <tr><td class="rf">RF-29</td><td>La app Flutter utilizará caché local para permitir consulta y edición de horarios sin conexión.</td></tr>
+      <tr><td class="rf">RF-30</td><td>Los cambios realizados offline se sincronizarán automáticamente con el backend al recuperar conectividad.</td></tr>
+      <tr><td class="rf">RF-31</td><td>El módulo ESP32 operará el timbre automático de forma autónoma aunque pierda conexión al servidor.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">3.7 · Módulo de profesores y notificaciones de clase <span class="new">Nuevo en v2.0</span></h3>
+  <table>
+    <thead><tr><th style="width:66px;">ID</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF-32</td><td>Cada profesor tendrá un perfil en el sistema con: nombre, correo, materia(s) que dicta y token FCM de su dispositivo.</td></tr>
+      <tr><td class="rf">RF-33</td><td>El administrador podrá crear, editar y eliminar perfiles de profesores desde la app.</td></tr>
+      <tr><td class="rf">RF-34</td><td>Cada profesor tendrá un horario semanal asignado con entradas que incluyen: día, hora de inicio, hora de fin, materia y salón.</td></tr>
+      <tr><td class="rf">RF-35</td><td>El administrador podrá cargar y modificar el horario semanal de cada profesor desde la app.</td></tr>
+      <tr><td class="rf">RF-36</td><td>Al activarse el timbre (automático, manual o sísmico), <strong>Vapor</strong> consultará qué clase corresponde a continuación para cada profesor según su horario en PostgreSQL.</td></tr>
+      <tr><td class="rf">RF-37</td><td>Se enviará una notificación push FCM personalizada a cada profesor con: hora de la próxima clase, materia y salón al que debe dirigirse.</td></tr>
+      <tr><td class="rf">RF-38</td><td>Si un profesor no tiene clase en el siguiente período, no recibirá notificación.</td></tr>
+      <tr><td class="rf">RF-39</td><td>Los profesores tendrán acceso a la app con rol Profesor, diferente al Administrador y al Operador.</td></tr>
+      <tr><td class="rf">RF-40</td><td>La app en modo Profesor mostrará el horario semanal completo del profesor autenticado.</td></tr>
+      <tr><td class="rf">RF-41</td><td>La clase en curso se resaltará visualmente con un indicador de color y etiqueta En curso.</td></tr>
+      <tr><td class="rf">RF-42</td><td>La próxima clase se resaltará con un indicador secundario y etiqueta Próxima.</td></tr>
+      <tr><td class="rf">RF-43</td><td>El horario del profesor se actualizará en tiempo real si el administrador realiza cambios durante el día.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================== 04 REQUERIMIENTOS NO FUNCIONALES ===================== -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">Swifty<span class="dot">.</span>Devs</div><div class="rh-meta">04 · Requerimientos no funcionales</div></div>
+  <div class="sec-head"><span class="num">04</span><h2>Requerimientos no funcionales</h2></div>
+  <table>
+    <thead><tr><th style="width:70px;">ID</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RNF-01</td><td>La app usará los colores institucionales del colegio como paleta principal.</td></tr>
+      <tr><td class="rf">RNF-02</td><td>La interfaz seguirá los lineamientos de Material Design 3.</td></tr>
+      <tr><td class="rf">RNF-03</td><td>La app debe ser compatible con Android 8.0+ e iOS 14+.</td></tr>
+      <tr><td class="rf">RNF-04</td><td>El tiempo de respuesta entre comando de la app y activación del timbre físico no debe superar 2 segundos con conexión estable.</td></tr>
+      <tr><td class="rf">RNF-05</td><td>El envío de notificaciones FCM a todos los profesores debe completarse en menos de 5 segundos desde la activación del timbre.</td></tr>
+      <tr><td class="rf">RNF-06</td><td>Toda comunicación entre la app y el backend usará HTTPS con certificado SSL válido.</td></tr>
+      <tr><td class="rf">RNF-07</td><td>Las contraseñas se almacenarán en PostgreSQL con hash bcrypt. Nunca en texto plano.</td></tr>
+      <tr><td class="rf">RNF-08</td><td>La autenticación se realizará mediante JWT con tiempo de expiración configurable.</td></tr>
+      <tr><td class="rf">RNF-09</td><td>El código Flutter seguirá arquitectura Clean Architecture con separación por capas (data / domain / presentation).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================== 05 STACK TECNOLÓGICO ===================== -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">Swifty<span class="dot">.</span>Devs</div><div class="rh-meta">05 · Stack tecnológico</div></div>
+  <div class="sec-head"><span class="num">05</span><h2>Stack tecnológico</h2></div>
+
+  <div class="stack-col">
+    <div class="card">
+      <h4 class="mini">App móvil</h4>
+      <table style="margin:0;"><tbody>
+        <tr><td style="width:135px;">Framework</td><td class="mono">Flutter (Dart)</td></tr>
+        <tr><td>State management</td><td class="mono">Riverpod / Bloc</td></tr>
+        <tr><td>Caché local</td><td class="mono">Hive / Isar</td></tr>
+        <tr><td>Autenticación</td><td class="mono">JWT almacenado en secure storage</td></tr>
+        <tr><td>Notificaciones</td><td class="mono">flutter_local_notifications + FCM</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <h4 class="mini">Backend</h4>
+      <table style="margin:0;"><tbody>
+        <tr><td style="width:135px;">Framework</td><td class="mono">Vapor (Swift)</td></tr>
+        <tr><td>Base de datos</td><td class="mono">PostgreSQL</td></tr>
+        <tr><td>ORM</td><td class="mono">Fluent (fluent-postgres-driver)</td></tr>
+        <tr><td>Autenticación</td><td class="mono">JWT con vapor/jwt + Bcrypt</td></tr>
+        <tr><td>Servidor</td><td class="mono">AlmaLinux — Nginx reverse proxy</td></tr>
+        <tr><td>Dominio</td><td class="mono">host.swiftydevs.dev</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <h4 class="mini">Notificaciones push</h4>
+      <table style="margin:0;"><tbody>
+        <tr><td style="width:135px;">Servicio</td><td class="mono">FCM — Firebase Cloud Messaging (solo canal de entrega)</td></tr>
+        <tr><td>Integración</td><td class="mono">Vapor llama directamente a la API HTTP de FCM</td></tr>
+        <tr><td>Dependencia Firebase</td><td class="mono">Ninguna — solo se usa la Server Key de FCM</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <h4 class="mini">Módulo físico</h4>
+      <table style="margin:0;"><tbody>
+        <tr><td style="width:135px;">Microcontrolador</td><td class="mono">ESP32 DevKit v1 / v4</td></tr>
+        <tr><td>Sensor sísmico</td><td class="mono">MPU-6050 (acelerómetro + giroscopio)</td></tr>
+        <tr><td>Pantalla</td><td class="mono">OLED 1.3" I2C (SH1106)</td></tr>
+        <tr><td>Actuador</td><td class="mono">Relé de estado sólido 3.3V</td></tr>
+        <tr><td>Comunicación</td><td class="mono">HTTP REST hacia Vapor vía WiFi</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 06 PLAN DE DESARROLLO ===================== -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">Swifty<span class="dot">.</span>Devs</div><div class="rh-meta">06 · Plan de desarrollo</div></div>
+  <div class="sec-head"><span class="num">06</span><h2>Plan de desarrollo por fases</h2></div>
+  <table>
+    <thead><tr><th style="width:210px;">Fase</th><th>Alcance</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Fase 1</strong> — Base del proyecto<br><span class="mono" style="font-size:8.5pt; color:var(--gray-2);">Mes 1</span></td><td>Proyecto Flutter + Vapor configurados · PostgreSQL con modelo de datos · JWT Auth funcionando · Los 3 roles operativos.</td></tr>
+      <tr><td><strong>Fase 2</strong> — Módulo de timbre<br><span class="mono" style="font-size:8.5pt; color:var(--gray-2);">Mes 2</span></td><td>Sincronización ESP32 con Vapor · Timbre automático y manual · Operación offline · Pantalla OLED funcionando.</td></tr>
+      <tr><td><strong>Fase 3 – 4</strong> — Módulo de profesores<br><span class="mono" style="font-size:8.5pt; color:var(--gray-2);">Mes 3 – 4</span></td><td>CRUD de perfiles y horarios de profesores · Vista semanal con clase en curso · Notificaciones FCM desde Vapor.</td></tr>
+      <tr><td><strong>Fase 5</strong> — Módulos avanzados<br><span class="mono" style="font-size:8.5pt; color:var(--gray-2);">Mes 5</span></td><td>Horarios especiales con date picker · Módulo sísmico con algoritmo anti-vehicular · Historial de eventos.</td></tr>
+      <tr><td><strong>Fase 6</strong> — Pulido y entrega<br><span class="mono" style="font-size:8.5pt; color:var(--gray-2);">Mes 6</span></td><td>UI con colores institucionales · Pruebas reales con ESP32 físico · Corrección de bugs · Documentación final.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================== 07 ENTREGABLES ===================== -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">Swifty<span class="dot">.</span>Devs</div><div class="rh-meta">07 · Entregables esperados</div></div>
+  <div class="sec-head"><span class="num">07</span><h2>Entregables esperados</h2></div>
+
+  <div class="grid-2">
+    <div class="card"><h4 class="mini">01 · App Flutter (Android + iOS)</h4><p style="margin:0; font-size:9.5pt;">Módulos de usuarios, horarios, timbre manual y vista de profesores.</p></div>
+    <div class="card"><h4 class="mini">02 · Backend Vapor</h4><p style="margin:0; font-size:9.5pt;">API REST documentada con todos los endpoints del sistema.</p></div>
+    <div class="card"><h4 class="mini">03 · Base de datos PostgreSQL</h4><p style="margin:0; font-size:9.5pt;">Modelo relacional completo con migraciones y datos iniciales.</p></div>
+    <div class="card"><h4 class="mini">04 · Firmware ESP32</h4><p style="margin:0; font-size:9.5pt;">Código fuente documentado para el módulo físico.</p></div>
+    <div class="card"><h4 class="mini">05 · Manual de usuario</h4><p style="margin:0; font-size:9.5pt;">Guía básica para el administrador (Doña Andrea).</p></div>
+    <div class="card"><h4 class="mini">06 · Diagrama de flujo</h4><p style="margin:0; font-size:9.5pt;">Algoritmo anti-vibración vehicular para el módulo sísmico.</p></div>
+  </div>
+</section>
+
+<!-- ===================== CIERRE ===================== -->
+<section class="closing">
+  <div class="line"></div>
+  <div class="big">Sistema de Timbre<br>Escolar Inteligente.</div>
+  <div class="sig">Swifty<span class="dot">.</span>Devs</div>
+  <div class="meta">Documento de Requerimientos v4.0 · Dosquebradas, Colombia · 2026</div>
+  <div class="meta" style="margin-top:2px;">Built for Apple. Day 0.</div>
+</section>
+
+</div>
+</body>
+</html>

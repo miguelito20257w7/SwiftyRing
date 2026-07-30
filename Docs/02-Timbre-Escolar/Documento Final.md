@@ -6,6 +6,29 @@ Este documento tiene como propósito general determinar la norma básica para la
 
 ---
 
+## Registro de cambios
+
+**Julio de 2026 — Convivencia con el módulo Control Baños SS**
+
+Al proyecto de grado se sumó un segundo módulo, **Control Baños SS**, desarrollado por otro equipo de aprendices de la misma institución (Jhoan Santiago Chalarca, Isabel Galeano y Juan Esteban Estrada). Los dos módulos se entregan sobre una misma aplicación móvil y una misma base de datos, pero se desarrollan y despliegan por separado.
+
+Esta incorporación **no modifica ninguna funcionalidad del Sistema de Timbre Escolar**: las 17 tablas del modelo, los 43 requerimientos funcionales originales y el módulo físico ESP32 quedan exactamente igual. Lo que cambia es el entorno alrededor del sistema, y este documento lo recoge así:
+
+| Qué cambió | Cómo estaba antes | Cómo queda | Dónde se refleja |
+|---|---|---|---|
+| **Alcance del proyecto** | Un solo sistema, una sola aplicación | Dos módulos independientes conviviendo en una aplicación institucional | 1.1.3 |
+| **Rol del backend** | Autenticaba únicamente a su propia app | Además actúa como **servidor de identidad** para el otro módulo | 1.3.1 (Módulo 8), 1.6.5 |
+| **Firma de los tokens JWT** | HMAC-SHA512, llave única compartida | **RS256**: llave privada para firmar, llave pública para que otros verifiquen | RF-44, RNF-13 |
+| **Claims del token** | `sub`, `exp`, `rol` | Se agregan `iss`, `aud`, `iat`, `nombre`, `email` | RF-45 |
+| **Base de datos** | Base propia y exclusiva | Base compartida; el Timbre conserva el schema `public` intacto | 1.6.2, 1.6.5 |
+| **Permisos de PostgreSQL** | Un solo rol con acceso total | Se agrega el rol `proyectobanos` con **solo lectura** sobre dos tablas | RNF-11, 1.6.5 |
+| **Estructura de la app Flutter** | `lib/features/…` | `lib/core/` + `lib/modules/`, con el módulo ajeno aislado y eliminable | RNF-12, 1.6.5 |
+| **Requerimientos** | 43 RF · 9 RNF | 48 RF · 13 RNF | 1.3 |
+
+Ninguno de los cambios anteriores altera lo que el sistema hace para la I.E. Santa Sofía. Son cambios de **frontera**: definen qué puede y qué no puede hacer un módulo ajeno que comparte infraestructura. Las condiciones exactas están en `Docs/04-Integracion/Contrato_Integracion_Timbre_ControlBanos.md`.
+
+---
+
 # 1. Análisis y Diseño
 
 ## 1.1. Identificación de la empresa
@@ -29,7 +52,7 @@ Un factor determinante del contexto es la ubicación geográfica: Dosquebradas p
 
 Swifty Devs es un estudio de desarrollo de software fundado en 2026, con la filosofía de "apps hechas con intención": un estudio pequeño con estándares de clase mundial, donde cada producto que se publica es intencional, cuidado y nativo. Sus valores de marca son el **cuidado** (cada pixel es una decisión), la **confianza** (el diseño como primera señal de seriedad) y la **artesanía** (cada release es un acto de orgullo, no solo de entrega).
 
-Aunque el enfoque principal del estudio es el ecosistema Apple (iOS, macOS, Swift), su público objetivo incluye **empresas y organizaciones que necesitan software a medida**. Este proyecto pertenece a esa línea de negocio: para garantizar cobertura tanto en Android como en iOS —realidad de los dispositivos del personal del colegio—, la solución se construye con Flutter en el frontend móvil, FastAPI + PostgreSQL en el backend y un módulo físico basado en ESP32, manteniendo el estándar de calidad visual y técnica que caracteriza al estudio (Material Design 3, arquitectura limpia, comunicación segura).
+Aunque el enfoque principal del estudio es el ecosistema Apple (iOS, macOS, Swift), su público objetivo incluye **empresas y organizaciones que necesitan software a medida**. Este proyecto pertenece a esa línea de negocio: para garantizar cobertura tanto en Android como en iOS —realidad de los dispositivos del personal del colegio—, la solución se construye con Flutter en el frontend móvil, un backend propio en Vapor + PostgreSQL y un módulo físico basado en ESP32, manteniendo el estándar de calidad visual y técnica que caracteriza al estudio (Material Design 3, arquitectura limpia, comunicación segura). La elección de **Vapor** para el backend es deliberada: es un framework web escrito en **Swift**, el mismo lenguaje del ecosistema Apple en el que se especializa Swifty Devs, lo que alinea el backend con la especialidad técnica del estudio y unifica el stack alrededor de Swift.
 
 ### 1.1.3. Necesidades en el mercado y alcance de la aplicación
 
@@ -37,12 +60,16 @@ Aunque el enfoque principal del estudio es el ecosistema Apple (iOS, macOS, Swif
 
 **Alcance de la aplicación.** El sistema a desarrollar comprende:
 
-- **Aplicación móvil Flutter** (Android 8.0+ / iOS 14+) con tres roles: Administrador, Operador y Profesor.
-- **Backend propio FastAPI + PostgreSQL** (AlmaLinux, autenticación JWT), lo que garantiza control total sobre los datos e independencia de plataformas externas. Swifty Devs ofrece dos modalidades de despliegue a elección del cliente: **(a)** alojamiento en los servidores propios de Swifty Devs (dominio `host.swiftydevs.dev`) con un costo mensual por definir, o **(b)** entrega del código fuente del backend para que la institución lo aloje en su propia infraestructura, en caso de no requerir el servicio de alojamiento.
+- **Aplicación móvil Flutter** (Android 8.0+ / iOS 15+) con tres roles: Administrador, Operador y Profesor.
+- **Backend propio Vapor + PostgreSQL** (Swift, sobre AlmaLinux; ORM Fluent; autenticación JWT), lo que garantiza control total sobre los datos e independencia de plataformas externas. Swifty Devs ofrece dos modalidades de despliegue a elección del cliente: **(a)** alojamiento en los servidores propios de Swifty Devs (dominio `host.swiftydevs.dev`) con un costo mensual por definir, o **(b)** entrega del código fuente del backend para que la institución lo aloje en su propia infraestructura, en caso de no requerir el servicio de alojamiento.
 - **Módulo físico ESP32** que acciona el timbre (relé de estado sólido), opera de forma autónoma sin internet, incluye pantalla OLED informativa y un acelerómetro MPU-6050 para detección de sismos.
 - **Notificaciones push** a los docentes mediante FCM (usado exclusivamente como canal de entrega).
 
 El alcance de esta implementación cubre **todas las sedes de la I.E. Santa Sofía** (cada sede contará con su propio módulo físico de timbre, administradas desde la misma plataforma). Adicionalmente, la arquitectura de backend propio y el modelo de datos parametrizable (tabla de configuración, catálogos de salones y materias) permiten escalar la solución a otras instituciones educativas de la región como producto replicable.
+
+**Convivencia con un segundo módulo.** A partir de julio de 2026, la aplicación institucional aloja también el módulo **Control Baños SS**, desarrollado por otro equipo de aprendices de la misma institución para gestionar las salidas al baño de los estudiantes. Los dos módulos comparten la pantalla de ingreso y la instancia de base de datos, pero son sistemas distintos: repositorios separados, backends separados, tablas separadas y sustentaciones separadas.
+
+Esta convivencia agrega una responsabilidad al Sistema de Timbre Escolar —ser el **emisor único de identidad** de la aplicación, para que el docente use un solo usuario y una sola contraseña— y una restricción —que ese segundo módulo no pueda escribir sobre los datos del timbre ni romper su compilación—. Ambas se detallan en 1.6.5. Lo que el Sistema de Timbre Escolar hace para el colegio no cambia en absoluto.
 
 **Fuera del alcance de la versión 1.** La app no incluye en su primera versión un mecanismo de notificación de cambios puntuales de asignación durante la jornada (por ejemplo: "el profesor tenía clase en 10D —o tenía la hora libre— y debe dirigirse al salón 11B a acompañar o adelantar clase"). Las notificaciones de la v1 se basan exclusivamente en el horario semanal registrado. Esta funcionalidad queda identificada como una posibilidad de mejora para versiones futuras.
 
@@ -62,7 +89,9 @@ Actualmente el timbre de la I.E. Santa Sofía se opera de forma **completamente 
 
 ## 1.3. Requerimientos y necesidades
 
-El levantamiento de requerimientos se consolidó en el documento *Requerimientos_TimbreEscolar_SwiftyDevs* (versión 3.0, junio de 2026), del cual se transcriben a continuación los requerimientos funcionales (RF) y no funcionales (RNF) acordados con el cliente.
+El levantamiento de requerimientos se consolidó en el documento *Requerimientos_TimbreEscolar_SwiftyRing* (**versión 5.0, julio de 2026**), del cual se transcriben a continuación los requerimientos funcionales (RF) y no funcionales (RNF) acordados con el cliente.
+
+El documento ha pasado por tres revisiones desde su levantamiento inicial: la **v3.0** (junio de 2026) recogió los 43 RF y 9 RNF originales sobre un backend en FastAPI/Python; la **v4.0** mantuvo los requerimientos intactos y solo actualizó el stack a Vapor/Swift; y la **v5.0** agregó los RF-44 a RF-48 y los RNF-10 a RNF-13 que nacen de la convivencia con el módulo Control Baños SS (ver el registro de cambios al inicio de este documento y la sección 1.6.5). Las versiones anteriores se conservan en `_archivo/`.
 
 ### 1.3.1. Requerimientos funcionales
 
@@ -70,7 +99,7 @@ El levantamiento de requerimientos se consolidó en el documento *Requerimientos
 
 | ID | Requerimiento |
 |---|---|
-| RF-01 | El sistema contará con autenticación propia mediante JWT (JSON Web Tokens) gestionada desde el backend FastAPI. |
+| RF-01 | El sistema contará con autenticación propia mediante JWT (JSON Web Tokens) gestionada desde el backend Vapor. |
 | RF-02 | Existirá una cuenta de Administrador Principal (Doña Andrea) creada en la inicialización del sistema, no eliminable. |
 | RF-03 | El administrador principal podrá crear, editar, suspender y eliminar usuarios secundarios. |
 | RF-04 | El sistema manejará tres roles: Administrador, Operador y Profesor. |
@@ -106,7 +135,7 @@ El levantamiento de requerimientos se consolidó en el documento *Requerimientos
 | RF-19 | El algoritmo de detección deberá distinguir entre sismos y vibraciones de vehículos, usando análisis de frecuencia y duración de la vibración. |
 | RF-20 | Un evento sísmico confirmado enviará una notificación push FCM al dispositivo del administrador. |
 | RF-21 | La notificación incluirá: hora del evento, intensidad estimada (en g) y duración de la vibración. |
-| RF-22 | Al confirmarse un evento sísmico, el módulo ESP32 activará el timbre de forma inmediata y autónoma. Simultáneamente FastAPI enviará la notificación push al administrador como registro del evento. |
+| RF-22 | Al confirmarse un evento sísmico, el módulo ESP32 activará el timbre de forma inmediata y autónoma. Simultáneamente Vapor enviará la notificación push al administrador como registro del evento. |
 | RF-23 | El historial de eventos sísmicos detectados será consultable desde la app. |
 
 **Módulo 5 — Pantalla OLED en módulo físico**
@@ -135,7 +164,7 @@ El levantamiento de requerimientos se consolidó en el documento *Requerimientos
 | RF-33 | El administrador podrá crear, editar y eliminar perfiles de profesores desde la app. |
 | RF-34 | Cada profesor tendrá un horario semanal asignado con entradas que incluyen: día, hora de inicio, hora de fin, materia y salón. |
 | RF-35 | El administrador podrá cargar y modificar el horario semanal de cada profesor desde la app. |
-| RF-36 | Al activarse el timbre (automático, manual o sísmico), FastAPI consultará qué clase corresponde a continuación para cada profesor según su horario en PostgreSQL. |
+| RF-36 | Al activarse el timbre (automático, manual o sísmico), Vapor consultará qué clase corresponde a continuación para cada profesor según su horario en PostgreSQL. |
 | RF-37 | Se enviará una notificación push FCM personalizada a cada profesor con: hora de la próxima clase, materia y salón al que debe dirigirse. |
 | RF-38 | Si un profesor no tiene clase en el siguiente período, no recibirá notificación. |
 | RF-39 | Los profesores tendrán acceso a la app con rol Profesor, diferente al Administrador y al Operador. |
@@ -144,19 +173,35 @@ El levantamiento de requerimientos se consolidó en el documento *Requerimientos
 | RF-42 | La próxima clase se resaltará con un indicador secundario y etiqueta "Próxima". |
 | RF-43 | El horario del profesor se actualizará en tiempo real si el administrador realiza cambios durante el día. |
 
+**Módulo 8 — Servidor de identidad para módulos externos** *(agregado en julio de 2026)*
+
+Estos requerimientos no describen funcionalidad que el docente vea en pantalla: describen lo que el backend debe ofrecer para que otro módulo de la aplicación institucional pueda autenticar usuarios sin tener acceso a las credenciales.
+
+| ID | Requerimiento |
+|---|---|
+| RF-44 | El backend firmará los tokens JWT con el algoritmo **RS256**, de modo que la llave de verificación pueda entregarse a terceros sin permitirles emitir tokens. |
+| RF-45 | El token incluirá los claims `sub`, `exp`, `iat`, `rol`, `nombre`, `email`, `iss` (emisor) y `aud` (audiencias autorizadas). |
+| RF-46 | El backend expondrá la llave pública de verificación en el endpoint público `/.well-known/jwks.json`. |
+| RF-47 | El backend expondrá un endpoint de solo lectura `GET /api/profesores`, accesible con rol Administrador, con la lista de docentes activos. |
+| RF-48 | Ningún módulo externo podrá crear, modificar ni eliminar registros del Sistema de Timbre Escolar a través de la API. La superficie expuesta es exclusivamente de lectura. |
+
 ### 1.3.2. Requerimientos no funcionales
 
 | ID | Requerimiento |
 |---|---|
 | RNF-01 | La app usará los colores institucionales del colegio como paleta principal. |
 | RNF-02 | La interfaz seguirá los lineamientos de Material Design 3. |
-| RNF-03 | La app debe ser compatible con Android 8.0+ e iOS 14+. |
+| RNF-03 | La app debe ser compatible con Android 8.0+ e iOS 15+. |
 | RNF-04 | El tiempo de respuesta entre comando de la app y activación del timbre físico no debe superar 2 segundos con conexión estable. |
 | RNF-05 | El envío de notificaciones FCM a todos los profesores debe completarse en menos de 5 segundos desde la activación del timbre. |
 | RNF-06 | Toda comunicación entre la app y el backend usará HTTPS con certificado SSL válido. |
 | RNF-07 | Las contraseñas se almacenarán en PostgreSQL con hash bcrypt. Nunca en texto plano. |
 | RNF-08 | La autenticación se realizará mediante JWT con tiempo de expiración configurable. |
 | RNF-09 | El código Flutter seguirá arquitectura Clean Architecture con separación por capas (data / domain / presentation). |
+| RNF-10 | **Autonomía.** El Sistema de Timbre Escolar no dependerá en ningún punto de otro módulo de la aplicación institucional: debe compilar, migrar y operar aunque los demás módulos se eliminen por completo. *(agregado jul. 2026)* |
+| RNF-11 | **Aislamiento de datos.** Ningún rol de base de datos ajeno al Sistema de Timbre Escolar tendrá permisos de escritura sobre el schema `public`. La restricción se aplicará con `GRANT`/`REVOKE` en PostgreSQL, no por convención entre equipos. *(agregado jul. 2026)* |
+| RNF-12 | **Modularidad del código.** La app Flutter se organizará en `lib/core/` (compartido) y `lib/modules/<módulo>/`. Ningún archivo de `core/` ni de `modules/timbre_escolar/` podrá importar código de otro módulo. *(agregado jul. 2026)* |
+| RNF-13 | **Custodia de la llave privada.** La llave privada de firma RS256 residirá exclusivamente en el servidor del Sistema de Timbre Escolar, fuera del control de versiones. Solo se distribuye la llave pública. *(agregado jul. 2026)* |
 
 ## 1.4. Análisis de documentos
 
@@ -297,7 +342,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A([Usuario abre la app]) --> B[Ingresa correo y contraseña]
-    B --> C[FastAPI valida credenciales<br/>contra PostgreSQL - hash bcrypt]
+    B --> C[Vapor valida credenciales<br/>contra PostgreSQL - hash bcrypt]
     C --> D{¿Credenciales válidas<br/>y usuario activo?}
     D -- No --> E[/Mensaje de error/] --> B
     D -- Sí --> F[Backend emite token JWT]
@@ -317,8 +362,8 @@ flowchart TD
     C --> D[Pantalla OLED muestra<br/>indicador de timbre activo]
     C --> E{¿Hay conexión<br/>con el servidor?}
     E -- No --> F[Guarda el evento localmente<br/>y sincroniza al reconectar]
-    E -- Sí --> G[Notifica la activación a FastAPI]
-    G --> H[FastAPI registra la activación<br/>en PostgreSQL - tipo: automático]
+    E -- Sí --> G[Notifica la activación a Vapor]
+    G --> H[Vapor registra la activación<br/>en PostgreSQL - tipo: automático]
     H --> I[Consulta el horario académico:<br/>¿qué clase sigue para cada profesor?]
     I --> J{¿El profesor tiene clase<br/>en el siguiente período?}
     J -- No --> K[No se le envía notificación]
@@ -330,9 +375,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A([Admin u operador pulsa el botón<br/>de timbre manual en la app]) --> B[FastAPI valida el JWT<br/>y el rol del usuario]
+    A([Admin u operador pulsa el botón<br/>de timbre manual en la app]) --> B[Vapor valida el JWT<br/>y el rol del usuario]
     C([Se presiona el botón físico<br/>del módulo ESP32]) --> D[ESP32 activa el timbre<br/>de inmediato]
-    B --> E[FastAPI ordena al ESP32<br/>activar el timbre - menos de 2 s]
+    B --> E[Vapor ordena al ESP32<br/>activar el timbre - menos de 2 s]
     E --> D
     D --> F[Registro en PostgreSQL:<br/>usuario, timestamp y origen<br/>app o físico]
     F --> G[Se disparan las notificaciones<br/>de clase a profesores<br/>igual que en P-02]
@@ -348,7 +393,7 @@ flowchart TD
     C --> D{¿Patrón sísmico o<br/>vibración vehicular?}
     D -- Vehicular --> E[Se descarta el evento] --> A
     D -- Sísmico --> F[ESP32 activa el timbre<br/>de forma inmediata y autónoma]
-    F --> G[Reporta el evento a FastAPI]
+    F --> G[Reporta el evento a Vapor]
     G --> H[Registro en PostgreSQL:<br/>intensidad en g, duración, hora]
     H --> I[Push FCM al administrador:<br/>hora, intensidad y duración]
     I --> J([Evento consultable en el<br/>historial de la app])
@@ -361,7 +406,7 @@ flowchart TD
     A([Administrador crea un<br/>horario especial en la app]) --> B[Define nombre<br/>ej. Semana de exámenes]
     B --> C[Selecciona rango de vigencia<br/>con el date picker]
     C --> D[Registra los timbres especiales:<br/>etiqueta, hora, días, duración]
-    D --> E[FastAPI guarda el horario y lo<br/>marca como vigente en el rango]
+    D --> E[Vapor guarda el horario y lo<br/>marca como vigente en el rango]
     E --> F[El ESP32 sincroniza y reemplaza<br/>temporalmente el horario habitual]
     F --> G{¿Venció la fecha fin?}
     G -- No --> F
@@ -391,15 +436,19 @@ La solución es el **Sistema de Timbre Escolar Inteligente**: una plataforma com
 | Componente | Rol en la solución |
 |---|---|
 | **App Flutter** (Admin / Operador / Profesor) | Interfaz de gestión: horarios, usuarios, docentes, timbre manual, historiales y vista del profesor |
-| **Backend FastAPI** (AlmaLinux, HTTPS) | Lógica de negocio, autenticación JWT, API REST y despacho de notificaciones |
+| **Backend Vapor** (AlmaLinux, HTTPS) | Lógica de negocio, autenticación JWT, API REST y despacho de notificaciones |
 | **Base de datos PostgreSQL** | Almacenamiento relacional con integridad referencial de toda la información del sistema |
 | **Módulo físico ESP32** | Acciona el timbre (automático, manual y sísmico), opera offline, pantalla OLED y sensor sísmico MPU-6050 |
 
 Las notificaciones push se entregan mediante FCM únicamente como canal de entrega; no existe ninguna otra dependencia de Firebase, garantizando control total sobre los datos.
 
+A estos cuatro componentes se suma, desde julio de 2026, una **quinta función del backend**: además de servir a su propia aplicación, actúa como servidor de identidad de la aplicación institucional, emitiendo los tokens que también verifica el módulo Control Baños SS. Es una función añadida, no un componente nuevo: vive dentro del mismo backend Vapor y no altera ninguno de los cuatro anteriores. Se detalla en 1.6.5.
+
 ### 1.6.2. Modelo relacional de la base de datos
 
 El modelo de datos (versión 5, archivo fuente `SketchBD.dbml`) consta de **17 tablas** y **5 tipos enumerados** sobre PostgreSQL.
+
+Desde julio de 2026 estas 17 tablas viven en el schema **`public`** de una base de datos compartida con el módulo Control Baños SS, que ocupa el schema `banos`. El modelo no cambió ni una columna por esa convivencia: sigue siendo el mismo de la versión 5. Lo que se agregó son garantías externas al modelo —permisos de PostgreSQL y prohibición de llaves foráneas entre schemas— descritas en 1.6.5.
 
 **Diagrama entidad–relación**
 
@@ -647,6 +696,68 @@ Restricción única `uq_salon_dia` sobre `(salon_id, dia)`: un salón solo puede
 | `modo_offline` | boolean | NOT NULL, default `false` | Indica si el sistema opera actualmente sin conexión |
 | `ultima_sync` | timestamptz | — | Fecha y hora de la última sincronización con el módulo físico |
 
+### 1.6.5. Convivencia con el módulo Control Baños SS
+
+*(Sección agregada en julio de 2026)*
+
+El proyecto de grado incorporó un segundo módulo, **Control Baños SS**, desarrollado por otro equipo para gestionar las salidas al baño de los estudiantes. Los dos módulos se entregan sobre una misma aplicación móvil y una misma base de datos PostgreSQL.
+
+El principio que gobierna la relación es **asimétrico**: Control Baños depende del Sistema de Timbre Escolar, nunca al revés. El Sistema de Timbre Escolar debe poder seguir funcionando, compilando y migrando aunque el otro módulo desaparezca por completo.
+
+**Comparación con el estado anterior**
+
+| Dimensión | Antes (hasta junio 2026) | Ahora |
+|---|---|---|
+| Aplicación móvil | Una app, un solo sistema | Una app institucional con dos módulos independientes |
+| Ingreso | Login propio del timbre | Login único de la aplicación, emitido por el timbre |
+| Base de datos | Base propia y exclusiva | Base compartida; el timbre conserva el schema `public` sin cambios |
+| Roles de PostgreSQL | Un rol con acceso total | Se agrega `proyectobanos` con solo lectura sobre dos tablas |
+| Firma de tokens | HMAC-SHA512 | RS256 (privada firma, pública verifica) |
+| Estructura del código Flutter | `lib/features/…` | `lib/core/` + `lib/modules/` |
+
+**a. Identidad — el backend como servidor de autenticación**
+
+El backend del Sistema de Timbre Escolar es el **emisor único de identidad** de toda la aplicación institucional. Emite los tokens; Control Baños solo los verifica.
+
+El cambio de HMAC-SHA512 a RS256 (RF-44) no es cosmético. Con HMAC, la llave que firma y la que verifica son la misma: entregarla para que otro módulo valide tokens le permitiría también **fabricarlos**, incluidos tokens con rol Administrador. Con RS256 la llave privada se queda en el servidor del timbre (RNF-13) y solo se publica la pública, en `/.well-known/jwks.json` (RF-46). Control Baños puede comprobar que un token es auténtico, pero no puede crear uno.
+
+Los roles del sistema **no cambian**: el enum `rol_usuario` sigue siendo `admin`, `operador` y `profesor`. Lo que Control Baños llama "docente" es el rol `profesor`; lo que llama "coordinador" es el rol `admin`. El rol `operador` no tiene acceso a ese módulo.
+
+**b. Datos — dos schemas en una base**
+
+| Schema | Dueño | Contenido |
+|---|---|---|
+| `public` | Sistema de Timbre Escolar | Las 17 tablas de 1.6.3, sin ningún cambio |
+| `banos` | Control Baños SS | 5 tablas propias: grupos, estudiantes, salidas, alertas y configuración |
+
+Las garantías, aplicadas en el motor de base de datos y no confiadas al acuerdo entre equipos:
+
+1. El rol `proyectobanos` tiene únicamente `SELECT` sobre `usuarios` y `profesores`. Sin `INSERT`, sin `UPDATE`, sin `DELETE`, sin `CREATE` en `public` (RNF-11).
+2. No existe ninguna llave foránea entre los dos schemas, en ninguna dirección. Las tablas de Control Baños guardan `usuario_id` como texto plano y validan contra el JWT. Así, ninguna fila ajena puede bloquear un `DELETE` sobre `usuarios`.
+3. Cada backend lleva su propio registro de migraciones de Fluent: el rol de Control Baños tiene `search_path = banos`, de modo que su `_fluent_migrations` es una tabla distinta de la del timbre.
+4. `DROP SCHEMA banos CASCADE` no deja rastro en `public`. Esa es la prueba de que el aislamiento funciona.
+
+Una nota sobre `profesores.director_de_grupo`: es un `varchar` libre (ej. `'11B'`) que se parece conceptualmente a los grupos de Control Baños, pero no es ni debe convertirse en llave foránea. Si el schema `banos` desaparece, esa columna queda como un texto inofensivo.
+
+**c. Código — módulos aislados en la app Flutter**
+
+```
+lib/
+├── core/                    ← compartido: auth, red, tema, router
+├── modules/
+│   ├── timbre_escolar/      ← este proyecto
+│   └── proyecto_banos/      ← módulo ajeno, 100 % eliminable
+└── main.dart
+```
+
+Ni `core/` ni `modules/timbre_escolar/` pueden importar nada de `proyecto_banos/`; la dependencia solo va en el sentido contrario (RNF-12). El módulo ajeno se engancha en un único punto —el registro de rutas—, de modo que eliminarlo son dos pasos: borrar la carpeta y quitar esa línea.
+
+La verificación es una prueba concreta que se ejecuta antes de cada entrega: eliminar la carpeta del módulo ajeno y comprobar que `flutter analyze` y `flutter build` siguen pasando. Si falla, hay una dependencia oculta que corregir.
+
+**d. Lo que requiere acuerdo escrito**
+
+Ningún equipo modifica por su cuenta el enum `rol_usuario`, la tabla `usuarios`, los claims del JWT, el algoritmo de firma, los endpoints expuestos ni los permisos de base de datos. El detalle completo está en `Docs/04-Integracion/Contrato_Integracion_Timbre_ControlBanos.md`, y el modelo de las 22 tablas de ambos schemas en `Docs/04-Integracion/modelo_datos_completo.dbml`.
+
 ---
 
 # 2. Nombre, marca y logo de la aplicación
@@ -685,6 +796,10 @@ Alterna, para contextos donde se quiera resaltar el componente de seguridad:
 ### 2.1.4. Arquitectura de marca
 
 SwiftyRing es un **producto respaldado (endorsed brand)** por el estudio: se presenta como *"SwiftyRing, un producto de Swifty Devs"*. En materiales y pantallas donde aplique, el logo del producto puede acompañarse de la firma del estudio en tamaño secundario.
+
+**Convivencia con Control Baños SS.** SwiftyRing y Control Baños SS son **marcas independientes** que comparten aplicación, no una familia de marca. No hay relación de submarca entre ellas: cada una tiene su nombre, su paleta, su tipografía y su equipo responsable. Ni la marca Swifty Devs ni el nombre SwiftyRing se aplican al módulo ajeno, y viceversa.
+
+Lo único compartido es la pantalla de ingreso, que pertenece a la aplicación institucional y usa una identidad neutra. Desde el momento en que el usuario entra a un módulo, la identidad visual es la de ese módulo.
 
 ## 2.2. Personalidad y concepto de marca
 

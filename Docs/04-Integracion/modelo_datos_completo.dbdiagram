@@ -1,0 +1,538 @@
+{
+  "version": "2.0.0",
+  "darkMode": false,
+  "gridEnabling": false,
+  "currentViewName": null,
+  "defaultView": {
+    "detailLevel": "All",
+    "tablePositions": [
+      {
+        "name": "grupos",
+        "schemaName": "public",
+        "x": 12,
+        "y": 354
+      },
+      {
+        "name": "estudiantes",
+        "schemaName": "public",
+        "x": 522.39404296875,
+        "y": 354
+      },
+      {
+        "name": "salidas",
+        "schemaName": "public",
+        "x": 1046.21240234375,
+        "y": 354
+      },
+      {
+        "name": "alertas",
+        "schemaName": "public",
+        "x": 1620.36767578125,
+        "y": 354
+      },
+      {
+        "name": "configuracion",
+        "schemaName": "public",
+        "x": 12,
+        "y": 12
+      },
+      {
+        "name": "usuarios",
+        "schemaName": "public",
+        "x": 0,
+        "y": 50
+      },
+      {
+        "name": "dispositivos",
+        "schemaName": "public",
+        "x": 338.0126953125,
+        "y": 50
+      },
+      {
+        "name": "profesores",
+        "schemaName": "public",
+        "x": 701.15673828125,
+        "y": 50
+      },
+      {
+        "name": "materias",
+        "schemaName": "public",
+        "x": 1043.24658203125,
+        "y": 50
+      },
+      {
+        "name": "profesor_materias",
+        "schemaName": "public",
+        "x": 0,
+        "y": 388
+      },
+      {
+        "name": "salones",
+        "schemaName": "public",
+        "x": 338.0126953125,
+        "y": 388
+      },
+      {
+        "name": "horario_timbres",
+        "schemaName": "public",
+        "x": 701.15673828125,
+        "y": 260
+      },
+      {
+        "name": "timbre_dias",
+        "schemaName": "public",
+        "x": 1043.24658203125,
+        "y": 228
+      },
+      {
+        "name": "horario_especial",
+        "schemaName": "public",
+        "x": 0,
+        "y": 534
+      },
+      {
+        "name": "timbres_especiales",
+        "schemaName": "public",
+        "x": 338.0126953125,
+        "y": 662
+      },
+      {
+        "name": "timbre_especial_dias",
+        "schemaName": "public",
+        "x": 701.15673828125,
+        "y": 534
+      },
+      {
+        "name": "horario_salon",
+        "schemaName": "public",
+        "x": 1043.24658203125,
+        "y": 374
+      },
+      {
+        "name": "bloques",
+        "schemaName": "public",
+        "x": 0,
+        "y": 840
+      },
+      {
+        "name": "activaciones_timbre",
+        "schemaName": "public",
+        "x": 338.0126953125,
+        "y": 904
+      },
+      {
+        "name": "eventos_sismicos",
+        "schemaName": "public",
+        "x": 701.15673828125,
+        "y": 680
+      },
+      {
+        "name": "notificaciones_profesores",
+        "schemaName": "public",
+        "x": 1043.24658203125,
+        "y": 584
+      },
+      {
+        "name": "configuracion_sistema",
+        "schemaName": "public",
+        "x": 0,
+        "y": 1146
+      },
+      {
+        "name": "grupos",
+        "schemaName": "banos",
+        "x": 338.0126953125,
+        "y": 1178
+      },
+      {
+        "name": "estudiantes",
+        "schemaName": "banos",
+        "x": 701.15673828125,
+        "y": 986
+      },
+      {
+        "name": "salidas",
+        "schemaName": "banos",
+        "x": 1043.24658203125,
+        "y": 890
+      },
+      {
+        "name": "alertas",
+        "schemaName": "banos",
+        "x": 0,
+        "y": 1420
+      },
+      {
+        "name": "configuracion",
+        "schemaName": "banos",
+        "x": 338.0126953125,
+        "y": 1548
+      }
+    ],
+    "tableGroupCollapseStates": [],
+    "stickyNoteLayouts": [],
+    "referencePaths": [
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "grupos",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "grupo_id"
+        ],
+        "secondTableName": "estudiantes",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "estudiantes",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "estudiante_id"
+        ],
+        "secondTableName": "salidas",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "salidas",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "salida_id"
+        ],
+        "secondTableName": "alertas",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "usuarios",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "usuario_id"
+        ],
+        "secondTableName": "dispositivos",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "usuarios",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "usuario_id"
+        ],
+        "secondTableName": "profesores",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "usuario_id"
+        ],
+        "firstTableName": "profesores",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "profesor_id"
+        ],
+        "secondTableName": "profesor_materias",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "materias",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "materia_id"
+        ],
+        "secondTableName": "profesor_materias",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "horario_timbres",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "timbre_id"
+        ],
+        "secondTableName": "timbre_dias",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "usuarios",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "creado_por"
+        ],
+        "secondTableName": "horario_especial",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "horario_especial",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "horario_especial_id"
+        ],
+        "secondTableName": "timbres_especiales",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "timbres_especiales",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "timbre_especial_id"
+        ],
+        "secondTableName": "timbre_especial_dias",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "salones",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "salon_id"
+        ],
+        "secondTableName": "horario_salon",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "horario_salon",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "horario_salon_id"
+        ],
+        "secondTableName": "bloques",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "materias",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "materia_id"
+        ],
+        "secondTableName": "bloques",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "usuario_id"
+        ],
+        "firstTableName": "profesores",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "profesor_id"
+        ],
+        "secondTableName": "bloques",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "usuarios",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "origen_usuario_id"
+        ],
+        "secondTableName": "activaciones_timbre",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "horario_timbres",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "horario_timbre_id"
+        ],
+        "secondTableName": "activaciones_timbre",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "activaciones_timbre",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "activacion_id"
+        ],
+        "secondTableName": "eventos_sismicos",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "activaciones_timbre",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "activacion_id"
+        ],
+        "secondTableName": "notificaciones_profesores",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "usuario_id"
+        ],
+        "firstTableName": "profesores",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "profesor_id"
+        ],
+        "secondTableName": "notificaciones_profesores",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "bloques",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "bloque_id"
+        ],
+        "secondTableName": "notificaciones_profesores",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "grupos",
+        "firstSchemaName": "banos",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "grupo_id"
+        ],
+        "secondTableName": "estudiantes",
+        "secondSchemaName": "banos",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "estudiantes",
+        "firstSchemaName": "banos",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "estudiante_id"
+        ],
+        "secondTableName": "salidas",
+        "secondSchemaName": "banos",
+        "secondRelation": "*",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "salidas",
+        "firstSchemaName": "banos",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "salida_id"
+        ],
+        "secondTableName": "alertas",
+        "secondSchemaName": "banos",
+        "secondRelation": "*",
+        "checkPoints": []
+      }
+    ]
+  },
+  "views": {}
+}

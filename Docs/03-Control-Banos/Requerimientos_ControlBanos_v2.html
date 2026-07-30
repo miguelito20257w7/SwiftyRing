@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control Baños SS — Documento de Requerimientos v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1E2545; --navy-deep:#141A33; --verde:#2D8C3E; --verde-glow:#3FA852;
+  --gris:#F2F2F2; --white:#FFFFFF;
+  --gray-1:#3C4256; --gray-2:#6B7189; --gray-3:#A0A5B8; --hairline:#E2E4EC;
+  --font-display:'Bebas Neue', Impact, sans-serif;
+  --font-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:'Roboto Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+  --radius-card:16px; --radius-sm:10px; --shadow-xs:0 2px 8px rgba(30,37,69,0.06);
+  --page-w:210mm; --page-pad:20mm;
+}
+*{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+html{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+body{ margin:0; background:#d8d8dc; color:var(--navy); font-family:var(--font-body); font-weight:400; font-size:10.5pt; line-height:1.65; }
+.doc{ max-width:calc(var(--page-w) + 40px); margin:0 auto; padding:24px 0 60px; }
+.page{ background:var(--white); width:var(--page-w); min-height:297mm; margin:0 auto 22px; padding:var(--page-pad); box-shadow:0 10px 40px rgba(0,0,0,0.16); position:relative; overflow:hidden; }
+h1,h2,h3{ font-family:var(--font-display); font-weight:400; color:var(--navy); margin:0; letter-spacing:0.5px; }
+h4{ font-family:var(--font-body); font-weight:600; color:var(--navy); margin:0; }
+p{ margin:0 0 11px; } strong{ font-weight:600; color:var(--navy); } em{ font-style:italic; }
+a{ color:var(--verde); text-decoration:none; }
+.eyebrow{ font-family:var(--font-body); font-weight:600; font-size:8.5pt; letter-spacing:0.3em; text-transform:uppercase; color:var(--verde); margin:0 0 10px; display:block; }
+.mono{ font-family:var(--font-mono); font-size:9.5pt; }
+.runhead{ display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline); padding-bottom:10px; margin-bottom:26px; }
+.runhead .rh-brand{ font-family:var(--font-display); font-size:16pt; letter-spacing:1px; }
+.runhead .rh-brand .dot{ color:var(--verde); }
+.runhead .rh-meta{ font-family:var(--font-mono); font-size:7.5pt; color:var(--gray-3); letter-spacing:0.05em; text-transform:uppercase;}
+.sec-head{ margin:0 0 22px; }
+.sec-head .num{ font-family:var(--font-mono); font-size:9.5pt; color:var(--verde); font-weight:500; letter-spacing:0.1em; }
+.sec-head h2{ font-size:32pt; line-height:1; letter-spacing:0.5px; margin-top:6px; }
+.sec-head .sub{ color:var(--gray-2); font-size:11pt; margin-top:8px; max-width:62ch; font-weight:300;}
+h3.block{ font-size:19pt; letter-spacing:0.6px; margin:26px 0 10px; padding-left:14px; border-left:3px solid var(--verde); }
+h4.mini{ font-size:11pt; margin:16px 0 6px; }
+.card{ background:var(--white); border:1px solid var(--hairline); border-radius:var(--radius-card); padding:18px 20px; box-shadow:var(--shadow-xs); margin:14px 0; }
+.card.tint{ background:var(--gris); border-color:transparent; }
+.card.dark{ background:var(--navy); border-color:transparent; color:#E8EAF2; }
+.card.dark h3,.card.dark h4,.card.dark strong{ color:var(--white); }
+.callout{ border-left:3px solid var(--verde); background:linear-gradient(90deg, rgba(45,140,62,0.07), rgba(45,140,62,0)); padding:13px 17px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:16px 0; }
+.callout .lbl{ font-weight:600; color:var(--verde); font-size:8.5pt; letter-spacing:0.18em; text-transform:uppercase; display:block; margin-bottom:4px;}
+.callout.warn{ border-left-color:#C8611E; background:linear-gradient(90deg, rgba(200,97,30,0.07), rgba(200,97,30,0)); }
+.callout.warn .lbl{ color:#C8611E; }
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.stat{ background:var(--gris); border-radius:var(--radius-card); padding:15px 17px; }
+.stat .big{ font-family:var(--font-display); font-size:30pt; line-height:0.9; letter-spacing:0.5px; }
+.stat .big .u{ font-size:12pt; color:var(--verde); }
+.stat .lbl{ font-size:9pt; color:var(--gray-2); margin-top:6px; }
+table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:9.5pt; }
+thead th{ background:var(--navy); color:var(--white); text-align:left; font-weight:600; padding:9px 12px; font-size:8.5pt; letter-spacing:0.05em; text-transform:uppercase; }
+thead th:first-child{ border-radius:8px 0 0 0; } thead th:last-child{ border-radius:0 8px 0 0; }
+tbody td{ padding:8px 12px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+tbody tr:nth-child(even){ background:var(--gris); }
+.rf{ font-family:var(--font-mono); font-size:8.5pt; color:var(--verde); font-weight:500; white-space:nowrap;}
+.new{ display:inline-block; font-family:var(--font-mono); font-size:6.5pt; padding:1px 6px; border-radius:999px; background:var(--verde); color:#fff; letter-spacing:0.05em; vertical-align:middle; margin-left:6px;}
+.chg{ display:inline-block; font-family:var(--font-mono); font-size:6.5pt; padding:1px 6px; border-radius:999px; background:#C8611E; color:#fff; letter-spacing:0.05em; vertical-align:middle; margin-left:6px;}
+.chip{ display:inline-block; font-family:var(--font-mono); font-size:8pt; padding:2px 9px; border-radius:999px; background:var(--gris); color:var(--gray-1); border:1px solid var(--hairline); margin:2px 4px 2px 0;}
+.chip.g{ background:rgba(45,140,62,0.1); color:var(--verde); border-color:transparent;}
+ul.clean{ list-style:none; padding:0; margin:8px 0; }
+ul.clean li{ position:relative; padding-left:22px; margin-bottom:7px; }
+ul.clean li::before{ content:''; position:absolute; left:2px; top:8px; width:6px; height:6px; border-radius:2px; background:var(--verde); }
+
+/* Cover */
+.cover{ min-height:297mm; display:flex; flex-direction:column; background:var(--white); padding:var(--page-pad); position:relative; overflow:hidden; }
+.cover::before{ content:''; position:absolute; top:0; left:0; width:12px; height:100%; background:linear-gradient(180deg, var(--navy), var(--verde)); }
+.cover-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+.cover-studio{ font-family:var(--font-display); font-size:18pt; letter-spacing:1px; }
+.cover-studio .dot{ color:var(--verde); }
+.cover-studio .tag{ display:block; font-family:var(--font-mono); font-size:7pt; letter-spacing:0.16em; text-transform:uppercase; color:var(--gray-3); margin-top:2px; }
+.cover-badge{ text-align:right; font-family:var(--font-mono); font-size:7.5pt; color:var(--gray-2); letter-spacing:0.06em; line-height:1.8; text-transform:uppercase;}
+.cover-hero{ flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+.cover-mark{ width:120px; height:120px; border-radius:28px; background:var(--navy); display:flex; align-items:center; justify-content:center; margin-bottom:22px; box-shadow:0 12px 30px rgba(30,37,69,0.25); }
+.cover-mark span{ font-family:var(--font-display); font-size:44pt; color:var(--white); letter-spacing:1px; line-height:1; }
+.cover-mark span i{ color:var(--verde); font-style:normal; }
+.cover-eyebrow{ font-family:var(--font-body); font-weight:600; font-size:9.5pt; letter-spacing:0.3em; text-transform:uppercase; color:var(--verde); margin-bottom:12px; }
+.cover-title{ font-family:var(--font-display); font-size:52pt; line-height:0.92; letter-spacing:1.5px; }
+.cover-title .g{ color:var(--verde); }
+.cover-sub{ font-family:var(--font-body); font-weight:300; font-size:14pt; color:var(--gray-1); margin-top:14px; }
+.cover-line{ width:64px; height:3px; background:var(--verde); border-radius:2px; margin:20px auto 14px;}
+.cover-desc{ max-width:56ch; color:var(--gray-2); font-size:10pt; font-weight:300; }
+.cover-meta{ border-top:1px solid var(--hairline); padding-top:18px; }
+.cover-meta .mrow{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px 30px; }
+.meta-item .k{ font-family:var(--font-mono); font-size:7pt; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-3); }
+.meta-item .v{ font-size:10pt; margin-top:3px; }
+.cover-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-family:var(--font-mono); font-size:7.5pt; color:var(--gray-3); letter-spacing:0.06em; text-transform:uppercase;}
+
+/* TOC */
+.toc-row{ display:flex; align-items:baseline; padding:11px 0; border-bottom:1px solid var(--hairline); }
+.toc-row .tn{ font-family:var(--font-mono); font-size:10.5pt; color:var(--verde); width:44px; font-weight:500;}
+.toc-row .tt{ font-family:var(--font-display); font-size:16pt; letter-spacing:0.5px; }
+
+/* Arch */
+.arch{ display:flex; flex-direction:column; gap:12px; margin:16px 0; }
+.arch-row{ display:flex; gap:12px; align-items:stretch; justify-content:center; flex-wrap:wrap;}
+.node{ border:1.5px solid var(--hairline); border-radius:12px; padding:12px 14px; background:var(--white); min-width:150px; text-align:center; box-shadow:var(--shadow-xs); }
+.node .nt{ font-weight:600; font-size:10pt; }
+.node .nd{ font-size:8pt; color:var(--gray-2); margin-top:3px; line-height:1.45; font-weight:300;}
+.node.accent{ border-color:var(--verde); background:rgba(45,140,62,0.06);}
+.node.dark{ background:var(--navy); border-color:var(--navy);} .node.dark .nt{ color:var(--white);} .node.dark .nd{ color:var(--gray-3);}
+.arch-arrow{ text-align:center; color:var(--gray-3); font-size:9pt;}
+.footnote{ font-size:8pt; color:var(--gray-3); border-top:1px solid var(--hairline); padding-top:8px; margin-top:20px; font-weight:300;}
+
+/* Closing */
+.closing{ min-height:297mm; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; background:var(--navy); color:#E8EAF2; padding:var(--page-pad);}
+.closing .big{ font-family:var(--font-display); font-size:40pt; line-height:1; letter-spacing:1px; color:var(--white);}
+.closing .sig{ font-family:var(--font-display); font-size:18pt; margin-top:26px; letter-spacing:1px;}
+.closing .sig .dot{ color:var(--verde);}
+.closing .meta{ font-family:var(--font-mono); font-size:8pt; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray-3); margin-top:8px;}
+.closing .line{ width:60px; height:3px; background:var(--verde); border-radius:2px; margin:24px auto;}
+
+@media print{
+  @page{ size:A4; margin:14mm 15mm; }
+  @page cover{ margin:0; }
+  @page closing{ margin:0; }
+  body{ background:#fff; } .doc{ padding:0; margin:0; max-width:none; }
+  .runhead{ display:none; }
+  .page{ width:auto; min-height:0; margin:0; padding:0; box-shadow:none; overflow:visible; }
+  .sec-head{ padding-top:3mm; }
+  .cover{ page:cover; height:296mm; min-height:0; margin:0; padding:20mm; box-shadow:none; overflow:hidden; break-after:page; }
+  .closing{ page:closing; height:296mm; min-height:0; margin:0; padding:20mm; box-shadow:none; overflow:hidden; break-before:page; }
+  .card,.node,.stat,.callout,.toc-row,.arch{ break-inside:avoid; }
+  table,tr,thead,ul.clean li{ break-inside:avoid; }
+  h3.block,h4.mini,.sec-head{ break-after:avoid; }
+}
+@media screen and (max-width:760px){
+  .page,.cover,.closing{ width:auto; padding:22px; }
+  .grid-2,.grid-3,.grid-4,.cover-meta .mrow{ grid-template-columns:1fr; }
+  .cover-title{ font-size:38pt; }
+  table{ font-size:8.5pt; }
+}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<!-- ============ PORTADA ============ -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="cover-studio">CONTROL BAÑOS<span class="dot">.</span>SS
+      <span class="tag">Proyecto productivo · Grado 11</span>
+    </div>
+    <div class="cover-badge">
+      Versión 2.0<br>Julio de 2026<br>Documento controlado
+    </div>
+  </div>
+
+  <div class="cover-hero">
+    <div class="cover-mark"><span>CB<i>.</i></span></div>
+    <div class="cover-eyebrow">Documento de requerimientos</div>
+    <div class="cover-title">CONTROL <span class="g">BAÑOS</span> SS</div>
+    <div class="cover-sub">Sistema inteligente de control de salidas al baño</div>
+    <div class="cover-line"></div>
+    <p class="cover-desc">Especificación funcional, no funcional, de datos y de integración del módulo de gestión de salidas al baño para la I.E. Santa Sofía — Sede Villa Fanny.</p>
+  </div>
+
+  <div class="cover-meta">
+    <div class="mrow">
+      <div class="meta-item"><div class="k">Programa de formación</div><div class="v">Técnico en Programación de Software</div></div>
+      <div class="meta-item"><div class="k">Institución educativa</div><div class="v">I.E. Santa Sofía — Sede Villa Fanny</div></div>
+      <div class="meta-item"><div class="k">Centro de formación</div><div class="v">SENA — CDITI, Regional Risaralda</div></div>
+      <div class="meta-item"><div class="k">Integrantes</div><div class="v">Jhoan Santiago Chalarca<br>Isabel Galeano<br>Juan Esteban Estrada</div></div>
+      <div class="meta-item"><div class="k">Lugar</div><div class="v">Dosquebradas, Risaralda</div></div>
+      <div class="meta-item"><div class="k">Plataforma</div><div class="v">Flutter · Vapor · PostgreSQL</div></div>
+    </div>
+  </div>
+
+  <div class="cover-foot">
+    <span>Articulación con la media · Grado 11</span>
+    <span>Reemplaza a la versión 1.0</span>
+  </div>
+</section>
+
+<!-- ============ CAMBIOS + ÍNDICE ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">Requerimientos v2.0</div></div>
+
+  <div class="sec-head">
+    <div class="num">00</div>
+    <h2>CAMBIOS FRENTE A LA VERSIÓN 1.0</h2>
+    <p class="sub">Esta versión corrige el documento original a partir del stack realmente acordado y de la integración con el Sistema de Timbre Escolar.</p>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:34px">#</th><th style="width:38%">Cambio</th><th>Motivo</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">01</td><td>Stack: de HTML/CSS/JS + MySQL a <strong>Flutter + Vapor (Swift) + PostgreSQL</strong></td><td>Es el stack acordado y el que ya declara la propuesta de proyecto productivo v2.</td></tr>
+      <tr><td class="rf">02</td><td>Plataforma: de web + móvil a <strong>solo móvil</strong> (Android/iOS)</td><td>La v1.0 se contradecía: el resumen prometía navegador y el objetivo general decía móvil. Se resuelve a favor del objetivo general.</td></tr>
+      <tr><td class="rf">03</td><td>Se elimina la tabla <strong>Docentes</strong> con usuario y contraseña propios</td><td>Rompía el requisito de login único. Los docentes son usuarios del Sistema de Timbre Escolar.</td></tr>
+      <tr><td class="rf">04</td><td>"Ficha" pasa a <strong>grado + grupo</strong> (ej. 11A)</td><td>"Ficha" es vocabulario del SENA; en educación básica y media la unidad es el grupo.</td></tr>
+      <tr><td class="rf">05</td><td>Vocabulario unificado: <span class="mono">grupos, estudiantes, salidas, alertas, configuracion</span></td><td>La propuesta decía "cursos" y "alertas"; el documento v1.0 decía "Configuración" y "Docentes".</td></tr>
+      <tr><td class="rf">06</td><td>Estados de una salida: <strong>En curso / Finalizada / Cancelada</strong></td><td>La v1.0 listaba "Autorizada, Cancelada, En curso", pero "Autorizada" y "En curso" eran el mismo estado y faltaba el estado final.</td></tr>
+      <tr><td class="rf">07</td><td>Se agregan RF16–RF21 y la sección de integración</td><td>Cubren alertas, configuración y aislamiento: funcionalidad que la propuesta prometía y el documento no recogía.</td></tr>
+      <tr><td class="rf">08</td><td>Municipio corregido a <strong>Dosquebradas, Risaralda</strong></td><td>La I.E. Santa Sofía está en Dosquebradas, no en Pereira.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">ÍNDICE</h3>
+  <div class="toc-row"><span class="tn">01</span><span class="tt">Identificación y alcance del proyecto</span></div>
+  <div class="toc-row"><span class="tn">02</span><span class="tt">Actores del sistema</span></div>
+  <div class="toc-row"><span class="tn">03</span><span class="tt">Requerimientos funcionales</span></div>
+  <div class="toc-row"><span class="tn">04</span><span class="tt">Reglas de negocio</span></div>
+  <div class="toc-row"><span class="tn">05</span><span class="tt">Requerimientos no funcionales</span></div>
+  <div class="toc-row"><span class="tn">06</span><span class="tt">Requerimientos de datos</span></div>
+  <div class="toc-row"><span class="tn">07</span><span class="tt">Requerimientos técnicos</span></div>
+  <div class="toc-row"><span class="tn">08</span><span class="tt">Integración y aislamiento</span></div>
+  <div class="toc-row"><span class="tn">09</span><span class="tt">Fuera de alcance</span></div>
+</section>
+
+<!-- ============ 01 ALCANCE ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">01 · Alcance</div></div>
+
+  <div class="sec-head">
+    <div class="num">01</div>
+    <h2>IDENTIFICACIÓN Y ALCANCE DEL PROYECTO</h2>
+  </div>
+
+  <div class="grid-4">
+    <div class="stat"><div class="big">21</div><div class="lbl">Requerimientos funcionales</div></div>
+    <div class="stat"><div class="big">10</div><div class="lbl">No funcionales</div></div>
+    <div class="stat"><div class="big">9</div><div class="lbl">Reglas de negocio</div></div>
+    <div class="stat"><div class="big">7</div><div class="lbl">De integración</div></div>
+  </div>
+
+  <h3 class="block">OBJETIVO GENERAL</h3>
+  <p>Desarrollar un sistema móvil que permita a los docentes autorizar, registrar y analizar las salidas al baño de los estudiantes en tiempo real, dejando constancia digital de cada salida —hora, duración y tipo— y generando reportes de uso para coordinación.</p>
+
+  <h3 class="block">PROBLEMA QUE RESUELVE</h3>
+  <p>Hoy el control de salidas al baño se lleva de forma verbal o en papel. No existe registro trazable: no se sabe cuánto tardó el estudiante, cuántas veces sale por semana, ni es posible identificar situaciones repetitivas que requieran atención. La ausencia de datos impide que docentes y coordinación tomen decisiones informadas sobre convivencia, seguridad y aprovechamiento del tiempo escolar.</p>
+
+  <h3 class="block">ALCANCE</h3>
+  <p>Módulo dentro de la aplicación móvil institucional, con panel de control para el docente —autorizar, cancelar, cerrar y consultar salidas—, historial exportable, alertas de tiempo excedido y módulo de reportes para coordinación.</p>
+
+  <div class="callout">
+    <span class="lbl">Relación con el Sistema de Timbre Escolar</span>
+    Control Baños SS es un módulo del mismo proyecto de grado y de la misma aplicación. Comparte la identidad de los usuarios —un solo login— y la instancia de base de datos, pero mantiene sus datos y su código completamente separados. Las condiciones exactas están en el <em>Contrato de integración — Sistema de Timbre Escolar ↔ Control Baños SS</em>.
+  </div>
+
+  <h3 class="block">EQUIPO</h3>
+  <table>
+    <thead><tr><th>Integrante</th><th>Responsabilidad</th></tr></thead>
+    <tbody>
+      <tr><td>Jhoan Santiago Chalarca</td><td>Líder de proyecto · Backend Vapor y base de datos</td></tr>
+      <tr><td>Isabel Galeano</td><td>Diseño UX · Documentación</td></tr>
+      <tr><td>Juan Esteban Estrada</td><td>Frontend Flutter · Pruebas</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 02 ACTORES ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">02 · Actores</div></div>
+
+  <div class="sec-head">
+    <div class="num">02</div>
+    <h2>ACTORES DEL SISTEMA</h2>
+    <p class="sub">El módulo no define usuarios propios: reutiliza la identidad emitida por el Sistema de Timbre Escolar.</p>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:20%">Actor</th><th style="width:18%">Rol real</th><th>Descripción</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Docente</strong></td><td class="mono">profesor</td><td>Inicia sesión con las credenciales institucionales. Autoriza, cancela y cierra salidas. Consulta el historial.</td></tr>
+      <tr><td><strong>Coordinador</strong></td><td class="mono">admin</td><td>Todo lo del docente, más reportes institucionales, atención de alertas y configuración de parámetros.</td></tr>
+      <tr><td><strong>Estudiante</strong></td><td>—</td><td>No accede al sistema. Es gestionado por el docente; su información y su historial de salidas quedan registrados.</td></tr>
+      <tr><td><strong>Sistema</strong></td><td>—</td><td>Aplica las reglas de negocio: límite de salidas, cálculo de duración, generación de alertas e historial.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <span class="lbl">Exclusión explícita</span>
+    El rol <span class="mono">operador</span> del Sistema de Timbre Escolar <strong>no tiene acceso</strong> a Control Baños. Su token se rechaza con código 403 y la aplicación muestra un mensaje claro, no una pantalla vacía.
+  </div>
+
+  <h3 class="block">UN SOLO LOGIN</h3>
+  <div class="arch">
+    <div class="arch-row">
+      <div class="node dark"><div class="nt">App Flutter</div><div class="nd">Una sola aplicación, una sola contraseña</div></div>
+    </div>
+    <div class="arch-arrow">↓ credenciales</div>
+    <div class="arch-row">
+      <div class="node accent"><div class="nt">Backend Timbre Escolar</div><div class="nd">Emisor único de identidad · firma JWT RS256</div></div>
+    </div>
+    <div class="arch-arrow">↓ token firmado</div>
+    <div class="arch-row">
+      <div class="node"><div class="nt">Módulo Timbre</div><div class="nd">Verifica y opera</div></div>
+      <div class="node accent"><div class="nt">Backend Control Baños</div><div class="nd">Verifica con la llave pública · nunca ve contraseñas</div></div>
+    </div>
+  </div>
+  <p class="footnote">Control Baños SS no almacena contraseñas ni emite tokens. Solo verifica los que emite el Sistema de Timbre Escolar.</p>
+</section>
+
+<!-- ============ 03 RF ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">03 · Funcionales</div></div>
+
+  <div class="sec-head">
+    <div class="num">03</div>
+    <h2>REQUERIMIENTOS FUNCIONALES</h2>
+    <p class="sub">21 requerimientos agrupados por área. La etiqueta <span class="new">NUEVO</span> marca los que no existían en la versión 1.0.</p>
+  </div>
+
+  <h3 class="block">ACCESO</h3>
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF01</td><td>El docente debe poder iniciar sesión con las mismas credenciales institucionales que usa para el resto de la aplicación. El módulo no tiene registro de usuarios ni contraseñas propias.</td></tr>
+      <tr><td class="rf">RF02</td><td>El sistema debe rechazar el acceso al módulo a los usuarios con rol <span class="mono">operador</span>, mostrando un mensaje claro en lugar de una pantalla vacía.<span class="new">NUEVO</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">PANEL DE CONTROL</h3>
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF03</td><td>El sistema debe mostrar un panel "Control Baños" con la lista de grupos activos y, dentro de cada grupo, sus estudiantes con el estado actual: <strong>en salón</strong> o <strong>fuera del salón</strong>.</td></tr>
+      <tr><td class="rf">RF04</td><td>El sistema debe mostrar la actividad reciente: estudiantes que están fuera, hora de salida y tiempo transcurrido, actualizado en vivo.</td></tr>
+      <tr><td class="rf">RF05</td><td>El sistema debe permitir buscar un estudiante por nombre o código dentro del panel.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">GESTIÓN DE SALIDAS</h3>
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF06</td><td>El sistema debe permitir autorizar la salida de un estudiante, registrando estudiante, docente que autoriza, fecha y hora de salida.</td></tr>
+      <tr><td class="rf">RF07</td><td>Antes de autorizar, el sistema debe validar cuántas salidas normales lleva el estudiante ese día y bloquear la autorización si ya alcanzó el máximo configurado.</td></tr>
+      <tr><td class="rf">RF08</td><td>Si el estudiante agotó sus salidas normales, el sistema debe informarlo con un mensaje explícito e indicar que solo procede una nueva salida marcándola como <strong>emergencia</strong>.</td></tr>
+      <tr><td class="rf">RF09</td><td>El sistema debe impedir que un estudiante tenga dos salidas en curso al mismo tiempo.<span class="new">NUEVO</span></td></tr>
+      <tr><td class="rf">RF10</td><td>El sistema debe permitir registrar el regreso del estudiante y calcular automáticamente la duración de la salida.</td></tr>
+      <tr><td class="rf">RF11</td><td>El sistema debe permitir cancelar una salida ya autorizada, exigiendo un motivo y dejando constancia de quién canceló y cuándo.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">HISTORIAL Y REPORTES</h3>
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF12</td><td>El sistema debe mostrar un historial de salidas con fecha, hora, estudiante, grupo, docente, tipo, estado y duración.</td></tr>
+      <tr><td class="rf">RF13</td><td>El sistema debe permitir filtrar el historial por rango de fechas, grupo, estudiante y tipo de salida.</td></tr>
+      <tr><td class="rf">RF14</td><td>El sistema debe permitir exportar el historial filtrado a CSV o PDF y compartirlo desde el dispositivo.</td></tr>
+      <tr><td class="rf">RF15</td><td>El sistema debe generar un módulo de reportes con: total de salidas del día, duración promedio, número de emergencias, salidas por día y estudiantes con más salidas en el periodo.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">03 · Funcionales</div></div>
+
+  <h3 class="block">ALERTAS Y CONFIGURACIÓN</h3>
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF16</td><td>El sistema debe generar automáticamente una alerta cuando una salida en curso supere la duración configurada como límite.<span class="new">NUEVO</span></td></tr>
+      <tr><td class="rf">RF17</td><td>El sistema debe registrar una alerta cuando un docente intente autorizar una salida por encima del máximo diario del estudiante.<span class="new">NUEVO</span></td></tr>
+      <tr><td class="rf">RF18</td><td>El coordinador debe poder consultar las alertas pendientes y marcarlas como atendidas.<span class="new">NUEVO</span></td></tr>
+      <tr><td class="rf">RF19</td><td>El coordinador debe poder configurar el máximo de salidas normales por día, la duración recomendada y el umbral de alerta, sin recompilar la aplicación.<span class="new">NUEVO</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">ADMINISTRACIÓN DE DATOS</h3>
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RF20</td><td>El sistema debe permitir registrar, editar y desactivar grupos y estudiantes. Los estudiantes son propiedad de Control Baños SS: ningún otro módulo los administra.<span class="new">NUEVO</span></td></tr>
+      <tr><td class="rf">RF21</td><td>Al terminar cualquier acción —autorizar, cancelar, cerrar, exportar— el sistema debe permitir volver al panel principal o registrar una nueva salida sin pasos intermedios.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-head" style="margin-top:34px">
+    <div class="num">04</div>
+    <h2>REGLAS DE NEGOCIO</h2>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Regla</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RN01</td><td>Cada estudiante tiene un máximo de salidas normales por día, configurable, con valor inicial <strong>2</strong>.</td></tr>
+      <tr><td class="rf">RN02</td><td>Las salidas marcadas como <strong>emergencia</strong> no cuentan contra ese límite y siempre pueden autorizarse.</td></tr>
+      <tr><td class="rf">RN03</td><td>Una salida está en uno de tres estados excluyentes: <strong>En curso</strong> (autorizada, el estudiante sigue fuera), <strong>Finalizada</strong> (regresó, tiene duración) o <strong>Cancelada</strong> (el docente revocó la autorización).</td></tr>
+      <tr><td class="rf">RN04</td><td>La duración se calcula como <span class="mono">hora_regreso − hora_salida</span> y solo existe cuando la salida está finalizada.</td></tr>
+      <tr><td class="rf">RN05</td><td>Un estudiante no puede tener dos salidas en curso simultáneamente.</td></tr>
+      <tr><td class="rf">RN06</td><td>Solo un usuario autenticado con rol <span class="mono">profesor</span> o <span class="mono">admin</span> puede autorizar, cancelar o consultar salidas.</td></tr>
+      <tr><td class="rf">RN07</td><td>Cancelar exige motivo. La salida cancelada <strong>no se borra</strong>: queda en el historial con su estado.</td></tr>
+      <tr><td class="rf">RN08</td><td>Ninguna salida se elimina de la base de datos. El historial es permanente.</td></tr>
+      <tr><td class="rf">RN09</td><td>El límite diario se cuenta sobre el <strong>día escolar</strong>, no sobre ventanas móviles de 24 horas.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 05 RNF ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">05 · No funcionales</div></div>
+
+  <div class="sec-head">
+    <div class="num">05</div>
+    <h2>REQUERIMIENTOS NO FUNCIONALES</h2>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:64px">#</th><th style="width:22%">Atributo</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RNF01</td><td><strong>Usabilidad</strong></td><td>Una instrucción clara por pantalla; el docente actúa sin adivinar el siguiente paso. Autorizar una salida no debe tomar más de tres toques desde el panel.</td></tr>
+      <tr><td class="rf">RNF02</td><td><strong>Rendimiento</strong></td><td>Autorizar, cancelar o cerrar una salida debe reflejarse en el panel en menos de 2 segundos sobre la red del colegio.</td></tr>
+      <tr><td class="rf">RNF03</td><td><strong>Seguridad</strong></td><td>El módulo no almacena contraseñas. Todo acceso exige un token JWT válido y vigente, verificado con la llave pública del Sistema de Timbre Escolar.</td></tr>
+      <tr><td class="rf">RNF04</td><td><strong>Aislamiento</strong></td><td>El backend solo escribe en su propio schema. No tiene permiso de escritura sobre ninguna tabla del Sistema de Timbre Escolar.<span class="new">NUEVO</span></td></tr>
+      <tr><td class="rf">RNF05</td><td><strong>Disponibilidad</strong></td><td>Operativo durante toda la jornada académica, en las jornadas mañana y tarde.</td></tr>
+      <tr><td class="rf">RNF06</td><td><strong>Identidad visual</strong></td><td>Azul Marino <span class="mono">#1E2545</span>, Verde Acción <span class="mono">#2D8C3E</span> y Gris Fondo <span class="mono">#F2F2F2</span>; tipografías Bebas Neue (títulos), Inter (cuerpo) y Roboto Mono (datos y códigos).</td></tr>
+      <tr><td class="rf">RNF07</td><td><strong>Compatibilidad</strong></td><td>Android 8.0 o superior e iOS 15 o superior, desde una sola base de código Flutter.<span class="chg">MODIFICADO</span></td></tr>
+      <tr><td class="rf">RNF08</td><td><strong>Trazabilidad</strong></td><td>Toda salida autorizada, cerrada o cancelada queda registrada de forma permanente, con el usuario responsable y la marca de tiempo.</td></tr>
+      <tr><td class="rf">RNF09</td><td><strong>Mantenibilidad</strong></td><td>El módulo vive completo bajo <span class="mono">lib/modules/proyecto_banos/</span> y puede eliminarse sin romper la compilación del resto de la aplicación.<span class="new">NUEVO</span></td></tr>
+      <tr><td class="rf">RNF10</td><td><strong>Privacidad</strong></td><td>Los datos de los estudiantes solo son visibles para docentes y coordinación autenticados. La aplicación no expone listados fuera de sesión.<span class="new">NUEVO</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <span class="lbl">Corrección de la v1.0</span>
+    El RNF06 original exigía funcionamiento "en navegador web y en dispositivos móviles". Se reemplaza por compatibilidad móvil: el objetivo general del proyecto y su marco teórico describen una aplicación móvil construida con Flutter, sin mención de despliegue web.
+  </div>
+</section>
+
+<!-- ============ 06 DATOS ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">06 · Datos</div></div>
+
+  <div class="sec-head">
+    <div class="num">06</div>
+    <h2>REQUERIMIENTOS DE DATOS</h2>
+    <p class="sub">Cinco entidades propias en el schema <span class="mono">banos</span>, más dos tablas del Sistema de Timbre Escolar accesibles solo en lectura.</p>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:22%">Entidad</th><th>Contenido</th><th style="width:26%">Dueño</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">grupos</td><td>Nombre (11A), grado, jornada, sede, año lectivo, director de grupo</td><td>Control Baños SS</td></tr>
+      <tr><td class="mono">estudiantes</td><td>Código institucional, nombre completo, grupo, estado activo</td><td>Control Baños SS</td></tr>
+      <tr><td class="mono">salidas</td><td>Estudiante, docente que autoriza, fecha, hora de salida y de regreso, duración, número de salida del día, tipo, estado, motivo y datos de cancelación</td><td>Control Baños SS</td></tr>
+      <tr><td class="mono">alertas</td><td>Salida asociada, tipo, umbral, fecha de generación, atendida por quién y cuándo</td><td>Control Baños SS</td></tr>
+      <tr><td class="mono">configuracion</td><td>Máximo de salidas normales, duración máxima, umbral de alerta, año lectivo</td><td>Control Baños SS</td></tr>
+      <tr><td class="mono">usuarios</td><td>Identidad de docentes y coordinadores</td><td>Timbre Escolar — <strong>solo lectura</strong></td></tr>
+      <tr><td class="mono">profesores</td><td>Jornada y dirección de grupo del docente</td><td>Timbre Escolar — <strong>solo lectura</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">RESTRICCIONES DE DATOS</h3>
+  <ul class="clean">
+    <li>No existe ninguna llave foránea entre el schema <span class="mono">banos</span> y el schema del Sistema de Timbre Escolar, en ninguna de las dos direcciones. Los identificadores de usuario se guardan como texto y se validan con el JWT.</li>
+    <li><span class="mono">salidas</span> conserva copias del nombre del docente y del grupo del estudiante al momento de la salida, para que el historial siga siendo correcto si esos datos cambian después.</li>
+    <li>La tabla <span class="mono">configuracion</span> tiene una sola fila, garantizada por restricción en la base de datos.</li>
+    <li>La tabla <span class="mono">docentes</span> de la versión 1.0 <strong>no se implementa</strong>: rompía el requisito de login único.</li>
+  </ul>
+
+  <div class="callout">
+    <span class="lbl">Modelo completo</span>
+    El diagrama entidad-relación, los tipos de cada campo y los índices están en <span class="mono">modelo_datos_control_banos.dbml</span>, listo para abrir en dbdiagram.io.
+  </div>
+</section>
+
+<!-- ============ 07 + 08 ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">07 · Técnicos</div></div>
+
+  <div class="sec-head">
+    <div class="num">07</div>
+    <h2>REQUERIMIENTOS TÉCNICOS</h2>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:32%">Capa</th><th>Tecnología</th></tr></thead>
+    <tbody>
+      <tr><td>Aplicación móvil</td><td>Flutter (Dart) — Android e iOS desde una sola base de código</td></tr>
+      <tr><td>Cliente HTTP</td><td><span class="mono">dio</span>, apuntando al backend propio en <span class="mono">/api/banos</span></td></tr>
+      <tr><td>Backend</td><td>Vapor 4 (Swift), API REST JSON</td></tr>
+      <tr><td>ORM</td><td>Fluent con <span class="mono">fluent-postgres-driver</span></td></tr>
+      <tr><td>Base de datos</td><td>PostgreSQL, schema <span class="mono">banos</span></td></tr>
+      <tr><td>Autenticación</td><td>JWT RS256 emitido por el Sistema de Timbre Escolar, verificado con su llave pública</td></tr>
+      <tr><td>Versionado</td><td>Git — repositorio <span class="mono">controlbanos-backend</span></td></tr>
+      <tr><td>Diseño</td><td>Figma, siguiendo el manual de marca de Control Baños SS</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">CONDICIONES DE DESPLIEGUE</h3>
+  <ul class="clean">
+    <li>El backend de Control Baños corre como servicio independiente, en su propio puerto y con su propio proceso.</li>
+    <li>Se conecta a PostgreSQL con el rol <span class="mono">proyectobanos</span>, cuyo <span class="mono">search_path</span> apunta a <span class="mono">banos</span>.</li>
+    <li>Nunca comparte proceso, puerto ni archivo de configuración con el backend del Sistema de Timbre Escolar.</li>
+  </ul>
+
+  <div class="sec-head" style="margin-top:34px">
+    <div class="num">08</div>
+    <h2>INTEGRACIÓN Y AISLAMIENTO</h2>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Requerimiento</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">RI01</td><td>Control Baños SS no emite tokens. Recibe el JWT del Sistema de Timbre Escolar y lo verifica con la llave pública publicada en <span class="mono">/.well-known/jwks.json</span>.</td></tr>
+      <tr><td class="rf">RI02</td><td>El backend valida, en este orden: firma, expiración, emisor <span class="mono">iss</span>, audiencia <span class="mono">aud</span> —debe incluir <span class="mono">banos</span>— y rol.</td></tr>
+      <tr><td class="rf">RI03</td><td>Control Baños no ejecuta ninguna sentencia de escritura sobre tablas del Sistema de Timbre Escolar. El permiso está revocado a nivel de base de datos, no solo por convención.</td></tr>
+      <tr><td class="rf">RI04</td><td>El código del módulo vive completo bajo <span class="mono">lib/modules/proyecto_banos/</span> y solo puede importar desde <span class="mono">lib/core/</span>.</td></tr>
+      <tr><td class="rf">RI05</td><td>El módulo se engancha a la aplicación en un único punto: el registro de rutas. Eliminar la carpeta y esa línea debe dejar la aplicación compilando.</td></tr>
+      <tr><td class="rf">RI06</td><td>Antes de cada entrega se ejecuta la prueba de borrado: eliminar el módulo, correr <span class="mono">flutter analyze</span> y compilar.</td></tr>
+      <tr><td class="rf">RI07</td><td>Cualquier cambio en el enum de roles, en los claims del JWT o en los permisos de base de datos requiere acuerdo escrito entre los dos equipos.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 09 FUERA DE ALCANCE ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">09 · Fuera de alcance</div></div>
+
+  <div class="sec-head">
+    <div class="num">09</div>
+    <h2>FUERA DE ALCANCE</h2>
+    <p class="sub">Lo que este proyecto explícitamente no hace, para que no aparezca como expectativa durante la sustentación.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card tint"><h4 class="mini">Hardware físico</h4><p style="margin:0">Sensores de puerta, torniquetes o tarjetas RFID. El registro es manual, hecho por el docente desde la aplicación.</p></div>
+    <div class="card tint"><h4 class="mini">Notificaciones</h4><p style="margin:0">Ni push ni correo electrónico. Las alertas se consultan dentro de la aplicación.</p></div>
+    <div class="card tint"><h4 class="mini">Web y escritorio</h4><p style="margin:0">No hay versión de navegador ni aplicación de escritorio. Solo Android e iOS.</p></div>
+    <div class="card tint"><h4 class="mini">Acceso de estudiantes</h4><p style="margin:0">Estudiantes y padres de familia no acceden al sistema. Solo docentes y coordinación.</p></div>
+    <div class="card tint"><h4 class="mini">Datos del Timbre Escolar</h4><p style="margin:0">Ninguna escritura sobre horarios, timbres, salones o materias. Ese módulo es de otro equipo.</p></div>
+    <div class="card tint"><h4 class="mini">Modo sin conexión</h4><p style="margin:0">El módulo requiere red para autorizar y registrar salidas. No hay sincronización diferida.</p></div>
+  </div>
+
+  <div class="callout">
+    <span class="lbl">Criterio de cierre</span>
+    Un requerimiento fuera de alcance no es un requerimiento pendiente: es una decisión tomada. Incorporarlo exige una versión 3.0 de este documento y el visto bueno del instructor asesor.
+  </div>
+
+  <p class="footnote">Documento de requerimientos v2.0 · Reemplaza a la versión 1.0 de 2026 · Control Baños SS · I.E. Santa Sofía — Sede Villa Fanny, Dosquebradas (Risaralda) · SENA — CDITI</p>
+</section>
+
+<!-- ============ CIERRE ============ -->
+<section class="closing">
+  <div class="big">CONTROL BAÑOS SS</div>
+  <div class="line"></div>
+  <p style="max-width:52ch; color:#C6CBDC; font-weight:300;">Cada salida registrada es un minuto de clase que la institución puede volver a contar.</p>
+  <div class="sig">JHOAN · ISABEL · JUAN ESTEBAN</div>
+  <div class="meta">Documento de requerimientos v2.0 · Julio de 2026</div>
+  <div class="meta">I.E. Santa Sofía — Sede Villa Fanny · SENA CDITI</div>
+</section>
+
+</div>
+</body>
+</html>

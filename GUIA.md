@@ -1,0 +1,318 @@
+# Guía de trabajo
+
+Cómo agregar cosas a este proyecto sin tener que entender toda la arquitectura.
+
+Está pensada para copiar y pegar. Si algo no está aquí, probablemente no hace falta todavía.
+
+---
+
+## La idea, en una frase
+
+**Es un edificio con recepción y dos oficinas.**
+
+La recepción (`core/`) tiene la entrada con contraseña y el directorio de oficinas. Las oficinas (`modules/`) son SwiftyRing y Control Baños. La recepción no sabe qué hay dentro de cada oficina: solo tiene el cartelito que cada oficina escribió sobre sí misma.
+
+```
+app/lib/
+├── core/       ← la recepción. Compartida. Ya está hecha.
+├── modules/
+│   ├── timbre_escolar/    ← oficina 1
+│   └── proyecto_banos/    ← oficina 2
+└── main.dart   ← quien cuelga el directorio
+```
+
+**La única regla:** tu módulo puede usar `core/`. No puede usar el otro módulo, y `core/` no puede usar el tuyo.
+
+Para comprobarlo:
+
+```bash
+cd app && ./tool/check_module_isolation.sh
+```
+
+---
+
+## Dónde trabaja cada equipo
+
+| Equipo | Su carpeta en la app | Su parte del backend |
+|---|---|---|
+| Miguel — Timbre Escolar | `app/lib/modules/timbre_escolar/` | `backend/SwiftyRing/Sources/SwiftyRing/Modules/TimbreEscolar/` |
+| Jhoan, Isabel, Juan Esteban — Control Baños | `app/lib/modules/proyecto_banos/` | Repositorio aparte: `controlbanos-backend` |
+
+Nadie edita `core/` sin avisar al otro equipo. Es de los dos.
+
+---
+
+## Receta 1 · Agregar una pantalla a mi módulo
+
+Ejemplo: la pantalla de horarios del timbre.
+
+**Paso 1.** Crear el archivo:
+
+`app/lib/modules/timbre_escolar/presentation/pages/horarios_page.dart`
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:swiftyring/core/theme/app_theme.dart';
+
+class HorariosPage extends StatelessWidget {
+  const HorariosPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.fondo,
+      appBar: AppBar(title: const Text('Horarios')),
+      body: const Center(child: Text('Aquí van los horarios')),
+    );
+  }
+}
+```
+
+**Paso 2.** Registrar la ruta en `timbre_escolar_routes.dart`, dentro de `rutas:`
+
+```dart
+GoRoute(
+  path: '/timbre/horarios',
+  builder: (context, state) => const HorariosPage(),
+),
+```
+
+**Paso 3.** Navegar hasta ella desde donde quieras:
+
+```dart
+context.push('/timbre/horarios');
+```
+
+Eso es todo. No hay que tocar `core/` ni `main.dart`.
+
+---
+
+## Receta 2 · Saber quién está usando la app
+
+En cualquier widget, cambiá `StatelessWidget` por `ConsumerWidget`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:swiftyring/core/auth/auth_provider.dart';
+
+class MiPantalla extends ConsumerWidget {
+  const MiPantalla({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sesion = ref.watch(authProvider).session;
+    if (sesion == null) return const SizedBox.shrink();
+
+    return Text('Hola ${sesion.nombre}, sos ${sesion.rol.etiqueta}');
+  }
+}
+```
+
+Lo que tenés disponible: `sesion.nombre`, `sesion.email`, `sesion.rol`, `sesion.primerNombre`.
+
+**No pidas contraseña en tu módulo.** El login ya pasó; la identidad te llega resuelta.
+
+---
+
+## Receta 3 · Mostrar u ocultar algo según el rol
+
+```dart
+if (sesion.rol.puedeAdministrar) {
+  // solo el admin
+}
+
+if (sesion.rol == RolUsuario.profesor) {
+  // solo profesores
+}
+```
+
+Los tres roles son `admin`, `operador` y `profesor`. Para Control Baños: "docente" es `profesor` y "coordinador" es `admin`.
+
+---
+
+## Receta 4 · Llamar a la API
+
+```dart
+import 'package:swiftyring/core/auth/auth_provider.dart';
+
+final dio = ref.read(apiProvider).dio;
+final respuesta = await dio.get('/timbre/horarios');
+```
+
+El token ya va puesto en la cabecera: no hay que agregarlo. La URL base ya apunta al backend, así que las rutas se escriben relativas (`/timbre/horarios`, no `http://...`).
+
+Si el backend responde un error, `respuesta.statusCode` te lo dice y `respuesta.data['reason']` trae el mensaje.
+
+---
+
+## Receta 5 · Agregar una tabla al backend (Vapor)
+
+**Paso 1.** El modelo, en `Modules/TimbreEscolar/HorarioTimbre.swift`:
+
+```swift
+import Fluent
+import Foundation
+
+final class HorarioTimbre: Model, @unchecked Sendable {
+    static let schema = "horario_timbres"
+
+    @ID(key: .id) var id: UUID?
+    @Field(key: "etiqueta") var etiqueta: String
+    @Field(key: "duracion_seg") var duracionSeg: Int
+
+    init() { }
+}
+```
+
+**Paso 2.** La migración, en el mismo sitio:
+
+```swift
+import Fluent
+
+struct CreateHorarioTimbre: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.schema("horario_timbres")
+            .id()
+            .field("etiqueta", .string, .required)
+            .field("duracion_seg", .int, .required)
+            .create()
+    }
+
+    func revert(on database: any Database) async throws {
+        try await database.schema("horario_timbres").delete()
+    }
+}
+```
+
+**Paso 3.** Registrarla en `Modules/TimbreEscolar/TimbreEscolar.swift`:
+
+```swift
+static var migraciones: [any AsyncMigration] {
+    [CreateHorarioTimbre()]
+}
+```
+
+**Paso 4.** Aplicarla:
+
+```bash
+cd backend/SwiftyRing
+swift run SwiftyRing migrate --yes --env development
+```
+
+---
+
+## Receta 6 · Agregar un endpoint al backend
+
+**Paso 1.** El controlador, en `Modules/TimbreEscolar/HorariosController.swift`:
+
+```swift
+import Vapor
+import Fluent
+
+struct HorariosController: RouteCollection {
+    func boot(routes: any RoutesBuilder) throws {
+        // Todo lo protegido cuelga del middleware: sin token no se entra.
+        let protegidas = routes.grouped("api", "timbre")
+            .grouped(SwiftyRingAuthMiddleware())
+
+        protegidas.get("horarios", use: listar)
+    }
+
+    func listar(req: Request) async throws -> [HorarioTimbre] {
+        let payload = try req.requireSwiftyRingPayload()
+        // payload.rol, payload.nombre, payload.usuarioID están disponibles
+
+        return try await HorarioTimbre.query(on: req.db).all()
+    }
+}
+```
+
+**Paso 2.** Registrarlo en `TimbreEscolar.swift`:
+
+```swift
+static func registrarRutas(_ app: Application) throws {
+    try app.register(collection: HorariosController())
+}
+```
+
+---
+
+## Cómo correr todo
+
+**Backend** (hace falta Postgres.app abierto):
+
+```bash
+cd backend/SwiftyRing && swift run SwiftyRing serve --env development --hostname 127.0.0.1 --port 8080
+```
+
+**App:**
+
+```bash
+cd app && flutter run
+```
+
+**Usuario de prueba:** `andrea@santasofia.edu.co` / `Admin123*` (rol admin, solo para desarrollo).
+
+**Antes de entregar:**
+
+```bash
+cd app && flutter analyze && flutter test && ./tool/check_module_isolation.sh
+```
+
+---
+
+## Qué NO tocar
+
+| No toques | Por qué |
+|---|---|
+| `app/lib/core/` | Es compartido. Cambiarlo afecta al otro equipo |
+| El enum de roles | Es contrato con el backend y con el otro módulo |
+| Los claims del JWT | El otro backend los lee; quitar uno rompe su módulo |
+| `keys/jwt_private.pem` | Es la llave de firma. No se copia, no se sube, no se comparte |
+| La carpeta del otro módulo | Ni para leerla en un `import` |
+
+Si necesitás algo de esa lista, se acuerda por escrito entre los dos equipos y se actualiza `Docs/04-Integracion/Contrato_Integracion_Timbre_ControlBanos.md`.
+
+---
+
+## Para el equipo de Control Baños
+
+Lo que ya tenés resuelto y no hay que construir:
+
+- El login. Un docente entra una vez y su identidad les llega en `ref.watch(authProvider).session`.
+- El rol. `admin` es coordinador, `profesor` es docente. El `operador` no entra a su módulo y su tarjeta ni aparece en el lanzador.
+- El token para llamar a su backend. Va en la cabecera automáticamente.
+
+Su backend es un proyecto Vapor **aparte**, en su propio repositorio. Para validar los tokens que emite el backend del timbre:
+
+```
+GET http://127.0.0.1:8080/.well-known/jwks.json
+```
+
+o si prefieren pegar la llave en un archivo de configuración:
+
+```
+GET http://127.0.0.1:8080/.well-known/jwt-public-key.pem
+```
+
+Con esa llave **pueden verificar** tokens, pero no pueden emitirlos. Es a propósito.
+
+En la base de datos les corresponde el schema `banos`, con sus cinco tablas. El modelo está en `Docs/04-Integracion/modelo_datos_completo.dbml`. Sobre el schema del timbre tienen solo lectura, y solo de dos tablas.
+
+Sus requerimientos están en `Docs/03-Control-Banos/`.
+
+---
+
+## Si algo se rompe
+
+| Síntoma | Causa más probable |
+|---|---|
+| Error de conexión al entrar | El backend no está corriendo. Probá `curl http://127.0.0.1:8080/` |
+| La app arranca y se queda en el círculo de carga | El backend no responde, o falta la llave RS256 en `keys/` |
+| "Correo o contraseña incorrectos" con datos buenos | La base no tiene el admin sembrado. Corré `migrate` |
+| El script de aislamiento falla | Alguien importó el otro módulo. El mensaje dice qué archivo |
+| Cambié algo en `core/` y se rompió otra cosa | Por eso `core/` no se toca sin avisar |
+
+---
+
+*Guía de trabajo · Proyecto de grado SENA CDITI · I.E. Santa Sofía · 2026*

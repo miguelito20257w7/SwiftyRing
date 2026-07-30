@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control Baños SS — Propuesta de Proyecto Productivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1E2545; --navy-deep:#141A33; --verde:#2D8C3E; --verde-glow:#3FA852;
+  --gris:#F2F2F2; --white:#FFFFFF; --ambar:#C8611E; --rojo:#B3261E;
+  --gray-1:#3C4256; --gray-2:#6B7189; --gray-3:#A0A5B8; --hairline:#E2E4EC;
+  --font-display:'Bebas Neue', Impact, sans-serif;
+  --font-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:'Roboto Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+  --radius-card:16px; --radius-sm:10px; --shadow-xs:0 2px 8px rgba(30,37,69,0.06);
+  --page-w:210mm; --page-pad:20mm;
+}
+*{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+html{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+body{ margin:0; background:#d8d8dc; color:var(--navy); font-family:var(--font-body); font-weight:400; font-size:10.5pt; line-height:1.65; }
+.doc{ max-width:calc(var(--page-w) + 40px); margin:0 auto; padding:24px 0 60px; }
+.page{ background:var(--white); width:var(--page-w); min-height:297mm; margin:0 auto 22px; padding:var(--page-pad); box-shadow:0 10px 40px rgba(0,0,0,0.16); position:relative; overflow:hidden; }
+h1,h2,h3{ font-family:var(--font-display); font-weight:400; color:var(--navy); margin:0; letter-spacing:0.5px; }
+h4{ font-family:var(--font-body); font-weight:600; color:var(--navy); margin:0; }
+p{ margin:0 0 11px; } strong{ font-weight:600; color:var(--navy); } em{ font-style:italic; }
+a{ color:var(--verde); text-decoration:none; }
+.mono{ font-family:var(--font-mono); font-size:9.5pt; }
+.runhead{ display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline); padding-bottom:10px; margin-bottom:26px; }
+.runhead .rh-brand{ font-family:var(--font-display); font-size:16pt; letter-spacing:1px; }
+.runhead .rh-brand .dot{ color:var(--verde); }
+.runhead .rh-meta{ font-family:var(--font-mono); font-size:7.5pt; color:var(--gray-3); letter-spacing:0.05em; text-transform:uppercase;}
+.sec-head{ margin:0 0 22px; }
+.sec-head .num{ font-family:var(--font-mono); font-size:9.5pt; color:var(--verde); font-weight:500; letter-spacing:0.1em; }
+.sec-head h2{ font-size:32pt; line-height:1; letter-spacing:0.5px; margin-top:6px; }
+.sec-head .sub{ color:var(--gray-2); font-size:11pt; margin-top:8px; max-width:62ch; font-weight:300;}
+h3.block{ font-size:19pt; letter-spacing:0.6px; margin:26px 0 10px; padding-left:14px; border-left:3px solid var(--verde); }
+h4.mini{ font-size:11pt; margin:16px 0 6px; }
+.card{ background:var(--white); border:1px solid var(--hairline); border-radius:var(--radius-card); padding:18px 20px; box-shadow:var(--shadow-xs); margin:14px 0; }
+.card.tint{ background:var(--gris); border-color:transparent; }
+.card.dark{ background:var(--navy); border-color:transparent; color:#E8EAF2; }
+.card.dark h4,.card.dark strong{ color:var(--white); }
+.callout{ border-left:3px solid var(--verde); background:linear-gradient(90deg, rgba(45,140,62,0.07), rgba(45,140,62,0)); padding:13px 17px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:16px 0; }
+.callout .lbl{ font-weight:600; color:var(--verde); font-size:8.5pt; letter-spacing:0.18em; text-transform:uppercase; display:block; margin-bottom:4px;}
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.stat{ background:var(--gris); border-radius:var(--radius-card); padding:15px 17px; }
+.stat .big{ font-family:var(--font-display); font-size:30pt; line-height:0.9; letter-spacing:0.5px; }
+.stat .big .u{ font-size:12pt; color:var(--verde); }
+.stat .lbl{ font-size:9pt; color:var(--gray-2); margin-top:6px; }
+table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:9.5pt; }
+thead th{ background:var(--navy); color:var(--white); text-align:left; font-weight:600; padding:9px 12px; font-size:8.5pt; letter-spacing:0.05em; text-transform:uppercase; }
+thead th:first-child{ border-radius:8px 0 0 0; } thead th:last-child{ border-radius:0 8px 0 0; }
+tbody td{ padding:8px 12px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+tbody tr:nth-child(even){ background:var(--gris); }
+.rf{ font-family:var(--font-mono); font-size:8.5pt; color:var(--verde); font-weight:500; white-space:nowrap;}
+.chip{ display:inline-block; font-family:var(--font-mono); font-size:8pt; padding:2px 9px; border-radius:999px; background:var(--gris); color:var(--gray-1); border:1px solid var(--hairline); margin:2px 4px 2px 0;}
+.chip.g{ background:rgba(45,140,62,0.1); color:var(--verde); border-color:transparent;}
+ul.clean{ list-style:none; padding:0; margin:8px 0; }
+ul.clean li{ position:relative; padding-left:22px; margin-bottom:7px; }
+ul.clean li::before{ content:''; position:absolute; left:2px; top:8px; width:6px; height:6px; border-radius:2px; background:var(--verde); }
+
+/* FODA */
+.foda{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0; }
+.foda .q{ border-radius:var(--radius-card); padding:15px 17px; border:1px solid var(--hairline); }
+.foda .q h4{ font-family:var(--font-display); font-size:15pt; letter-spacing:0.5px; margin-bottom:6px; }
+.foda .f{ background:rgba(45,140,62,0.07); border-color:transparent; } .foda .f h4{ color:var(--verde); }
+.foda .o{ background:rgba(30,37,69,0.05); border-color:transparent; } .foda .o h4{ color:var(--navy); }
+.foda .d{ background:rgba(200,97,30,0.07); border-color:transparent; } .foda .d h4{ color:var(--ambar); }
+.foda .a{ background:rgba(179,38,30,0.06); border-color:transparent; } .foda .a h4{ color:var(--rojo); }
+.foda ul{ margin:0; padding-left:16px; font-size:9.5pt; } .foda li{ margin-bottom:4px; }
+
+/* Organigrama */
+.org{ display:flex; flex-direction:column; align-items:center; gap:10px; margin:16px 0; }
+.org-row{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.org-node{ border:1.5px solid var(--hairline); border-radius:12px; padding:12px 14px; background:var(--white); min-width:160px; text-align:center; box-shadow:var(--shadow-xs); }
+.org-node .n{ font-weight:600; font-size:10pt; }
+.org-node .r{ font-size:8.5pt; color:var(--gray-2); margin-top:3px; font-weight:300; }
+.org-node.lead{ background:var(--navy); border-color:var(--navy); } .org-node.lead .n{ color:var(--white);} .org-node.lead .r{ color:var(--gray-3);}
+.org-arrow{ color:var(--gray-3); font-size:12pt; }
+
+/* Gantt */
+.gantt{ margin:16px 0; font-size:9pt; }
+.gantt-row{ display:grid; grid-template-columns:150px 1fr; align-items:center; gap:10px; margin-bottom:6px; }
+.gantt-row .lbl{ font-weight:500; font-size:9pt; }
+.gantt-track{ position:relative; height:22px; background:var(--gris); border-radius:6px; overflow:hidden; }
+.gantt-bar{ position:absolute; top:0; height:100%; background:var(--verde); border-radius:6px; display:flex; align-items:center; padding-left:8px; color:#fff; font-family:var(--font-mono); font-size:7.5pt; }
+.gantt-bar.navy{ background:var(--navy); }
+.gantt-scale{ display:grid; grid-template-columns:150px 1fr; gap:10px; margin-bottom:6px; }
+.gantt-weeks{ display:grid; grid-template-columns:repeat(13,1fr); font-family:var(--font-mono); font-size:7pt; color:var(--gray-3); text-align:center; }
+.footnote{ font-size:8pt; color:var(--gray-3); border-top:1px solid var(--hairline); padding-top:8px; margin-top:20px; font-weight:300;}
+
+/* Cover */
+.cover{ min-height:297mm; display:flex; flex-direction:column; background:var(--white); padding:var(--page-pad); position:relative; overflow:hidden; }
+.cover::before{ content:''; position:absolute; top:0; left:0; width:12px; height:100%; background:linear-gradient(180deg, var(--navy), var(--verde)); }
+.cover-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+.cover-studio{ font-family:var(--font-display); font-size:18pt; letter-spacing:1px; }
+.cover-studio .dot{ color:var(--verde); }
+.cover-studio .tag{ display:block; font-family:var(--font-mono); font-size:7pt; letter-spacing:0.16em; text-transform:uppercase; color:var(--gray-3); margin-top:2px; }
+.cover-badge{ text-align:right; font-family:var(--font-mono); font-size:7.5pt; color:var(--gray-2); letter-spacing:0.06em; line-height:1.8; text-transform:uppercase;}
+.cover-hero{ flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+.cover-mark{ width:120px; height:120px; border-radius:28px; background:var(--navy); display:flex; align-items:center; justify-content:center; margin-bottom:22px; box-shadow:0 12px 30px rgba(30,37,69,0.25); }
+.cover-mark span{ font-family:var(--font-display); font-size:44pt; color:var(--white); letter-spacing:1px; line-height:1; }
+.cover-mark span i{ color:var(--verde); font-style:normal; }
+.cover-eyebrow{ font-family:var(--font-body); font-weight:600; font-size:9.5pt; letter-spacing:0.3em; text-transform:uppercase; color:var(--verde); margin-bottom:12px; }
+.cover-title{ font-family:var(--font-display); font-size:52pt; line-height:0.92; letter-spacing:1.5px; }
+.cover-title .g{ color:var(--verde); }
+.cover-sub{ font-family:var(--font-body); font-weight:300; font-size:14pt; color:var(--gray-1); margin-top:14px; }
+.cover-line{ width:64px; height:3px; background:var(--verde); border-radius:2px; margin:20px auto 14px;}
+.cover-desc{ max-width:56ch; color:var(--gray-2); font-size:10pt; font-weight:300; }
+.cover-meta{ border-top:1px solid var(--hairline); padding-top:18px; }
+.cover-meta .mrow{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px 30px; }
+.meta-item .k{ font-family:var(--font-mono); font-size:7pt; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-3); }
+.meta-item .v{ font-size:10pt; margin-top:3px; }
+.cover-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-family:var(--font-mono); font-size:7.5pt; color:var(--gray-3); letter-spacing:0.06em; text-transform:uppercase;}
+
+/* TOC */
+.toc-row{ display:flex; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--hairline); }
+.toc-row .tn{ font-family:var(--font-mono); font-size:10.5pt; color:var(--verde); width:44px; font-weight:500;}
+.toc-row .tt{ font-family:var(--font-display); font-size:16pt; letter-spacing:0.5px; }
+
+/* Closing */
+.closing{ min-height:297mm; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; background:var(--navy); color:#E8EAF2; padding:var(--page-pad);}
+.closing .big{ font-family:var(--font-display); font-size:40pt; line-height:1; letter-spacing:1px; color:var(--white);}
+.closing .sig{ font-family:var(--font-display); font-size:18pt; margin-top:26px; letter-spacing:1px;}
+.closing .meta{ font-family:var(--font-mono); font-size:8pt; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray-3); margin-top:8px;}
+.closing .line{ width:60px; height:3px; background:var(--verde); border-radius:2px; margin:24px auto;}
+
+@media print{
+  @page{ size:A4; margin:14mm 15mm; }
+  @page cover{ margin:0; }
+  @page closing{ margin:0; }
+  body{ background:#fff; } .doc{ padding:0; margin:0; max-width:none; }
+  .runhead{ display:none; }
+  .page{ width:auto; min-height:0; margin:0; padding:0; box-shadow:none; overflow:visible; }
+  .sec-head{ padding-top:3mm; }
+  .cover{ page:cover; height:296mm; min-height:0; margin:0; padding:20mm; box-shadow:none; overflow:hidden; break-after:page; }
+  .closing{ page:closing; height:296mm; min-height:0; margin:0; padding:20mm; box-shadow:none; overflow:hidden; break-before:page; }
+  .card,.stat,.callout,.toc-row,.foda .q,.org-node,.gantt-row{ break-inside:avoid; }
+  table,tr,thead,ul.clean li{ break-inside:avoid; }
+  h3.block,h4.mini,.sec-head{ break-after:avoid; }
+}
+@media screen and (max-width:760px){
+  .page,.cover,.closing{ width:auto; padding:22px; }
+  .grid-2,.grid-3,.grid-4,.cover-meta .mrow,.foda{ grid-template-columns:1fr; }
+  .cover-title{ font-size:38pt; }
+  table{ font-size:8.5pt; }
+  .gantt-row,.gantt-scale{ grid-template-columns:100px 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<!-- ============ 1. PORTADA ============ -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="cover-studio">CONTROL BAÑOS<span class="dot">.</span>SS
+      <span class="tag">Etapa productiva · Grado 11</span>
+    </div>
+    <div class="cover-badge">
+      Propuesta v1.0<br>Julio de 2026<br>SENA — CDITI
+    </div>
+  </div>
+
+  <div class="cover-hero">
+    <div class="cover-mark"><span>CB<i>.</i></span></div>
+    <div class="cover-eyebrow">Propuesta de proyecto productivo</div>
+    <div class="cover-title">CONTROL <span class="g">BAÑOS</span> SS</div>
+    <div class="cover-sub">Sistema inteligente de control de salidas al baño</div>
+    <div class="cover-line"></div>
+    <p class="cover-desc">Aplicación móvil que digitaliza el permiso de salida al baño, reemplazando el control verbal y el papel por un registro trazable de cada salida.</p>
+  </div>
+
+  <div class="cover-meta">
+    <div class="mrow">
+      <div class="meta-item"><div class="k">Programa de formación</div><div class="v">Técnico en Programación de Software</div></div>
+      <div class="meta-item"><div class="k">Institución educativa</div><div class="v">I.E. Santa Sofía — Sede Villa Fanny</div></div>
+      <div class="meta-item"><div class="k">Centro de formación</div><div class="v">SENA — CDITI, Regional Risaralda</div></div>
+      <div class="meta-item"><div class="k">Integrantes</div><div class="v">Jhoan Santiago Chalarca<br>Isabel Galeano<br>Juan Esteban Estrada</div></div>
+      <div class="meta-item"><div class="k">Lugar y fecha</div><div class="v">Dosquebradas, Risaralda<br>Julio de 2026</div></div>
+      <div class="meta-item"><div class="k">Modalidad</div><div class="v">Articulación con la media</div></div>
+    </div>
+  </div>
+
+  <div class="cover-foot">
+    <span>Cada salida, registrada</span>
+    <span>Flutter · Vapor · PostgreSQL</span>
+  </div>
+</section>
+
+<!-- ============ ÍNDICE ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">Índice</div></div>
+
+  <div class="sec-head">
+    <div class="num">00</div>
+    <h2>CONTENIDO</h2>
+    <p class="sub">Estructura definida por la guía de formulación de proyectos productivos del SENA — CDITI.</p>
+  </div>
+
+  <div class="toc-row"><span class="tn">01</span><span class="tt">Portada</span></div>
+  <div class="toc-row"><span class="tn">02</span><span class="tt">Resumen ejecutivo</span></div>
+  <div class="toc-row"><span class="tn">03</span><span class="tt">Planteamiento del problema</span></div>
+  <div class="toc-row"><span class="tn">04</span><span class="tt">Justificación</span></div>
+  <div class="toc-row"><span class="tn">05</span><span class="tt">Objetivos</span></div>
+  <div class="toc-row"><span class="tn">06</span><span class="tt">Marco teórico</span></div>
+  <div class="toc-row"><span class="tn">07</span><span class="tt">Planeación estratégica</span></div>
+  <div class="toc-row"><span class="tn">08</span><span class="tt">Descripción del proyecto</span></div>
+  <div class="toc-row"><span class="tn">09</span><span class="tt">Metas y cronograma</span></div>
+  <div class="toc-row"><span class="tn">10</span><span class="tt">Recursos</span></div>
+  <div class="toc-row"><span class="tn">11</span><span class="tt">Evaluación y seguimiento</span></div>
+  <div class="toc-row"><span class="tn">12</span><span class="tt">Conclusiones</span></div>
+  <div class="toc-row"><span class="tn">13</span><span class="tt">Bibliografía y referencias</span></div>
+
+  <div class="callout" style="margin-top:26px">
+    <span class="lbl">Nota de contexto</span>
+    Control Baños SS se entrega como módulo de una aplicación institucional que incluye también el <strong>Sistema de Timbre Escolar</strong>, desarrollado por otro aprendiz de la misma institución. Ambos módulos comparten la pantalla de ingreso y la base de datos, pero se desarrollan, se versionan y se sustentan por separado.
+  </div>
+</section>
+
+<!-- ============ 2. RESUMEN EJECUTIVO ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">02 · Resumen ejecutivo</div></div>
+
+  <div class="sec-head">
+    <div class="num">02</div>
+    <h2>RESUMEN EJECUTIVO</h2>
+  </div>
+
+  <p>Control Baños SS es una <strong>aplicación móvil</strong> que digitaliza el permiso de salida al baño en instituciones educativas, reemplazando el papel y el control verbal del docente por un registro digital trazable de cada salida.</p>
+
+  <div class="grid-4" style="margin:20px 0">
+    <div class="stat"><div class="big">21</div><div class="lbl">Requerimientos funcionales</div></div>
+    <div class="stat"><div class="big">13<span class="u">sem</span></div><div class="lbl">Duración del proyecto</div></div>
+    <div class="stat"><div class="big">3</div><div class="lbl">Integrantes</div></div>
+    <div class="stat"><div class="big">$0</div><div class="lbl">Costo de licencias</div></div>
+  </div>
+
+  <h3 class="block">MERCADO OBJETIVO</h3>
+  <p>Colegios públicos y privados de básica y media que buscan mejorar la seguridad, la disciplina y el registro de permanencia dentro del aula. El piloto se ejecuta en la sede Villa Fanny de la I.E. Santa Sofía.</p>
+
+  <h3 class="block">METAS</h3>
+  <ul class="clean">
+    <li>Reducir el tiempo que los estudiantes pasan fuera del aula durante la jornada.</li>
+    <li>Generar reportes automáticos para coordinación, sin trabajo manual de digitación.</li>
+    <li>Disponer de un historial trazable y permanente de cada salida.</li>
+  </ul>
+
+  <h3 class="block">BENEFICIOS PRINCIPALES</h3>
+  <div class="grid-2">
+    <div class="card tint"><h4 class="mini">Control en tiempo real</h4><p style="margin:0">El docente ve, en cualquier momento, qué estudiantes están fuera del aula y desde hace cuánto.</p></div>
+    <div class="card tint"><h4 class="mini">Alertas automáticas</h4><p style="margin:0">El sistema avisa cuando una salida supera el tiempo configurado, sin que nadie tenga que vigilar el reloj.</p></div>
+    <div class="card tint"><h4 class="mini">Privacidad de los datos</h4><p style="margin:0">La información del estudiante solo es visible para docentes y coordinación autenticados.</p></div>
+    <div class="card tint"><h4 class="mini">Evidencia digital</h4><p style="margin:0">Un historial permanente que la institución puede consultar y exportar para sustentar decisiones.</p></div>
+  </div>
+
+  <div class="callout">
+    <span class="lbl">Alcance de esta versión</span>
+    Aplicación <strong>móvil</strong> para Android e iOS. Esta propuesta no contempla versión web ni de escritorio: el objetivo general y el marco teórico del proyecto se construyen sobre desarrollo móvil con Flutter.
+  </div>
+</section>
+
+<!-- ============ 3. PROBLEMA ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">03 · Problema</div></div>
+
+  <div class="sec-head">
+    <div class="num">03</div>
+    <h2>PLANTEAMIENTO DEL PROBLEMA</h2>
+  </div>
+
+  <p>En la I.E. Santa Sofía — sede Villa Fanny, el control de salidas al baño se lleva de forma manual: permiso verbal o, en el mejor de los casos, una anotación en el cuaderno personal del docente. De ahí se derivan cuatro problemas concretos.</p>
+
+  <h3 class="block">NO SE SABE QUIÉN ESTÁ FUERA</h3>
+  <p>Si en mitad de la clase alguien pregunta por un estudiante, el docente responde de memoria. Con 35 estudiantes y varias salidas por hora, la memoria falla. En una emergencia —un simulacro, un sismo, una evacuación— la institución no tiene forma de saber cuántos estudiantes no están en su aula.</p>
+
+  <h3 class="block">NO SE SABE CUÁNTO TARDAN</h3>
+  <p>Una salida de tres minutos y una de veinticinco se ven exactamente igual desde el escritorio de un docente que está dictando clase. El tiempo fuera del aula no se mide, así que tampoco se puede corregir.</p>
+
+  <h3 class="block">NO HAY HISTORIAL</h3>
+  <p>Un estudiante que sale cuatro veces al día, todos los días, es indistinguible de uno que sale una vez a la semana. Puede ser un patrón de evasión o un problema de salud que la institución debería atender. Sin registro, ninguna de las dos cosas se detecta.</p>
+
+  <h3 class="block">COORDINACIÓN NO TIENE DATOS</h3>
+  <p>Cualquier decisión sobre convivencia, horarios de descanso o distribución de baños se toma sobre percepciones, no sobre cifras. La ausencia de datos impide que docentes y coordinación tomen decisiones informadas sobre convivencia, seguridad y aprovechamiento del tiempo escolar.</p>
+
+  <div class="callout">
+    <span class="lbl">Costo acumulado</span>
+    El costo de todo lo anterior es tiempo de clase. Cada permiso verbal interrumpe la explicación, y cada estudiante que tarda de más es un estudiante que se perdió una parte de la lección.
+  </div>
+</section>
+
+<!-- ============ 4. JUSTIFICACIÓN + 5. OBJETIVOS ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">04 · Justificación</div></div>
+
+  <div class="sec-head">
+    <div class="num">04</div>
+    <h2>JUSTIFICACIÓN</h2>
+  </div>
+
+  <p>El proyecto surge de una necesidad real observada por estudiantes y docentes: la interrupción constante de la clase y la falta de control sobre los tiempos fuera del aula.</p>
+
+  <div class="grid-3">
+    <div class="card tint"><h4 class="mini">Seguridad estudiantil</h4><p style="margin:0">La institución sabe en todo momento qué estudiantes están fuera del aula y desde cuándo.</p></div>
+    <div class="card tint"><h4 class="mini">Eficiencia del docente</h4><p style="margin:0">Autorizar y registrar toma tres toques, menos de lo que cuesta hoy discutir un permiso.</p></div>
+    <div class="card tint"><h4 class="mini">Mejora continua</h4><p style="margin:0">Coordinación obtiene datos objetivos para decidir sobre convivencia y uso del tiempo.</p></div>
+  </div>
+
+  <p style="margin-top:16px">Es además un proyecto viable desde el programa de Técnico en Programación de Software: aplica desarrollo móvil, diseño de bases de datos, autenticación con tokens y análisis de datos, competencias propias de la formación. Y al construirse sobre tecnología libre —Flutter, Vapor y PostgreSQL—, el costo de licenciamiento es cero, lo que hace la solución sostenible para colegios públicos.</p>
+
+  <div class="sec-head" style="margin-top:34px">
+    <div class="num">05</div>
+    <h2>OBJETIVOS</h2>
+  </div>
+
+  <div class="card dark">
+    <h4 class="mini" style="color:#fff">Objetivo general</h4>
+    <p style="margin:0">Desarrollar un sistema móvil que permita autorizar, registrar y analizar las salidas al baño de los estudiantes en tiempo real, dejando constancia digital de cada salida y generando reportes de uso para la coordinación de la institución.</p>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:64px">#</th><th>Objetivo específico</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">OE01</td><td>Diseñar la interfaz para el docente: ingreso, panel de control, autorización de salida, confirmación, historial y reportes.</td></tr>
+      <tr><td class="rf">OE02</td><td>Implementar la base de datos con grupos, estudiantes, salidas, alertas y configuración, con seguridad por perfil de usuario.</td></tr>
+      <tr><td class="rf">OE03</td><td>Integrar la autenticación con el sistema de identidad institucional, de modo que el docente use un solo usuario y una sola contraseña para toda la aplicación.</td></tr>
+      <tr><td class="rf">OE04</td><td>Generar reportes automáticos: salidas por día, estudiantes con más salidas y alertas de tiempo prolongado.</td></tr>
+      <tr><td class="rf">OE05</td><td>Validar la solución con docentes de la sede Villa Fanny mediante una prueba piloto y ajustar según su retroalimentación.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 6. MARCO TEÓRICO ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">06 · Marco teórico</div></div>
+
+  <div class="sec-head">
+    <div class="num">06</div>
+    <h2>MARCO TEÓRICO</h2>
+  </div>
+
+  <h3 class="block">DESARROLLO MÓVIL CON FLUTTER</h3>
+  <p>Flutter es un framework de Google basado en el lenguaje Dart que permite construir aplicaciones nativas para Android e iOS desde una sola base de código. Usa widgets propios y un motor de renderizado de alto rendimiento, lo que evita mantener dos proyectos separados y duplicar el esfuerzo del equipo.</p>
+
+  <h3 class="block">BACKEND CON VAPOR</h3>
+  <p>Vapor es un framework de servidor escrito en Swift que expone una API REST para autenticación y para la gestión de grupos, estudiantes y salidas, siguiendo el patrón cliente-servidor. Su ORM, Fluent, traduce las tablas de la base de datos a modelos del lenguaje y administra las migraciones de esquema.</p>
+
+  <h3 class="block">COMUNICACIÓN CLIENTE-SERVIDOR</h3>
+  <p>La aplicación Flutter consume los endpoints HTTP/JSON expuestos por Vapor mediante el paquete <span class="mono">dio</span>. Cada solicitud viaja con un token de autenticación en la cabecera, de modo que el servidor sabe quién la envía sin necesidad de mantener sesión en memoria.</p>
+
+  <h3 class="block">AUTENTICACIÓN CON JWT</h3>
+  <p>Un JSON Web Token es una credencial firmada digitalmente que transporta la identidad del usuario. En este proyecto los tokens los emite el sistema de identidad institucional y los verifica el backend de Control Baños usando una <strong>llave pública</strong>: puede comprobar que un token es auténtico, pero no puede fabricar tokens nuevos. Ese es el mecanismo que permite un solo inicio de sesión para toda la aplicación sin compartir contraseñas entre módulos.</p>
+
+  <h3 class="block">BASE DE DATOS RELACIONAL</h3>
+  <p>PostgreSQL es el motor de persistencia, integrado con Vapor a través de Fluent. El modelo aplica cinco entidades —grupos, estudiantes, salidas, alertas y configuración— y usa <strong>schemas</strong> para separar los datos de Control Baños de los del resto de la aplicación institucional, garantizando que cada módulo solo escriba sobre lo suyo.</p>
+
+  <h3 class="block">UX EDUCATIVO</h3>
+  <p>Diseño mobile-first, con una instrucción por pantalla, tipografía legible en tamaños pequeños y colores institucionales —Azul Marino <span class="mono">#1E2545</span> y Verde Acción <span class="mono">#2D8C3E</span>—. El criterio rector es que registrar una salida cueste menos esfuerzo que no registrarla.</p>
+
+  <h3 class="block">ANTECEDENTES</h3>
+  <p>Aplicaciones como HallPass y e-hallpass, ampliamente adoptadas en instituciones de Estados Unidos, demuestran que digitalizar el permiso de salida reduce interrupciones y mejora la seguridad escolar. Su modelo de licenciamiento por estudiante las hace inviables para el sector público colombiano, brecha que este proyecto busca cubrir con tecnología libre.</p>
+</section>
+
+<!-- ============ 7. PLANEACIÓN ESTRATÉGICA ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">07 · Planeación estratégica</div></div>
+
+  <div class="sec-head">
+    <div class="num">07</div>
+    <h2>PLANEACIÓN ESTRATÉGICA</h2>
+  </div>
+
+  <h3 class="block">ANÁLISIS FODA</h3>
+  <div class="foda">
+    <div class="q f">
+      <h4>FORTALEZAS</h4>
+      <ul>
+        <li>Equipo con formación en desarrollo de software.</li>
+        <li>Proyecto alineado con una necesidad declarada del colegio.</li>
+        <li>Tecnología gratuita y de código abierto.</li>
+        <li>Acceso directo a los docentes que serán los usuarios.</li>
+      </ul>
+    </div>
+    <div class="q o">
+      <h4>OPORTUNIDADES</h4>
+      <ul>
+        <li>Interés de la institución en digitalizar procesos.</li>
+        <li>Demanda de datos objetivos de convivencia.</li>
+        <li>Ausencia de soluciones asequibles en el sector público.</li>
+        <li>Posibilidad de replicar en otras sedes e instituciones.</li>
+      </ul>
+    </div>
+    <div class="q d">
+      <h4>DEBILIDADES</h4>
+      <ul>
+        <li>Tiempo limitado por la jornada escolar.</li>
+        <li>Equipos personales para desarrollar.</li>
+        <li>Primera experiencia del equipo con Swift y Vapor.</li>
+      </ul>
+    </div>
+    <div class="q a">
+      <h4>AMENAZAS</h4>
+      <ul>
+        <li>Resistencia al cambio de algunos docentes.</li>
+        <li>Dependencia de la conexión a internet del colegio.</li>
+        <li>Coordinación con el equipo del Sistema de Timbre Escolar.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:18px">
+    <div class="card dark">
+      <h4 class="mini" style="color:#fff">Misión</h4>
+      <p style="margin:0">Facilitar a los docentes el control seguro y trazable de las salidas al baño mediante tecnología móvil, sin agregarles carga de trabajo.</p>
+    </div>
+    <div class="card tint">
+      <h4 class="mini">Visión</h4>
+      <p style="margin:0">Ser la herramienta estándar de gestión de salidas en las instituciones educativas de Risaralda para 2028.</p>
+    </div>
+  </div>
+
+  <h3 class="block">ORGANIGRAMA</h3>
+  <div class="org">
+    <div class="org-row">
+      <div class="org-node lead"><div class="n">Jhoan Santiago Chalarca</div><div class="r">Líder de proyecto · Backend Vapor y base de datos</div></div>
+    </div>
+    <div class="org-arrow">↓</div>
+    <div class="org-row">
+      <div class="org-node"><div class="n">Isabel Galeano</div><div class="r">Diseño UX · Documentación</div></div>
+      <div class="org-node"><div class="n">Juan Esteban Estrada</div><div class="r">Frontend Flutter · Pruebas</div></div>
+    </div>
+  </div>
+  <p class="footnote">El equipo cuenta además con el acompañamiento de un instructor asesor del SENA — CDITI y con la validación de dos docentes de la sede Villa Fanny durante el piloto.</p>
+</section>
+
+<!-- ============ 8. DESCRIPCIÓN ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">08 · Descripción</div></div>
+
+  <div class="sec-head">
+    <div class="num">08</div>
+    <h2>DESCRIPCIÓN DEL PROYECTO</h2>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:24%">Pregunta</th><th>Respuesta</th></tr></thead>
+    <tbody>
+      <tr><td><strong>¿Qué se quiere hacer?</strong></td><td>Una aplicación móvil llamada Control Baños SS que permite al docente autorizar salidas, ver quién está fuera del aula y consultar historial y reportes.</td></tr>
+      <tr><td><strong>¿Cómo se va a hacer?</strong></td><td>Desarrollo iterativo con Flutter (Dart) en el frontend móvil y Vapor (Swift) como API backend sobre PostgreSQL, con validación semanal con el instructor asesor.</td></tr>
+      <tr><td><strong>¿Dónde se va a realizar?</strong></td><td>En la I.E. Santa Sofía — Sede Villa Fanny, Dosquebradas (Risaralda), durante la etapa productiva del grado 11.</td></tr>
+      <tr><td><strong>¿Quiénes lo harán?</strong></td><td>Jhoan Santiago Chalarca, Isabel Galeano y Juan Esteban Estrada, aprendices del programa Técnico en Programación de Software.</td></tr>
+      <tr><td><strong>¿A quién va dirigido?</strong></td><td>Docentes, coordinación y estudiantes de la sede Villa Fanny como piloto, y a cualquier institución educativa como beneficiario final.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">ARQUITECTURA DE LA SOLUCIÓN</h3>
+  <table>
+    <thead><tr><th style="width:26%">Pieza</th><th style="width:28%">Tecnología</th><th>Función</th></tr></thead>
+    <tbody>
+      <tr><td>Aplicación móvil</td><td>Flutter (Dart)</td><td>Panel de control, autorización de salidas, historial y reportes</td></tr>
+      <tr><td>Backend</td><td>Vapor 4 (Swift)</td><td>API REST propia que aplica las reglas de negocio</td></tr>
+      <tr><td>Base de datos</td><td>PostgreSQL</td><td>Grupos, estudiantes, salidas, alertas y configuración</td></tr>
+      <tr><td>Identidad</td><td>JWT firmado</td><td>Un solo inicio de sesión para toda la aplicación institucional</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">FUERA DE ALCANCE</h3>
+  <ul class="clean">
+    <li>Hardware físico: sensores de puerta, torniquetes o tarjetas RFID.</li>
+    <li>Notificaciones push o por correo electrónico.</li>
+    <li>Versión web o aplicación de escritorio.</li>
+    <li>Acceso de estudiantes o padres de familia al sistema.</li>
+    <li>Funcionamiento sin conexión a internet.</li>
+  </ul>
+</section>
+
+<!-- ============ 9. METAS Y CRONOGRAMA ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">09 · Metas y cronograma</div></div>
+
+  <div class="sec-head">
+    <div class="num">09</div>
+    <h2>METAS Y CRONOGRAMA</h2>
+    <p class="sub">Trece semanas de ejecución dentro de la etapa productiva del grado 11.</p>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:56px">Meta</th><th>Descripción</th><th style="width:20%">Semanas</th><th style="width:22%">Responsable</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">M1</td><td>Prototipo navegable de las cinco pantallas principales</td><td>1 a 3</td><td>Isabel</td></tr>
+      <tr><td class="rf">M2</td><td>Modelo de base de datos con grupos, estudiantes, salidas, alertas y configuración</td><td>4 a 5</td><td>Jhoan</td></tr>
+      <tr><td class="rf">M3</td><td>Ingreso funcional con roles y panel de control con datos reales</td><td>6 a 8</td><td>Jhoan · Juan Esteban</td></tr>
+      <tr><td class="rf">M4</td><td>Módulos de autorizar salida, registrar regreso, historial y reportes</td><td>9 a 11</td><td>Juan Esteban</td></tr>
+      <tr><td class="rf">M5</td><td>Prueba piloto con dos docentes y ajuste según retroalimentación</td><td>12</td><td>Equipo</td></tr>
+      <tr><td class="rf">M6</td><td>Sustentación final con documentación y video demostrativo</td><td>13</td><td>Equipo</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">DIAGRAMA DE GANTT</h3>
+  <div class="gantt">
+    <div class="gantt-scale">
+      <div></div>
+      <div class="gantt-weeks">
+        <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div><div>11</div><div>12</div><div>13</div>
+      </div>
+    </div>
+    <div class="gantt-row"><div class="lbl">M1 · Prototipo</div><div class="gantt-track"><div class="gantt-bar navy" style="left:0%; width:23.08%">Sem 1–3</div></div></div>
+    <div class="gantt-row"><div class="lbl">M2 · Base de datos</div><div class="gantt-track"><div class="gantt-bar navy" style="left:23.08%; width:15.38%">Sem 4–5</div></div></div>
+    <div class="gantt-row"><div class="lbl">M3 · Login y panel</div><div class="gantt-track"><div class="gantt-bar" style="left:38.46%; width:23.08%">Sem 6–8</div></div></div>
+    <div class="gantt-row"><div class="lbl">M4 · Salidas y reportes</div><div class="gantt-track"><div class="gantt-bar" style="left:61.54%; width:23.08%">Sem 9–11</div></div></div>
+    <div class="gantt-row"><div class="lbl">M5 · Piloto</div><div class="gantt-track"><div class="gantt-bar navy" style="left:84.62%; width:7.69%">12</div></div></div>
+    <div class="gantt-row"><div class="lbl">M6 · Sustentación</div><div class="gantt-track"><div class="gantt-bar navy" style="left:92.31%; width:7.69%">13</div></div></div>
+  </div>
+
+  <div class="callout">
+    <span class="lbl">Dependencia externa</span>
+    La meta M3 depende de que el sistema de identidad institucional exponga la verificación de tokens. Esa entrega está coordinada con el equipo del Sistema de Timbre Escolar y debe estar lista al terminar la semana 5.
+  </div>
+</section>
+
+<!-- ============ 10. RECURSOS ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">10 · Recursos</div></div>
+
+  <div class="sec-head">
+    <div class="num">10</div>
+    <h2>RECURSOS</h2>
+  </div>
+
+  <h3 class="block">MATERIALES</h3>
+  <table>
+    <thead><tr><th>Recurso</th><th style="width:18%">Cantidad</th><th style="width:26%">Origen</th></tr></thead>
+    <tbody>
+      <tr><td>Computadores portátiles</td><td>3</td><td>Propios de los integrantes</td></tr>
+      <tr><td>Conexión a internet</td><td>Permanente</td><td>Institución y hogares</td></tr>
+      <tr><td>Dispositivos móviles para pruebas</td><td>3</td><td>Propios de los integrantes</td></tr>
+      <tr><td>Video beam para socialización</td><td>1</td><td>Institución educativa</td></tr>
+      <tr><td>Cuaderno de campo</td><td>3</td><td>Propios de los integrantes</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">HUMANOS</h3>
+  <table>
+    <thead><tr><th>Rol</th><th style="width:18%">Cantidad</th><th style="width:34%">Función</th></tr></thead>
+    <tbody>
+      <tr><td>Aprendices del programa</td><td>3</td><td>Desarrollo, diseño y documentación</td></tr>
+      <tr><td>Instructor asesor SENA</td><td>1</td><td>Acompañamiento técnico y revisión quincenal</td></tr>
+      <tr><td>Docentes de la sede</td><td>2</td><td>Validación en la prueba piloto</td></tr>
+      <tr><td>Coordinador</td><td>1</td><td>Validación institucional de los reportes</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">TECNOLÓGICOS</h3>
+  <p><span class="chip g">Flutter SDK</span><span class="chip g">Dart</span><span class="chip g">Vapor 4</span><span class="chip g">Swift</span><span class="chip g">PostgreSQL</span><span class="chip">Fluent ORM</span><span class="chip">Git</span><span class="chip">GitHub</span><span class="chip">Figma</span><span class="chip">Canva</span></p>
+
+  <h3 class="block">FINANCIEROS</h3>
+  <table>
+    <thead><tr><th>Concepto</th><th style="width:24%">Costo estimado</th><th style="width:28%">Asume</th></tr></thead>
+    <tbody>
+      <tr><td>Licencias de software</td><td>$0</td><td>Herramientas libres o con plan educativo gratuito</td></tr>
+      <tr><td>Equipos de desarrollo</td><td>$0</td><td>Equipos propios de los integrantes</td></tr>
+      <tr><td>Transporte y refrigerios</td><td>Variable</td><td>Integrantes del equipo</td></tr>
+      <tr><td>Infraestructura de servidor</td><td>$0</td><td>Compartida con la aplicación institucional</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="lbl">Sostenibilidad</span>
+    El costo cero de licenciamiento no es un detalle presupuestal: es lo que hace la solución replicable en colegios públicos que no pueden pagar plataformas comerciales por estudiante.
+  </div>
+</section>
+
+<!-- ============ 11. EVALUACIÓN ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">11 · Evaluación</div></div>
+
+  <div class="sec-head">
+    <div class="num">11</div>
+    <h2>EVALUACIÓN Y SEGUIMIENTO</h2>
+  </div>
+
+  <h3 class="block">INDICADORES</h3>
+  <table>
+    <thead><tr><th style="width:56px">#</th><th>Indicador</th><th style="width:24%">Meta</th></tr></thead>
+    <tbody>
+      <tr><td class="rf">I1</td><td>Salidas registradas por semana durante el piloto</td><td>Al menos 30</td></tr>
+      <tr><td class="rf">I2</td><td>Tiempo promedio fuera del aula, antes contra después del sistema</td><td>Reducción del 20 %</td></tr>
+      <tr><td class="rf">I3</td><td>Satisfacción de los docentes piloto, en escala de 1 a 5</td><td>4.0 o más</td></tr>
+      <tr><td class="rf">I4</td><td>Reportes generados y consultados por coordinación</td><td>Al menos 4 durante el piloto</td></tr>
+      <tr><td class="rf">I5</td><td>Alertas de tiempo excedido atendidas por coordinación</td><td>80 % de las generadas</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="lbl">Sobre el indicador I2</span>
+    La medición del "antes" es el punto débil del indicador: hoy no existe registro de duraciones. Durante la primera semana del piloto se toma una línea base con los datos que el propio sistema captura, y la comparación se hace contra esa línea, no contra una estimación.
+  </div>
+
+  <h3 class="block">PLAN DE SEGUIMIENTO</h3>
+  <table>
+    <thead><tr><th style="width:26%">Actividad</th><th style="width:20%">Frecuencia</th><th>Producto</th></tr></thead>
+    <tbody>
+      <tr><td>Reunión de equipo</td><td>Semanal</td><td>Acta breve con avances, bloqueos y compromisos</td></tr>
+      <tr><td>Revisión con el instructor</td><td>Quincenal</td><td>Retroalimentación técnica y ajuste del cronograma</td></tr>
+      <tr><td>Bitácora de avances</td><td>Continua</td><td>Historial de commits y issues en GitHub</td></tr>
+      <tr><td>Validación con docentes</td><td>Al cierre de cada meta</td><td>Observaciones de usabilidad sobre la pantalla entregada</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">EVALUACIÓN FINAL</h3>
+  <ul class="clean">
+    <li>Sustentación ante jurado con demostración en vivo del sistema.</li>
+    <li>Entrega del prototipo funcional instalado y con datos del piloto.</li>
+    <li>Entrega del informe escrito y del documento de requerimientos.</li>
+    <li>Video demostrativo del flujo completo: ingreso, autorización, regreso y reporte.</li>
+  </ul>
+</section>
+
+<!-- ============ 12 + 13 ============ -->
+<section class="page">
+  <div class="runhead"><div class="rh-brand">CONTROL BAÑOS<span class="dot">.</span>SS</div><div class="rh-meta">12 · Conclusiones</div></div>
+
+  <div class="sec-head">
+    <div class="num">12</div>
+    <h2>CONCLUSIONES</h2>
+  </div>
+
+  <ul class="clean">
+    <li>Control Baños SS responde a una necesidad concreta y verificable del colegio, y aporta una solución tecnológica realista y medible.</li>
+    <li>El proyecto integra las competencias del programa de Técnico en Programación de Software: desarrollo móvil, diseño de interfaces, bases de datos relacionales, autenticación con tokens y análisis de datos.</li>
+    <li>El uso de tecnología gratuita y de código abierto hace la solución sostenible para colegios públicos, sin depender de licencias por estudiante.</li>
+    <li>La convivencia con el Sistema de Timbre Escolar demuestra que dos equipos pueden entregar módulos independientes sobre una misma aplicación e infraestructura, siempre que la frontera entre ellos esté definida por escrito.</li>
+    <li>El piloto permitirá medir con datos objetivos el impacto en el tiempo de clase y en la seguridad estudiantil, sustituyendo percepciones por cifras.</li>
+  </ul>
+
+  <div class="sec-head" style="margin-top:34px">
+    <div class="num">13</div>
+    <h2>BIBLIOGRAFÍA Y REFERENCIAS</h2>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:30%">Fuente</th><th>Referencia</th></tr></thead>
+    <tbody>
+      <tr><td>SENA</td><td>Guía para la formulación de proyectos productivos — Articulación con la Media. Servicio Nacional de Aprendizaje, 2024.</td></tr>
+      <tr><td>Ministerio de Educación</td><td>Orientaciones para el uso de herramientas digitales en el aula. Ministerio de Educación Nacional, 2023.</td></tr>
+      <tr><td>Flutter</td><td>Documentación oficial de Flutter — <span class="mono">flutter.dev</span> — y del lenguaje Dart — <span class="mono">dart.dev</span>.</td></tr>
+      <tr><td>Vapor</td><td>Documentación oficial de Vapor — <span class="mono">docs.vapor.codes</span> — y del lenguaje Swift — <span class="mono">swift.org</span>.</td></tr>
+      <tr><td>PostgreSQL</td><td>PostgreSQL — Documentación oficial — <span class="mono">postgresql.org/docs</span>.</td></tr>
+      <tr><td>JSON Web Tokens</td><td>RFC 7519 — JSON Web Token (JWT). Internet Engineering Task Force, 2015.</td></tr>
+      <tr><td>Referentes</td><td>HallPass Systems — <span class="mono">hallpass.com</span> — y e-hallpass — <span class="mono">eduspiresolutions.org</span>.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="footnote">Propuesta de Proyecto Productivo · Control Baños SS · Versión 1.0 · Julio de 2026 · I.E. Santa Sofía — Sede Villa Fanny, Dosquebradas (Risaralda) · SENA — CDITI, Regional Risaralda</p>
+</section>
+
+<!-- ============ CIERRE ============ -->
+<section class="closing">
+  <div class="big">CADA SALIDA,<br>REGISTRADA.</div>
+  <div class="line"></div>
+  <p style="max-width:52ch; color:#C6CBDC; font-weight:300;">Un minuto fuera del aula que nadie mide es un minuto de clase que la institución no puede recuperar.</p>
+  <div class="sig">JHOAN · ISABEL · JUAN ESTEBAN</div>
+  <div class="meta">Propuesta de Proyecto Productivo · Julio de 2026</div>
+  <div class="meta">I.E. Santa Sofía — Sede Villa Fanny · SENA CDITI</div>
+</section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swifty Devs — Manual de Marca</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black:   #0a0a0a;
+    --white:   #ffffff;
+    --orange:  #ff6b35;
+    --glow:    #ff8c5a;
+    --gray-1:  #1c1c1e;
+    --gray-2:  #2c2c2e;
+    --gray-3:  #636366;
+    --gray-4:  #aeaeb2;
+    --gray-5:  #f2f2f7;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body:    'DM Sans', -apple-system, sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--white);
+    color: var(--black);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 64px;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    transition: border-color 0.3s;
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 17px; font-weight: 500;
+    letter-spacing: -0.3px;
+    color: var(--black); text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-logo img { height: 48px; width: auto; display: block; }
+  .nav-logo span { color: var(--orange); }
+
+  .nav-links { display: flex; gap: 28px; list-style: none; }
+  .nav-links a {
+    font-size: 12px; font-weight: 400;
+    color: var(--black); text-decoration: none;
+    opacity: 0.6; transition: opacity 0.2s;
+  }
+  .nav-links a:hover { opacity: 1; }
+
+  /* ─── COVER ─── */
+  .cover {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 0 24px;
+    position: relative; overflow: hidden;
+    background: var(--black);
+  }
+
+  .cover-noise {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; opacity: 0.6;
+  }
+
+  .cover-tag {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 3.5px; text-transform: uppercase;
+    color: var(--orange); margin-bottom: 36px;
+    opacity: 0; animation: fadeUp 0.8s ease 0.2s forwards;
+  }
+
+  .cover-mark {
+    width: clamp(360px, 48vw, 560px);
+    height: auto; margin-bottom: 40px;
+    opacity: 0; animation: fadeUp 0.9s ease 0.1s forwards;
+    filter: drop-shadow(0 0 70px rgba(255, 107, 53, 0.35));
+  }
+
+  .cover-title {
+    font-family: var(--font-display);
+    font-size: clamp(64px, 11vw, 120px);
+    font-weight: 400; line-height: 0.95;
+    letter-spacing: -4px; color: var(--white);
+    margin-bottom: 12px;
+    opacity: 0; animation: fadeUp 0.9s ease 0.35s forwards;
+  }
+
+  .cover-title em { font-style: italic; color: var(--orange); }
+
+  .cover-sub {
+    font-size: 14px; font-weight: 300;
+    color: var(--gray-3); letter-spacing: 1px;
+    margin-top: 36px;
+    opacity: 0; animation: fadeUp 1s ease 0.6s forwards;
+  }
+
+  .cover-meta {
+    position: absolute; bottom: 48px;
+    display: flex; gap: 48px;
+    opacity: 0; animation: fadeIn 1s ease 1.2s forwards;
+  }
+
+  .cover-meta-item { text-align: center; }
+  .cover-meta-item span {
+    display: block; font-size: 10px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gray-3); margin-bottom: 4px;
+  }
+  .cover-meta-item p {
+    font-size: 14px; font-weight: 300; color: var(--gray-4);
+  }
+
+  /* ─── SECTION SHARED ─── */
+  .section-label {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--orange); margin-bottom: 20px;
+  }
+
+  .section-number {
+    font-family: var(--font-mono);
+    font-size: 10px; color: var(--gray-4);
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+
+  /* ─── INDEX ─── */
+  .section-index {
+    padding: 120px 48px;
+    max-width: 1000px; margin: 0 auto;
+  }
+
+  .index-title {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 400; letter-spacing: -1.5px;
+    margin-bottom: 60px;
+  }
+
+  .index-list { list-style: none; }
+
+  .index-item {
+    display: flex; align-items: baseline;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    text-decoration: none; color: var(--black);
+    transition: color 0.2s;
+  }
+
+  .index-item:hover { color: var(--orange); }
+
+  .index-item-left {
+    display: flex; align-items: baseline; gap: 20px;
+  }
+
+  .index-num {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--gray-4);
+    min-width: 24px;
+  }
+
+  .index-name {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 400; letter-spacing: -0.5px;
+  }
+
+  .index-dot {
+    flex: 1; height: 1px;
+    background: repeating-linear-gradient(to right, var(--gray-4) 0, var(--gray-4) 3px, transparent 3px, transparent 10px);
+    margin: 0 20px; opacity: 0.4;
+  }
+
+  .index-page {
+    font-size: 13px; color: var(--gray-4); font-weight: 300;
+  }
+
+  /* ─── MISION/VISION ─── */
+  .section-mv {
+    background: var(--black);
+    padding: 140px 48px;
+  }
+
+  .mv-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+  }
+
+  .mv-block {}
+
+  .mv-block h3 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4vw, 44px);
+    font-weight: 400; letter-spacing: -1px;
+    color: var(--white); margin-bottom: 24px;
+    line-height: 1.1;
+  }
+
+  .mv-block h3 em { font-style: italic; color: var(--orange); }
+
+  .mv-block p {
+    font-size: 16px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.75;
+  }
+
+  /* ─── LOGO ─── */
+  .section-logo {
+    padding: 140px 48px;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .logo-header {
+    display: flex; justify-content: space-between;
+    align-items: flex-end; margin-bottom: 80px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .logo-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 400; letter-spacing: -1.5px;
+  }
+
+  .logo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px; margin-bottom: 60px;
+  }
+
+  .logo-card {
+    border-radius: 20px;
+    padding: 60px 40px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 24px;
+  }
+
+  .logo-card.light { background: var(--white); border: 1px solid rgba(0,0,0,0.08); }
+  .logo-card.dark  { background: var(--black); }
+  .logo-card.gray  { background: var(--gray-5); }
+
+  .logo-mark {
+    width: 280px; height: auto; display: block;
+  }
+  .logo-card.gray .logo-mark { filter: grayscale(1); }
+
+  .logo-wordmark {
+    font-family: var(--font-display);
+    font-size: 28px; font-weight: 400;
+    letter-spacing: -0.5px;
+  }
+  .logo-wordmark span { color: var(--orange); }
+  .logo-card.dark .logo-wordmark { color: var(--white); }
+
+  .logo-card-label {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gray-4);
+  }
+
+  .logo-rules {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .logo-rule h4 {
+    font-size: 15px; font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .logo-rule ul {
+    list-style: none;
+  }
+
+  .logo-rule ul li {
+    font-size: 14px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.7;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex; gap: 10px; align-items: baseline;
+  }
+
+  .logo-rule ul li::before {
+    content: "–";
+    color: var(--orange); flex-shrink: 0;
+  }
+
+  .logo-rule.bad h4 { color: #cc3333; }
+  .logo-rule.bad ul li::before { content: "✕"; color: #cc3333; }
+  .logo-rule.good h4 { color: #2e8b2e; }
+  .logo-rule.good ul li::before { content: "✓"; color: #2e8b2e; }
+
+  /* ─── ZONA DE EXCLUSIÓN ─── */
+  .logo-safety {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 60px;
+    padding: 60px 50px;
+    background: var(--gray-5);
+    border-radius: 20px;
+    align-items: center;
+  }
+
+  .safety-tag {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--orange); margin-bottom: 16px;
+  }
+
+  .safety-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.5vw, 36px);
+    font-weight: 400; letter-spacing: -1px;
+    line-height: 1.1; margin-bottom: 20px;
+  }
+  .safety-title em { font-style: italic; color: var(--orange); }
+
+  .safety-desc {
+    font-size: 14px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.7;
+    margin-bottom: 28px;
+  }
+  .safety-desc strong { color: var(--black); font-weight: 500; }
+
+  .safety-specs { display: flex; flex-direction: column; }
+
+  .spec-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    font-size: 13px;
+  }
+  .spec-row:last-child { border-bottom: none; }
+
+  .spec-key { color: var(--gray-3); font-weight: 300; }
+  .spec-val {
+    font-family: var(--font-mono);
+    color: var(--black);
+    font-size: 12px;
+  }
+
+  .safety-visual {
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .safety-outer {
+    position: relative;
+    padding: 32px;
+    border: 1.5px dashed var(--orange);
+    border-radius: 12px;
+    background: var(--white);
+  }
+
+  .safety-inner {
+    border: 1px dashed rgba(0,0,0,0.18);
+    border-radius: 4px;
+    padding: 4px 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .safety-mark {
+    width: 380px; height: 220px; display: block;
+    background: url('LOGO_MARCa-removebg-preview.png') center / 175% auto no-repeat;
+  }
+
+  .safety-label-x {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--orange);
+    font-weight: 500;
+    background: var(--gray-5);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .safety-top    { top: -12px; left: 50%; transform: translateX(-50%); }
+  .safety-bottom { bottom: -12px; left: 50%; transform: translateX(-50%); }
+  .safety-left   { top: 50%; left: -12px; transform: translateY(-50%); }
+  .safety-right  { top: 50%; right: -12px; transform: translateY(-50%); }
+
+  /* ─── VARIANTES DEL SISTEMA ─── */
+  .logo-system-head {
+    margin-bottom: 28px;
+  }
+
+  .logo-system {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 60px;
+  }
+
+  .variant-card {
+    background: var(--white);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 48px 32px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .variant-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    margin-bottom: 28px;
+    width: 100%;
+  }
+
+  .variant-meta {
+    border-top: 1px solid rgba(0,0,0,0.06);
+    padding-top: 18px;
+    width: 100%;
+  }
+
+  .variant-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--gray-4);
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .variant-name {
+    font-size: 15px; font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .variant-use {
+    font-size: 12px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.55;
+  }
+
+  .v-isotype img { width: 160px; height: auto; display: block; }
+
+  .v-wordmark {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 4.2vw, 56px);
+    font-weight: 400; letter-spacing: -0.5px;
+    color: var(--black);
+  }
+  .v-wordmark span { color: var(--orange); }
+
+  .v-horizontal {
+    display: flex; align-items: center; gap: 18px;
+  }
+  .v-horizontal img { width: 100px; height: auto; display: block; }
+  .v-horizontal .vh-text {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 3.2vw, 42px);
+    font-weight: 400; letter-spacing: -0.5px;
+  }
+  .v-horizontal .vh-text span { color: var(--orange); }
+
+  .v-vertical {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 10px;
+  }
+  .v-vertical img { width: 120px; height: auto; display: block; }
+  .v-vertical .vv-text {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 400; letter-spacing: -0.5px;
+  }
+  .v-vertical .vv-text span { color: var(--orange); }
+
+  /* ─── PALETA ─── */
+  .section-palette {
+    background: var(--black);
+    padding: 140px 48px;
+  }
+
+  .palette-inner {
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .palette-header {
+    display: flex; justify-content: space-between;
+    align-items: flex-end; margin-bottom: 60px;
+  }
+
+  .palette-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 400; letter-spacing: -1.5px;
+    color: var(--white);
+  }
+
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px; margin-bottom: 60px;
+  }
+
+  .palette-swatch {
+    border-radius: 16px; overflow: hidden;
+  }
+
+  .swatch-color {
+    height: 160px;
+    position: relative;
+  }
+
+  .swatch-info {
+    padding: 16px;
+    background: var(--gray-1);
+    border-radius: 0 0 16px 16px;
+  }
+
+  .swatch-name {
+    font-size: 13px; font-weight: 500;
+    color: var(--white); margin-bottom: 4px;
+  }
+
+  .swatch-hex {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--gray-4);
+    margin-bottom: 2px;
+  }
+
+  .swatch-use {
+    font-size: 11px; font-weight: 300; color: var(--gray-3);
+  }
+
+  .palette-rule {
+    padding: 28px 32px;
+    background: var(--gray-1);
+    border-radius: 14px;
+    display: flex; gap: 20px; align-items: flex-start;
+  }
+
+  .palette-rule-icon {
+    font-size: 20px; flex-shrink: 0; margin-top: 2px;
+  }
+
+  .palette-rule p {
+    font-size: 14px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.65;
+  }
+
+  .palette-rule p strong { color: var(--white); font-weight: 500; }
+
+  /* ─── TIPOGRAFÍA ─── */
+  .section-type {
+    padding: 140px 48px;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .type-header {
+    display: flex; justify-content: space-between;
+    align-items: flex-end; margin-bottom: 80px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .type-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 400; letter-spacing: -1.5px;
+  }
+
+  .type-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 40px; margin-bottom: 80px;
+  }
+
+  .type-card {
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 20px; padding: 48px 40px;
+  }
+
+  .type-sample {
+    font-size: clamp(40px, 6vw, 64px);
+    letter-spacing: -2px; line-height: 1;
+    margin-bottom: 32px; color: var(--black);
+  }
+
+  .type-sample.display { font-family: var(--font-display); font-weight: 400; }
+  .type-sample.mono    { font-family: var(--font-mono); font-size: clamp(28px, 4vw, 44px); letter-spacing: -1px; }
+
+  .type-name {
+    font-size: 15px; font-weight: 500; margin-bottom: 4px;
+  }
+
+  .type-desc {
+    font-size: 13px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.6; margin-bottom: 20px;
+  }
+
+  .type-weights {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+
+  .type-weight-tag {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 1px; padding: 4px 10px;
+    background: var(--gray-5); border-radius: 100px;
+    color: var(--gray-3);
+  }
+
+  .type-hierarchy {
+    background: var(--gray-5);
+    border-radius: 20px; padding: 48px 40px;
+  }
+
+  .type-hierarchy h3 {
+    font-size: 15px; font-weight: 500;
+    margin-bottom: 40px; color: var(--gray-3);
+    letter-spacing: 1px; text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  .hier-row {
+    display: flex; align-items: baseline;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    gap: 20px;
+  }
+
+  .hier-row:last-child { border-bottom: none; }
+
+  .hier-sample { line-height: 1; flex-shrink: 0; }
+  .hier-h1 { font-family: var(--font-display); font-size: 40px; font-weight: 400; letter-spacing: -1.5px; }
+  .hier-h2 { font-family: var(--font-display); font-size: 28px; font-weight: 400; letter-spacing: -0.8px; }
+  .hier-h3 { font-family: var(--font-body); font-size: 20px; font-weight: 500; }
+  .hier-body { font-family: var(--font-body); font-size: 16px; font-weight: 300; }
+  .hier-caption { font-family: var(--font-body); font-size: 12px; font-weight: 300; color: var(--gray-3); }
+  .hier-code { font-family: var(--font-mono); font-size: 14px; font-weight: 400; }
+
+  .hier-spec {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--gray-4);
+    text-align: right; line-height: 1.6; flex-shrink: 0;
+  }
+
+  /* ─── TONO ─── */
+  .section-voice {
+    background: var(--gray-5);
+    padding: 140px 48px;
+  }
+
+  .voice-inner {
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .voice-header {
+    margin-bottom: 80px;
+  }
+
+  .voice-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 400; letter-spacing: -1.5px;
+  }
+
+  .voice-pillars {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 20px; margin-bottom: 60px;
+  }
+
+  .pillar {
+    background: var(--white);
+    border-radius: 16px; padding: 32px 28px;
+  }
+
+  .pillar-num {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--orange);
+    margin-bottom: 16px; letter-spacing: 1px;
+  }
+
+  .pillar-name {
+    font-size: 18px; font-weight: 500;
+    margin-bottom: 10px;
+  }
+
+  .pillar-desc {
+    font-size: 13px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.6;
+  }
+
+  .voice-examples {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .voice-ex {
+    border-radius: 16px; padding: 36px 32px;
+  }
+
+  .voice-ex.bad  { background: #fff5f5; border: 1px solid rgba(200,0,0,0.1); }
+  .voice-ex.good { background: #f5fff5; border: 1px solid rgba(0,150,0,0.1); }
+
+  .voice-ex-label {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .voice-ex.bad  .voice-ex-label { color: #cc3333; }
+  .voice-ex.good .voice-ex-label { color: #2e8b2e; }
+
+  .voice-ex-text {
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 400;
+    line-height: 1.5; letter-spacing: -0.3px;
+  }
+
+  .voice-ex.bad  .voice-ex-text { color: #991111; }
+  .voice-ex.good .voice-ex-text { color: #1a4a1a; }
+
+  /* ─── APLICACIONES ─── */
+  .section-apps {
+    padding: 140px 48px;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .apps-header {
+    display: flex; justify-content: space-between;
+    align-items: flex-end; margin-bottom: 80px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .apps-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 400; letter-spacing: -1.5px;
+  }
+
+  .apps-channels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .channel-card {
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 20px; padding: 40px 36px;
+    transition: border-color 0.2s, transform 0.25s;
+  }
+
+  .channel-card:hover {
+    border-color: var(--orange);
+    transform: translateY(-3px);
+  }
+
+  .channel-icon {
+    font-size: 28px; margin-bottom: 20px;
+  }
+
+  .channel-name {
+    font-size: 18px; font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .channel-rules {
+    list-style: none;
+  }
+
+  .channel-rules li {
+    font-size: 14px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.65;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex; gap: 10px;
+  }
+
+  .channel-rules li::before {
+    content: "–"; color: var(--orange); flex-shrink: 0;
+  }
+
+  /* ─── NO HACER ─── */
+  .section-dont {
+    background: var(--black);
+    padding: 140px 48px;
+  }
+
+  .dont-inner {
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .dont-header { margin-bottom: 60px; }
+
+  .dont-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 400; letter-spacing: -1.5px;
+    color: var(--white);
+  }
+
+  .dont-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px; background: var(--gray-2);
+    border-radius: 20px; overflow: hidden;
+    border: 1px solid var(--gray-2);
+  }
+
+  .dont-item {
+    background: var(--gray-1);
+    padding: 40px 32px;
+    transition: background 0.2s;
+  }
+
+  .dont-item:hover { background: var(--gray-2); }
+
+  .dont-x {
+    font-size: 24px; color: #cc3333;
+    margin-bottom: 16px;
+    font-family: var(--font-mono);
+  }
+
+  .dont-text {
+    font-size: 15px; font-weight: 400;
+    color: var(--white); margin-bottom: 8px;
+  }
+
+  .dont-why {
+    font-size: 13px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.55;
+  }
+
+  /* ─── CIERRE ─── */
+  .section-close {
+    min-height: 60vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 120px 48px;
+  }
+
+  .close-title {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 8vw, 96px);
+    font-weight: 400; letter-spacing: -3px;
+    line-height: 1; margin-bottom: 24px;
+  }
+
+  .close-title em { font-style: italic; color: var(--orange); }
+
+  .close-tagline {
+    font-size: 16px; font-weight: 300;
+    color: var(--gray-3); letter-spacing: 1px;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid rgba(0,0,0,0.07);
+    padding: 32px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .footer-logo {
+    font-family: var(--font-display);
+    font-size: 15px; color: var(--black);
+  }
+  .footer-logo span { color: var(--orange); }
+
+  footer p { font-size: 12px; color: var(--gray-4); font-weight: 300; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0; transform: translateY(28px);
+    transition: opacity 0.75s ease, transform 0.75s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ─── TOKENS EN CÓDIGO ─── */
+  .section-tokens {
+    background: var(--black);
+    padding: 140px 48px;
+  }
+
+  .tokens-inner {
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .tokens-header {
+    margin-bottom: 60px;
+  }
+
+  .tokens-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 400; letter-spacing: -1.5px;
+    color: var(--white);
+  }
+
+  .tokens-header p {
+    font-size: 14px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.7;
+    max-width: 580px; margin-top: 20px;
+  }
+
+  .tokens-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .token-card {
+    background: var(--gray-1);
+    border-radius: 16px;
+    padding: 28px 28px 32px;
+    overflow: hidden;
+  }
+
+  .token-lang {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .token-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .token-dot.swift { background: #FA7343; }
+  .token-dot.css   { background: #2965F1; }
+
+  .token-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--gray-4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .token-code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.75;
+    color: var(--gray-4);
+    white-space: pre;
+    overflow-x: auto;
+    margin: 0;
+  }
+
+  .tk-key { color: #FF8C5A; }
+  .tk-typ { color: #FFD166; }
+  .tk-str { color: #A6D49F; }
+  .tk-num { color: #79C0FF; }
+  .tk-com { color: var(--gray-3); font-style: italic; }
+  .tk-prop { color: #C9D1D9; }
+
+  /* ─── APP ICON SYSTEM ─── */
+  .app-icon-block {
+    margin-top: 60px;
+    padding-top: 60px;
+    border-top: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .app-icon-head {
+    margin-bottom: 40px;
+  }
+
+  .app-icon-head h3 {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 3vw, 34px);
+    font-weight: 400; letter-spacing: -1px;
+    margin-bottom: 12px;
+  }
+  .app-icon-head h3 em { font-style: italic; color: var(--orange); }
+
+  .app-icon-head p {
+    font-size: 14px; font-weight: 300;
+    color: var(--gray-3); line-height: 1.65;
+    max-width: 560px;
+  }
+
+  .app-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: end;
+  }
+
+  .app-icon-card {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 20px;
+    padding: 36px 20px 24px;
+    background: var(--gray-5);
+    border-radius: 18px;
+  }
+
+  .app-icon {
+    width: 180px; height: 180px;
+    border-radius: 22.5%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow:
+      0 14px 32px rgba(0,0,0,0.18),
+      0 2px 6px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-icon.dark   { background: var(--black); }
+  .app-icon.orange { background: linear-gradient(160deg, #FF8C5A 0%, #FF6B35 100%); }
+  .app-icon.light  { background: var(--white); border: 1px solid rgba(0,0,0,0.05); }
+
+  .app-icon-bird {
+    width: 70%; height: auto;
+  }
+  .app-icon.orange .app-icon-bird {
+    filter: brightness(0) invert(1);
+  }
+
+  .app-icon-meta { text-align: center; }
+  .app-icon-meta p {
+    font-size: 12px; font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .app-icon-meta span {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--gray-3);
+    letter-spacing: 1px;
+  }
+
+  .app-icon-sizes {
+    margin-top: 32px;
+    padding: 22px 28px;
+    background: var(--gray-5);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+
+  .sizes-label {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--orange);
+  }
+
+  .sizes-list {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--gray-3);
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── BOTÓN PDF ─── */
+  .pdf-btn {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    z-index: 200;
+    background: var(--black); color: var(--white);
+    border: none; cursor: pointer;
+    padding: 14px 22px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.3px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .pdf-btn:hover { background: var(--orange); transform: translateY(-2px); }
+  .pdf-btn, .pdf-btn:visited { text-decoration: none; color: var(--white); }
+  .pdf-btn .pdf-arrow {
+    font-family: var(--font-mono); font-size: 14px; line-height: 1;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    nav { padding: 0 24px; }
+    .nav-links { display: none; }
+    .cover-meta { display: none; }
+    .mv-inner { grid-template-columns: 1fr; gap: 48px; }
+    .section-index, .section-logo, .section-type, .section-apps, .section-dont .dont-inner, .voice-inner, .palette-inner { padding: 100px 24px; }
+    .section-mv, .section-palette, .section-voice, .section-dont { padding: 100px 24px; }
+    .logo-grid, .palette-grid { grid-template-columns: 1fr 1fr; }
+    .logo-safety { grid-template-columns: 1fr; gap: 40px; padding: 40px 28px; }
+    .safety-outer { padding: 24px; }
+    .safety-mark { width: 260px; height: 150px; }
+    .logo-system { grid-template-columns: 1fr; }
+    .type-grid { grid-template-columns: 1fr; }
+    .voice-pillars { grid-template-columns: 1fr 1fr; }
+    .voice-examples { grid-template-columns: 1fr; }
+    .apps-channels { grid-template-columns: 1fr; }
+    .dont-grid { grid-template-columns: 1fr; }
+    .section-tokens { padding: 100px 24px; }
+    .tokens-grid { grid-template-columns: 1fr; }
+    .app-icon-grid { grid-template-columns: 1fr; }
+    .app-icon { width: 150px; height: 150px; }
+    footer { flex-direction: column; gap: 12px; text-align: center; }
+  }
+
+  /* ─── PRINT / PDF ─── */
+  @media print {
+    *, *::before, *::after {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+      animation: none !important;
+      transition: none !important;
+    }
+
+    html, body { overflow: visible !important; background: var(--white); }
+
+    nav, .pdf-btn { display: none !important; }
+
+    .reveal { opacity: 1 !important; transform: none !important; }
+
+    .cover-title, .cover-mark, .cover-tag, .cover-sub, .cover-meta {
+      opacity: 1 !important;
+    }
+
+    .cover {
+      min-height: auto !important;
+      padding: 80px 40px !important;
+      page-break-after: always;
+    }
+    .cover-meta { position: static !important; margin-top: 48px; }
+
+    .section-index,
+    .section-mv,
+    .section-logo,
+    .section-palette,
+    .section-type,
+    .section-tokens,
+    .section-voice,
+    .section-apps,
+    .section-dont,
+    .section-close {
+      page-break-before: always;
+      padding: 60px 40px !important;
+    }
+
+    .logo-card, .palette-swatch, .type-card, .channel-card,
+    .pillar, .variant-card, .dont-item, .mv-block, .voice-ex,
+    .logo-safety, .type-hierarchy, .token-card, .app-icon-card {
+      page-break-inside: avoid;
+    }
+
+    .app-icon-block { page-break-before: always; padding-top: 30px !important; }
+
+    footer { page-break-before: auto; }
+
+    @page { margin: 12mm; size: A4; }
+  }
+</style>
+</head>
+<body>
+
+<!-- BOTÓN PDF -->
+<a class="pdf-btn"
+   href="swifty-devs-manual.pdf"
+   download="Swifty-Devs-Manual-de-Marca.pdf"
+   title="Descargar manual en PDF"
+   aria-label="Descargar manual en PDF">
+  <span class="pdf-arrow">↓</span>
+  Descargar PDF
+</a>
+
+<!-- NAV -->
+<nav id="top-nav">
+  <a href="#" class="nav-logo">
+    <img src="LOGO_MARCa-removebg-preview.png" alt="Swifty Devs">
+    <span style="color:var(--black)">Swifty<span style="color:var(--orange)">.</span>Devs</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#indice">Índice</a></li>
+    <li><a href="#identidad">Identidad</a></li>
+    <li><a href="#logo">Logo</a></li>
+    <li><a href="#colores">Colores</a></li>
+    <li><a href="#tipo">Tipografía</a></li>
+    <li><a href="#tokens">Código</a></li>
+    <li><a href="#voz">Voz</a></li>
+    <li><a href="#aplicaciones">Aplicaciones</a></li>
+  </ul>
+</nav>
+
+<!-- COVER -->
+<section class="cover">
+  <div class="cover-noise"></div>
+  <p class="cover-tag">Manual de Marca · Versión 1.0</p>
+  <img src="LOGO_MARCa-removebg-preview.png" alt="Swifty Devs" class="cover-mark">
+  <h1 class="cover-title">Swifty<em>.</em><br>Devs</h1>
+  <p class="cover-sub">Built for Apple. Day 0.</p>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <span>Año</span>
+      <p>2026</p>
+    </div>
+    <div class="cover-meta-item">
+      <span>Versión</span>
+      <p>1.0</p>
+    </div>
+    <div class="cover-meta-item">
+      <span>Plataformas</span>
+      <p>iOS · macOS · watchOS</p>
+    </div>
+  </div>
+</section>
+
+<!-- ÍNDICE -->
+<section id="indice" class="section-index">
+  <p class="section-label reveal">Contenido</p>
+  <h2 class="index-title reveal">Índice</h2>
+  <ul class="index-list">
+    <li><a href="#identidad" class="index-item reveal">
+      <div class="index-item-left">
+        <span class="index-num">01</span>
+        <span class="index-name">Identidad & Propósito</span>
+      </div>
+      <div class="index-dot"></div>
+      <span class="index-page">Misión, visión y valores</span>
+    </a></li>
+    <li><a href="#logo" class="index-item reveal" style="transition-delay:.05s">
+      <div class="index-item-left">
+        <span class="index-num">02</span>
+        <span class="index-name">Logo & Marca</span>
+      </div>
+      <div class="index-dot"></div>
+      <span class="index-page">Wordmark y uso correcto</span>
+    </a></li>
+    <li><a href="#colores" class="index-item reveal" style="transition-delay:.1s">
+      <div class="index-item-left">
+        <span class="index-num">03</span>
+        <span class="index-name">Paleta de Colores</span>
+      </div>
+      <div class="index-dot"></div>
+      <span class="index-page">Primarios y secundarios</span>
+    </a></li>
+    <li><a href="#tipo" class="index-item reveal" style="transition-delay:.15s">
+      <div class="index-item-left">
+        <span class="index-num">04</span>
+        <span class="index-name">Tipografía</span>
+      </div>
+      <div class="index-dot"></div>
+      <span class="index-page">Jerarquía y fuentes</span>
+    </a></li>
+    <li><a href="#tokens" class="index-item reveal" style="transition-delay:.18s">
+      <div class="index-item-left">
+        <span class="index-num">∞</span>
+        <span class="index-name">Sistema en código</span>
+      </div>
+      <div class="index-dot"></div>
+      <span class="index-page">Tokens en Swift y CSS</span>
+    </a></li>
+    <li><a href="#voz" class="index-item reveal" style="transition-delay:.2s">
+      <div class="index-item-left">
+        <span class="index-num">05</span>
+        <span class="index-name">Tono de Voz</span>
+      </div>
+      <div class="index-dot"></div>
+      <span class="index-page">Cómo hablamos</span>
+    </a></li>
+    <li><a href="#aplicaciones" class="index-item reveal" style="transition-delay:.25s">
+      <div class="index-item-left">
+        <span class="index-num">06</span>
+        <span class="index-name">Aplicaciones de Marca</span>
+      </div>
+      <div class="index-dot"></div>
+      <span class="index-page">Canales y usos</span>
+    </a></li>
+    <li><a href="#nodont" class="index-item reveal" style="transition-delay:.3s">
+      <div class="index-item-left">
+        <span class="index-num">07</span>
+        <span class="index-name">Lo que no somos</span>
+      </div>
+      <div class="index-dot"></div>
+      <span class="index-page">Restricciones de marca</span>
+    </a></li>
+  </ul>
+</section>
+
+<!-- IDENTIDAD -->
+<section id="identidad" class="section-mv">
+  <div class="mv-inner">
+    <div class="mv-block reveal">
+      <p class="section-label">01 — Misión</p>
+      <h3>Nativas<br>en forma,<br>nativas en <em>fondo.</em></h3>
+      <p style="margin-top:28px">Diseñar y desarrollar aplicaciones para el ecosistema Apple que sean indistinguibles del propio sistema operativo. Adoptamos cada evolución visual y técnica de Apple desde el día 0, sin compromisos estéticos ni retrasos injustificados.</p>
+    </div>
+    <div class="mv-block reveal" style="transition-delay:.15s">
+      <p class="section-label">01 — Visión</p>
+      <h3>El referente<br><em>latinoamericano</em><br>en apps Apple.</h3>
+      <p style="margin-top:28px">Que abrir una app de Swifty Devs sea sinónimo de consistencia, cuidado y excelencia en el ecosistema Apple. Reconocidos por elevar el estándar de calidad visual y técnica de la App Store.</p>
+    </div>
+  </div>
+
+  <!-- Valores -->
+  <div style="max-width:1100px; margin: 80px auto 0; padding: 0;">
+    <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:12px;">
+      <div class="reveal" style="background:var(--gray-1); border-radius:16px; padding:32px 28px; transition-delay:.05s">
+        <p style="font-family:var(--font-mono);font-size:11px;color:var(--orange);margin-bottom:16px;letter-spacing:1px">01</p>
+        <p style="font-size:18px;font-weight:500;color:var(--white);margin-bottom:10px">Natividad</p>
+        <p style="font-size:13px;font-weight:300;color:var(--gray-3);line-height:1.6">Cada decisión parte del sistema operativo, no en contra de él.</p>
+      </div>
+      <div class="reveal" style="background:var(--gray-1); border-radius:16px; padding:32px 28px; transition-delay:.1s">
+        <p style="font-family:var(--font-mono);font-size:11px;color:var(--orange);margin-bottom:16px;letter-spacing:1px">02</p>
+        <p style="font-size:18px;font-weight:500;color:var(--white);margin-bottom:10px">Día 0</p>
+        <p style="font-size:13px;font-weight:300;color:var(--gray-3);line-height:1.6">Cuando Apple lanza algo nuevo, Swifty Devs ya está listo. Sin excusas.</p>
+      </div>
+      <div class="reveal" style="background:var(--gray-1); border-radius:16px; padding:32px 28px; transition-delay:.15s">
+        <p style="font-family:var(--font-mono);font-size:11px;color:var(--orange);margin-bottom:16px;letter-spacing:1px">03</p>
+        <p style="font-size:18px;font-weight:500;color:var(--white);margin-bottom:10px">Exigencia</p>
+        <p style="font-size:13px;font-weight:300;color:var(--gray-3);line-height:1.6">No publicamos algo que no usaríamos nosotros mismos.</p>
+      </div>
+      <div class="reveal" style="background:var(--gray-1); border-radius:16px; padding:32px 28px; transition-delay:.2s">
+        <p style="font-family:var(--font-mono);font-size:11px;color:var(--orange);margin-bottom:16px;letter-spacing:1px">04</p>
+        <p style="font-size:18px;font-weight:500;color:var(--white);margin-bottom:10px">Open Source</p>
+        <p style="font-size:13px;font-weight:300;color:var(--gray-3);line-height:1.6">Creemos en compartir el conocimiento. La comunidad crece cuando los developers comparten.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGO -->
+<section id="logo" class="section-logo">
+  <div class="logo-header reveal">
+    <div>
+      <p class="section-number">02</p>
+      <p class="section-label">Logo & Marca</p>
+      <h2>El wordmark.</h2>
+    </div>
+    <p style="font-size:14px;font-weight:300;color:var(--gray-3);max-width:320px;line-height:1.65;text-align:right">Un wordmark limpio en Playfair Display. El nombre lo dice todo. La tipografía hace el trabajo; no necesita decoración.</p>
+  </div>
+
+  <div class="logo-grid">
+    <div class="logo-card light reveal">
+      <img src="LOGO_MARCa-removebg-preview.png" alt="Swifty Devs" class="logo-mark">
+      <div class="logo-wordmark">Swifty<span>.</span>Devs</div>
+      <p class="logo-card-label">Versión Principal</p>
+    </div>
+    <div class="logo-card dark reveal" style="transition-delay:.1s">
+      <img src="LOGO_MARCa-removebg-preview.png" alt="Swifty Devs" class="logo-mark">
+      <div class="logo-wordmark">Swifty<span>.</span>Devs</div>
+      <p class="logo-card-label" style="color:var(--gray-3)">Versión Oscura</p>
+    </div>
+    <div class="logo-card gray reveal" style="transition-delay:.2s">
+      <img src="LOGO_MARCa-removebg-preview.png" alt="Swifty Devs" class="logo-mark">
+      <div class="logo-wordmark" style="filter:grayscale(1)">Swifty<span style="color:inherit">.</span>Devs</div>
+      <p class="logo-card-label">Versión Monocromática</p>
+    </div>
+  </div>
+
+  <div class="logo-safety reveal">
+    <div class="safety-text">
+      <p class="safety-tag">Zona de exclusión</p>
+      <h3 class="safety-title">Márgenes de <em>seguridad.</em></h3>
+      <p class="safety-desc">Alrededor del isotipo se reserva un margen libre mínimo equivalente a <strong>X</strong>, donde <strong>X = la altura del propio isotipo</strong>. Ningún elemento — texto, imagen, borde u otro logo — debe invadir esta zona.</p>
+      <div class="safety-specs">
+        <div class="spec-row">
+          <span class="spec-key">Unidad</span>
+          <span class="spec-val">X = altura del isotipo</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Margen mínimo</span>
+          <span class="spec-val">1X en los cuatro lados</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Margen ideal</span>
+          <span class="spec-val">2X si hay espacio</span>
+        </div>
+      </div>
+    </div>
+    <div class="safety-visual">
+      <div class="safety-outer">
+        <div class="safety-inner">
+          <div class="safety-mark" role="img" aria-label="Isotipo Swifty Devs"></div>
+        </div>
+        <span class="safety-label-x safety-top">X</span>
+        <span class="safety-label-x safety-right">X</span>
+        <span class="safety-label-x safety-bottom">X</span>
+        <span class="safety-label-x safety-left">X</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="logo-system-head reveal">
+    <p class="safety-tag">Sistema de logo</p>
+    <h3 class="safety-title">Las <em>variantes.</em></h3>
+    <p class="safety-desc" style="max-width:620px">Cuatro composiciones a partir del mismo isotipo y wordmark. Cada una tiene su contexto; cuando dudes, usá el lockup horizontal.</p>
+  </div>
+
+  <div class="logo-system">
+    <div class="variant-card reveal">
+      <div class="variant-stage v-horizontal">
+        <img src="LOGO_MARCa-removebg-preview.png" alt="">
+        <span class="vh-text">Swifty<span>.</span>Devs</span>
+      </div>
+      <div class="variant-meta">
+        <p class="variant-tag">01 · Principal</p>
+        <p class="variant-name">Lockup horizontal</p>
+        <p class="variant-use">Versión principal del sistema. Headers de sitio web, cabeceras de documentos, firmas de email.</p>
+      </div>
+    </div>
+
+    <div class="variant-card reveal" style="transition-delay:.07s">
+      <div class="variant-stage v-vertical">
+        <img src="LOGO_MARCa-removebg-preview.png" alt="">
+        <span class="vv-text">Swifty<span>.</span>Devs</span>
+      </div>
+      <div class="variant-meta">
+        <p class="variant-tag">02 · Secundaria</p>
+        <p class="variant-name">Lockup vertical</p>
+        <p class="variant-use">Espacios cuadrados o de orientación vertical. Avatares de perfil, posts de redes sociales, banners.</p>
+      </div>
+    </div>
+
+    <div class="variant-card reveal" style="transition-delay:.14s">
+      <div class="variant-stage v-isotype">
+        <img src="LOGO_MARCa-removebg-preview.png" alt="">
+      </div>
+      <div class="variant-meta">
+        <p class="variant-tag">03 · Reducida</p>
+        <p class="variant-name">Isotipo solo</p>
+        <p class="variant-use">Cuando la marca ya es reconocida. App icon, favicon, watermark, marca de agua, marcas de check técnico.</p>
+      </div>
+    </div>
+
+    <div class="variant-card reveal" style="transition-delay:.21s">
+      <div class="variant-stage">
+        <span class="v-wordmark">Swifty<span>.</span>Devs</span>
+      </div>
+      <div class="variant-meta">
+        <p class="variant-tag">04 · Editorial</p>
+        <p class="variant-name">Wordmark solo</p>
+        <p class="variant-use">Contextos editoriales, créditos, footers minimalistas o lugares donde el isotipo resulta redundante.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="logo-rules reveal">
+    <div class="logo-rule good">
+      <h4>✓ Usos correctos</h4>
+      <ul>
+        <li>Sobre fondos blancos, negros o grises de la paleta oficial</li>
+        <li>Con la zona de exclusión respetada (1X = altura del isotipo en los cuatro lados)</li>
+        <li>En proporciones originales, sin escalar de forma no uniforme</li>
+        <li>Usando siempre Playfair Display como tipografía del wordmark</li>
+      </ul>
+    </div>
+    <div class="logo-rule bad">
+      <h4>✕ Usos incorrectos</h4>
+      <ul>
+        <li>No aplicar sombras, brillos, degradados ni efectos visuales</li>
+        <li>No distorsionar ni escalar de forma no proporcional</li>
+        <li>No cambiar los colores por fuera de las versiones definidas</li>
+        <li>No colocar sobre fondos con bajo contraste o imágenes complejas</li>
+        <li>No recrear el wordmark con fuentes distintas a Playfair Display</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- COLORES -->
+<section id="colores" class="section-palette">
+  <div class="palette-inner">
+    <div class="palette-header reveal">
+      <div>
+        <p class="section-number" style="color:var(--gray-3)">03</p>
+        <p class="section-label">Paleta de Colores</p>
+        <h2>La paleta.</h2>
+      </div>
+    </div>
+
+    <div class="palette-grid">
+      <div class="palette-swatch reveal">
+        <div class="swatch-color" style="background:#0a0a0a"></div>
+        <div class="swatch-info">
+          <p class="swatch-name">Carbon</p>
+          <p class="swatch-hex">#0A0A0A</p>
+          <p class="swatch-use">Texto principal, fondo oscuro</p>
+        </div>
+      </div>
+      <div class="palette-swatch reveal" style="transition-delay:.05s">
+        <div class="swatch-color" style="background:#1c1c1e"></div>
+        <div class="swatch-info">
+          <p class="swatch-name">Obsidian</p>
+          <p class="swatch-hex">#1C1C1E</p>
+          <p class="swatch-use">Modo oscuro, cards</p>
+        </div>
+      </div>
+      <div class="palette-swatch reveal" style="transition-delay:.1s">
+        <div class="swatch-color" style="background:#ff6b35"></div>
+        <div class="swatch-info">
+          <p class="swatch-name">Swift Orange</p>
+          <p class="swatch-hex">#FF6B35</p>
+          <p class="swatch-use">Acento principal, CTAs</p>
+        </div>
+      </div>
+      <div class="palette-swatch reveal" style="transition-delay:.15s">
+        <div class="swatch-color" style="background:#ff8c5a"></div>
+        <div class="swatch-info">
+          <p class="swatch-name">Glow</p>
+          <p class="swatch-hex">#FF8C5A</p>
+          <p class="swatch-use">Estados hover, énfasis</p>
+        </div>
+      </div>
+      <div class="palette-swatch reveal" style="transition-delay:.2s">
+        <div class="swatch-color" style="background:#f2f2f7; border:1px solid rgba(255,255,255,0.08)"></div>
+        <div class="swatch-info">
+          <p class="swatch-name">Ivory</p>
+          <p class="swatch-hex">#F2F2F7</p>
+          <p class="swatch-use">Fondos de sección, cards claras</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="reveal">
+      <div class="palette-rule">
+        <div class="palette-rule-icon">🟠</div>
+        <p><strong>Swift Orange es el único acento.</strong> No se añaden colores adicionales por "necesidad de variedad". La restricción es intencional y es parte de la identidad.</p>
+      </div>
+      <div class="palette-rule">
+        <div class="palette-rule-icon">⚫</div>
+        <p><strong>Carbon y Obsidian no son lo mismo.</strong> Carbon (#0A0A0A) es para texto. Obsidian (#1C1C1E) es para fondos oscuros y cards en modo dark. No son intercambiables.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIPOGRAFÍA -->
+<section id="tipo" class="section-type">
+  <div class="type-header reveal">
+    <div>
+      <p class="section-number">04</p>
+      <p class="section-label">Tipografía</p>
+      <h2>Las fuentes.</h2>
+    </div>
+    <p style="font-size:14px;font-weight:300;color:var(--gray-3);max-width:300px;line-height:1.65;text-align:right">Dos fuentes. No más. Cada una tiene su rol y no invade el del otro.</p>
+  </div>
+
+  <div class="type-grid">
+    <div class="type-card reveal">
+      <div class="type-sample display">Aa Bb Cc<br>1 2 3</div>
+      <p class="type-name">Playfair Display</p>
+      <p class="type-desc">Tipografía de display. Títulos, wordmark y elementos editoriales de alto impacto. Aporta la elegancia y personalidad de la marca.</p>
+      <div class="type-weights">
+        <span class="type-weight-tag">Regular 400</span>
+        <span class="type-weight-tag">Medium 500</span>
+        <span class="type-weight-tag">Italic 400i</span>
+      </div>
+    </div>
+    <div class="type-card reveal" style="transition-delay:.1s">
+      <div class="type-sample mono">fn() {<br>  return 0<br>}</div>
+      <p class="type-name">JetBrains Mono</p>
+      <p class="type-desc">Tipografía monoespaciada. Código, referencias técnicas, nombres de funciones y cualquier elemento que exija precisión técnica.</p>
+      <div class="type-weights">
+        <span class="type-weight-tag">Regular 400</span>
+        <span class="type-weight-tag">Medium 500</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DM Sans note -->
+  <div class="reveal" style="background:var(--gray-5);border-radius:16px;padding:28px 32px;margin-bottom:40px;display:flex;gap:16px;align-items:flex-start">
+    <span style="font-size:20px;flex-shrink:0">💡</span>
+    <div>
+      <p style="font-size:15px;font-weight:500;margin-bottom:6px">DM Sans — Cuerpo de texto</p>
+      <p style="font-size:14px;font-weight:300;color:var(--gray-3);line-height:1.65">Para párrafos, descripciones y cuerpo de texto en general se usa <strong>DM Sans</strong>. Es la fuente base del sistema que equilibra la elegancia del display con la legibilidad del cuerpo. Pesos usados: Light 300, Regular 400, Medium 500.</p>
+    </div>
+  </div>
+
+  <div class="type-hierarchy reveal">
+    <h3>Jerarquía tipográfica</h3>
+    <div class="hier-row">
+      <span class="hier-sample hier-h1">Título</span>
+      <span class="hier-spec">Playfair Display 400<br>40px / letter-spacing -1.5px</span>
+    </div>
+    <div class="hier-row">
+      <span class="hier-sample hier-h2">Subtítulo</span>
+      <span class="hier-spec">Playfair Display 400<br>28px / letter-spacing -0.8px</span>
+    </div>
+    <div class="hier-row">
+      <span class="hier-sample hier-h3">Sección</span>
+      <span class="hier-spec">DM Sans 500<br>20px</span>
+    </div>
+    <div class="hier-row">
+      <span class="hier-sample hier-body">Cuerpo de texto normal</span>
+      <span class="hier-spec">DM Sans 300<br>16px / line-height 1.7</span>
+    </div>
+    <div class="hier-row">
+      <span class="hier-sample hier-caption">Caption y notas secundarias</span>
+      <span class="hier-spec">DM Sans 300<br>12px / color Gray-3</span>
+    </div>
+    <div class="hier-row">
+      <span class="hier-sample hier-code">func buildApp() → App</span>
+      <span class="hier-spec">JetBrains Mono 400<br>14px</span>
+    </div>
+  </div>
+</section>
+
+<!-- TOKENS EN CÓDIGO -->
+<section id="tokens" class="section-tokens">
+  <div class="tokens-inner">
+    <div class="tokens-header reveal">
+      <p class="section-number" style="color:var(--gray-3)">∞</p>
+      <p class="section-label">Sistema en código</p>
+      <h2>De la marca al <em>producto.</em></h2>
+      <p>La paleta y la tipografía expresadas como tokens reales, listos para copiar. Si la marca no llega al código, no llega al producto.</p>
+    </div>
+
+    <div class="tokens-grid">
+      <div class="token-card reveal">
+        <div class="token-lang">
+          <span class="token-dot swift"></span>
+          <span class="token-name">Colors.swift · SwiftUI</span>
+        </div>
+<pre class="token-code"><span class="tk-key">import</span> <span class="tk-typ">SwiftUI</span>
+
+<span class="tk-key">extension</span> <span class="tk-typ">Color</span> {
+  <span class="tk-com">// Neutrales</span>
+  <span class="tk-key">static let</span> <span class="tk-prop">carbon</span>      = <span class="tk-typ">Color</span>(<span class="tk-str">"Carbon"</span>)
+  <span class="tk-key">static let</span> <span class="tk-prop">obsidian</span>    = <span class="tk-typ">Color</span>(<span class="tk-str">"Obsidian"</span>)
+  <span class="tk-key">static let</span> <span class="tk-prop">ivory</span>       = <span class="tk-typ">Color</span>(<span class="tk-str">"Ivory"</span>)
+
+  <span class="tk-com">// Acento</span>
+  <span class="tk-key">static let</span> <span class="tk-prop">swiftOrange</span> = <span class="tk-typ">Color</span>(<span class="tk-str">"SwiftOrange"</span>)
+  <span class="tk-key">static let</span> <span class="tk-prop">glow</span>        = <span class="tk-typ">Color</span>(<span class="tk-str">"Glow"</span>)
+}
+
+<span class="tk-key">extension</span> <span class="tk-typ">Font</span> {
+  <span class="tk-key">static let</span> <span class="tk-prop">display</span> = <span class="tk-typ">Font</span>.<span class="tk-prop">custom</span>(<span class="tk-str">"PlayfairDisplay-Regular"</span>, size: <span class="tk-num">32</span>)
+  <span class="tk-key">static let</span> <span class="tk-prop">body</span>    = <span class="tk-typ">Font</span>.<span class="tk-prop">custom</span>(<span class="tk-str">"DMSans-Light"</span>,         size: <span class="tk-num">16</span>)
+  <span class="tk-key">static let</span> <span class="tk-prop">mono</span>    = <span class="tk-typ">Font</span>.<span class="tk-prop">custom</span>(<span class="tk-str">"JetBrainsMono-Regular"</span>, size: <span class="tk-num">14</span>)
+}</pre>
+      </div>
+
+      <div class="token-card reveal" style="transition-delay:.08s">
+        <div class="token-lang">
+          <span class="token-dot css"></span>
+          <span class="token-name">tokens.css · Web</span>
+        </div>
+<pre class="token-code"><span class="tk-com">/* Swifty Devs · brand tokens */</span>
+<span class="tk-key">:root</span> {
+  <span class="tk-com">/* Neutrales */</span>
+  <span class="tk-prop">--carbon</span>:        <span class="tk-num">#0A0A0A</span>;
+  <span class="tk-prop">--obsidian</span>:      <span class="tk-num">#1C1C1E</span>;
+  <span class="tk-prop">--ivory</span>:         <span class="tk-num">#F2F2F7</span>;
+
+  <span class="tk-com">/* Acento */</span>
+  <span class="tk-prop">--swift-orange</span>:  <span class="tk-num">#FF6B35</span>;
+  <span class="tk-prop">--glow</span>:          <span class="tk-num">#FF8C5A</span>;
+
+  <span class="tk-com">/* Tipografía */</span>
+  <span class="tk-prop">--font-display</span>:  <span class="tk-str">'Playfair Display'</span>, serif;
+  <span class="tk-prop">--font-body</span>:     <span class="tk-str">'DM Sans'</span>, sans-serif;
+  <span class="tk-prop">--font-mono</span>:     <span class="tk-str">'JetBrains Mono'</span>, monospace;
+
+  <span class="tk-com">/* Radio &amp; sombra */</span>
+  <span class="tk-prop">--radius-card</span>:   <span class="tk-num">16px</span>;
+  <span class="tk-prop">--shadow-soft</span>:   <span class="tk-num">0 8px 24px</span> rgba(<span class="tk-num">0,0,0,0.08</span>);
+}</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TONO DE VOZ -->
+<section id="voz" class="section-voice">
+  <div class="voice-inner">
+    <div class="voice-header reveal">
+      <p class="section-number">05</p>
+      <p class="section-label">Tono de Voz</p>
+      <h2>Cómo hablamos.</h2>
+    </div>
+
+    <div class="voice-pillars">
+      <div class="pillar reveal">
+        <p class="pillar-num">01</p>
+        <p class="pillar-name">Directo</p>
+        <p class="pillar-desc">Una idea por oración. Si se puede decir en menos palabras, se dice en menos.</p>
+      </div>
+      <div class="pillar reveal" style="transition-delay:.07s">
+        <p class="pillar-num">02</p>
+        <p class="pillar-name">Técnico</p>
+        <p class="pillar-desc">Usamos términos correctos. Sin simplificar al punto de perder precisión.</p>
+      </div>
+      <div class="pillar reveal" style="transition-delay:.14s">
+        <p class="pillar-num">03</p>
+        <p class="pillar-name">Confiado</p>
+        <p class="pillar-desc">El trabajo habla por sí mismo. Sin alardear, sin exclamar lo obvio.</p>
+      </div>
+      <div class="pillar reveal" style="transition-delay:.21s">
+        <p class="pillar-num">04</p>
+        <p class="pillar-name">Honesto</p>
+        <p class="pillar-desc">Sin promesas vacías ni marketing de humo. Solo lo que podemos cumplir.</p>
+      </div>
+    </div>
+
+    <div class="voice-examples reveal">
+      <div class="voice-ex bad">
+        <p class="voice-ex-label">✕ Incorrecto</p>
+        <p class="voice-ex-text">"¡Nuestra increíble y revolucionaria aplicación transformará completamente tu experiencia móvil de una manera nunca antes imaginada!"</p>
+      </div>
+      <div class="voice-ex good">
+        <p class="voice-ex-label">✓ Correcto</p>
+        <p class="voice-ex-text">"Una app que se ve como parte de iOS. Porque lo es."</p>
+      </div>
+      <div class="voice-ex bad">
+        <p class="voice-ex-label">✕ Incorrecto</p>
+        <p class="voice-ex-text">"¡Aprovechamos TODAS las novedades del sistema para ofrecerte la MEJOR experiencia POSIBLE!"</p>
+      </div>
+      <div class="voice-ex good">
+        <p class="voice-ex-label">✓ Correcto</p>
+        <p class="voice-ex-text">"Liquid Glass desde el día 0. Sin feature flags. Sin esperas."</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APLICACIONES -->
+<section id="aplicaciones" class="section-apps">
+  <div class="apps-header reveal">
+    <div>
+      <p class="section-number">06</p>
+      <p class="section-label">Aplicaciones de Marca</p>
+      <h2>Dónde vivimos.</h2>
+    </div>
+  </div>
+
+  <div class="apps-channels">
+    <div class="channel-card reveal">
+      <div class="channel-icon">📱</div>
+      <p class="channel-name">App Store</p>
+      <ul class="channel-rules">
+        <li>Ícono con fondo sólido de la paleta, sin degradados complejos</li>
+        <li>Esquinas redondeadas siguiendo el sistema iOS exactamente</li>
+        <li>El ícono comunica la función de forma inmediata</li>
+        <li>Screenshots con fondo Carbon o Ivory, tipografía DM Sans</li>
+      </ul>
+    </div>
+    <div class="channel-card reveal" style="transition-delay:.1s">
+      <div class="channel-icon">🌐</div>
+      <p class="channel-name">Sitio Web</p>
+      <ul class="channel-rules">
+        <li>Fondo blanco (#FFFFFF) o negro (#0A0A0A) según sección</li>
+        <li>Acento Swift Orange solo en elementos interactivos y CTAs</li>
+        <li>Sin carruseles innecesarios ni animaciones que distraigan</li>
+        <li>Nav con frosted glass, igual al de este manual</li>
+      </ul>
+    </div>
+    <div class="channel-card reveal" style="transition-delay:.05s">
+      <div class="channel-icon">📣</div>
+      <p class="channel-name">Redes Sociales</p>
+      <ul class="channel-rules">
+        <li>Publicaciones con la paleta y tipografía de la marca</li>
+        <li>Formato cuadrado para posts de Instagram y X</li>
+        <li>Sin filtros, sin marcos decorativos ajenos a la marca</li>
+        <li>Tono técnico y directo, sin emojis excesivos</li>
+      </ul>
+    </div>
+    <div class="channel-card reveal" style="transition-delay:.15s">
+      <div class="channel-icon">📄</div>
+      <p class="channel-name">Documentos</p>
+      <ul class="channel-rules">
+        <li>Fondo blanco, texto en Carbon (#0A0A0A)</li>
+        <li>Acento Swift Orange para títulos de sección</li>
+        <li>Tipografía DM Sans en todas las jerarquías</li>
+        <li>Sin plantillas genéricas que rompan la identidad</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- APP ICON SYSTEM -->
+  <div class="app-icon-block reveal">
+    <div class="app-icon-head">
+      <p class="section-label">Sistema App Icon</p>
+      <h3>El isotipo como <em>app icon.</em></h3>
+      <p>Tres variantes oficiales del ícono de aplicación, con squircle iOS (radio de esquina 22.5% del lado). El isotipo ocupa el 70% del lienzo para conservar la zona de exclusión a escala.</p>
+    </div>
+
+    <div class="app-icon-grid">
+      <div class="app-icon-card">
+        <div class="app-icon dark">
+          <img src="LOGO_MARCa-removebg-preview.png" class="app-icon-bird" alt="">
+        </div>
+        <div class="app-icon-meta">
+          <p>Versión Dark</p>
+          <span>BG · Carbon</span>
+        </div>
+      </div>
+
+      <div class="app-icon-card">
+        <div class="app-icon orange">
+          <img src="LOGO_MARCa-removebg-preview.png" class="app-icon-bird" alt="">
+        </div>
+        <div class="app-icon-meta">
+          <p>Versión Primaria</p>
+          <span>BG · Swift Orange → Glow</span>
+        </div>
+      </div>
+
+      <div class="app-icon-card">
+        <div class="app-icon light">
+          <img src="LOGO_MARCa-removebg-preview.png" class="app-icon-bird" alt="">
+        </div>
+        <div class="app-icon-meta">
+          <p>Versión Light</p>
+          <span>BG · White</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-icon-sizes">
+      <span class="sizes-label">Sizes · iOS</span>
+      <span class="sizes-list">1024 · 180 · 167 · 152 · 120 · 87 · 80 · 76 · 60 · 58 · 40 · 29</span>
+    </div>
+  </div>
+</section>
+
+<!-- NO HACER -->
+<section id="nodont" class="section-dont">
+  <div class="dont-inner">
+    <div class="dont-header reveal">
+      <p class="section-number" style="color:var(--gray-3)">07</p>
+      <p class="section-label">Restricciones</p>
+      <h2>Lo que Swifty<br>Devs no es.</h2>
+    </div>
+
+    <div class="dont-grid">
+      <div class="dont-item reveal">
+        <p class="dont-x">✕ / ✓</p>
+        <p class="dont-text">Colores fuera de la paleta</p>
+        <p class="dont-why">La paleta oficial no es negociable en materiales de marca propios. <strong style="color:var(--glow)">Excepción:</strong> apps empresariales donde el cliente requiere su propia paleta corporativa. En ese caso se adaptan los colores, pero la identidad visual nativa de Swift e iOS permanece intacta e innegociable.</p>
+      </div>
+      <div class="dont-item reveal" style="transition-delay:.05s">
+        <p class="dont-x">✕</p>
+        <p class="dont-text">Más de dos pesos tipográficos</p>
+        <p class="dont-why">En un mismo material, máximo dos pesos. La jerarquía se logra con tamaño, no con saturar pesos.</p>
+      </div>
+      <div class="dont-item reveal" style="transition-delay:.1s">
+        <p class="dont-x">✕</p>
+        <p class="dont-text">Efectos sobre el logo</p>
+        <p class="dont-why">Sin sombras, brillos, degradados ni rotaciones. El wordmark es intocable en su forma.</p>
+      </div>
+      <div class="dont-item reveal" style="transition-delay:.15s">
+        <p class="dont-x">✕</p>
+        <p class="dont-text">Apps desactualizadas</p>
+        <p class="dont-why">No publicamos bajo la marca Swifty Devs nada que no esté al día con el último SO de Apple disponible.</p>
+      </div>
+      <div class="dont-item reveal" style="transition-delay:.2s">
+        <p class="dont-x">✕</p>
+        <p class="dont-text">Mayúsculas como énfasis</p>
+        <p class="dont-why">El énfasis viene de la jerarquía tipográfica y el espacio, no de gritar en mayúsculas.</p>
+      </div>
+      <div class="dont-item reveal" style="transition-delay:.25s">
+        <p class="dont-x">✕</p>
+        <p class="dont-text">Imágenes de stock genéricas</p>
+        <p class="dont-why">Si hay fotografía o ilustración, que sea auténtica y coherente con la estética de la marca.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CIERRE -->
+<section class="section-close">
+  <h2 class="close-title reveal">Diseño que<br>se <em>siente.</em></h2>
+  <p class="close-tagline reveal" style="transition-delay:.15s">Built for Apple. Day 0. — Swifty Devs · 2026</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">Swifty<span>.</span>Devs</span>
+  <p>Manual de Marca · Versión 1.0 · © 2026</p>
+  <p style="font-size:12px;color:var(--gray-4);font-weight:300">iOS · macOS · watchOS</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Nav border on scroll
+  const nav = document.getElementById('top-nav');
+  window.addEventListener('scroll', () => {
+    nav.style.borderBottomColor = window.scrollY > 10
+      ? 'rgba(0,0,0,0.12)'
+      : 'rgba(0,0,0,0.06)';
+  });
+</script>
+</body>
+</html>

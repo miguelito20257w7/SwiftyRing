@@ -1,0 +1,517 @@
+// ============================================================
+// MODELO DE DATOS COMPLETO — Base de datos institucional
+// I.E. Santa Sofía · Dosquebradas, Risaralda · 2026
+//
+// Una sola base PostgreSQL, dos schemas independientes:
+//
+//   public  -> Sistema de Timbre Escolar   (17 tablas)
+//              Autor: Miguel Ángel Salazar García
+//              Repo:  timbre-escolar-backend
+//              Rol:   swiftyring
+//
+//   banos   -> Control Baños SS            (5 tablas)
+//              Autores: Jhoan Santiago Chalarca · Isabel Galeano
+//                       Juan Esteban Estrada
+//              Repo:  controlbanos-backend
+//              Rol:   proyectobanos  (search_path = banos)
+//
+// ------------------------------------------------------------
+// REGLA DE ORO: no existe NINGUNA foreign key entre schemas,
+// en ninguna de las dos direcciones.
+//
+// Las columnas de `banos` que apuntan a identidad del Timbre
+// Escolar (`*_usuario_id`) guardan el UUID de `public.usuarios.id`
+// como texto plano y se validan en la capa de aplicación, con el
+// JWT como fuente de verdad. Están marcadas abajo con [NO FK].
+//
+// Por qué:
+//   1. `DROP SCHEMA banos CASCADE` no deja rastro en `public`.
+//   2. Una fila de Control Baños nunca bloquea un DELETE del
+//      Timbre Escolar.
+//   3. El rol `proyectobanos` no necesita el privilegio
+//      REFERENCES sobre las tablas de `public`.
+//
+// Permisos del rol `proyectobanos` sobre `public`:
+//   SELECT sobre public.usuarios y public.profesores. Nada más.
+//   Sin INSERT, sin UPDATE, sin DELETE, sin CREATE.
+//
+// Ver: Contrato_Integracion_Timbre_ControlBanos.md
+// ============================================================
+
+
+// ############################################################
+// #                                                          #
+// #   SCHEMA public — SISTEMA DE TIMBRE ESCOLAR              #
+// #                                                          #
+// ############################################################
+
+// ---------- Enums ----------
+Enum public.rol_usuario {
+  admin
+  operador
+  profesor
+}
+
+Enum public.tipo_activacion {
+  automatico
+  manual_app
+  manual_fisico
+  sismico
+}
+
+Enum public.dia_semana {
+  lunes
+  martes
+  miercoles
+  jueves
+  viernes
+  sabado
+}
+
+Enum public.plataforma {
+  ios
+  android
+  web      // incluye Windows via PWA / FCM Web Push
+}
+
+Enum public.jornada {
+  manana
+  tarde
+  completa
+}
+
+// ---------- Identidad ----------
+// FUENTE ÚNICA DE IDENTIDAD de toda la aplicación institucional.
+// Control Baños SS la lee (SELECT) pero nunca la escribe.
+// Los docentes de Control Baños son filas de esta tabla con
+// rol = 'profesor'; los coordinadores, con rol = 'admin'.
+Table public.usuarios {
+  id varchar [pk, note: 'UUID generado por el backend']
+  nombre varchar [not null]
+  email varchar [not null, unique]
+  password_hash varchar [not null, note: 'Hash bcrypt']
+  rol public.rol_usuario [not null]
+  activo boolean [not null, default: true]
+  creado_at timestamptz [not null, default: `now()`]
+  actualizado_at timestamptz [not null, default: `now()`]
+}
+
+// Un usuario puede tener N dispositivos (celular, tablet, navegador).
+// El push se manda a TODOS los dispositivos activos del usuario.
+Table public.dispositivos {
+  id varchar [pk]
+  usuario_id varchar [not null, ref: > public.usuarios.id]
+  plataforma public.plataforma [not null]
+  fcm_token varchar [not null, unique, note: 'Token FCM del dispositivo']
+  nombre_dispositivo varchar [note: 'Ej: iPhone de Andrea, Tablet sala profes']
+  activo boolean [not null, default: true]
+  registrado_at timestamptz [not null, default: `now()`]
+  ultimo_uso_at timestamptz [note: 'Actualizar en cada refresh de token / login']
+
+  indexes {
+    usuario_id [name: 'idx_disp_usuario']
+  }
+}
+
+// Extension 1:1 de usuario para el rol profesor.
+// Control Baños SS la lee para conocer jornada y dirección de grupo.
+Table public.profesores {
+  usuario_id varchar [pk, ref: - public.usuarios.id, note: '1:1 con usuarios']
+  jornada public.jornada [not null]
+  director_de_grupo varchar [unique, note: 'Ej: 11B. NULL si no es director. Texto libre: NO es FK a banos.grupos']
+  creado_at timestamptz [not null, default: `now()`]
+}
+
+// ---------- Catalogo de materias ----------
+Table public.materias {
+  id varchar [pk]
+  nombre varchar [not null, unique]
+  activo boolean [not null, default: true]
+}
+
+Table public.profesor_materias {
+  profesor_id varchar [not null, ref: > public.profesores.usuario_id]
+  materia_id varchar [not null, ref: > public.materias.id]
+
+  indexes {
+    (profesor_id, materia_id) [pk]
+  }
+}
+
+// ---------- Salones ----------
+// Espacios físicos del colegio. NO confundir con banos.grupos:
+// un salón es un aula; un grupo es un conjunto de estudiantes.
+Table public.salones {
+  id varchar [pk]
+  nombre varchar [not null, unique, note: 'Ej: Salon 201']
+  bloque varchar [note: 'Ej: Bloque A']
+  piso int
+  capacidad int
+  activo boolean [not null, default: true]
+}
+
+// ---------- Horario habitual de timbres (RF-07..RF-09) ----------
+Table public.horario_timbres {
+  id varchar [pk]
+  etiqueta varchar [not null, note: 'Ej: Inicio de clases']
+  hora time [not null]
+  duracion_seg int [not null, default: 5]
+  activo boolean [not null, default: true]
+  creado_at timestamptz [not null, default: `now()`]
+}
+
+Table public.timbre_dias {
+  timbre_id varchar [not null, ref: > public.horario_timbres.id]
+  dia public.dia_semana [not null]
+
+  indexes {
+    (timbre_id, dia) [pk]
+  }
+}
+
+// ---------- Horarios especiales (RF-10..RF-13) ----------
+Table public.horario_especial {
+  id varchar [pk]
+  nombre varchar [not null, note: 'Ej: Semana de examenes']
+  fecha_inicio date [not null]
+  fecha_fin date [not null]
+  activo boolean [not null, default: true]
+  creado_por varchar [not null, ref: > public.usuarios.id]
+  creado_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (activo, fecha_inicio, fecha_fin) [name: 'idx_especial_vigencia']
+  }
+}
+
+Table public.timbres_especiales {
+  id varchar [pk]
+  horario_especial_id varchar [not null, ref: > public.horario_especial.id]
+  etiqueta varchar [not null]
+  hora time [not null]
+  duracion_seg int [not null, default: 5]
+}
+
+Table public.timbre_especial_dias {
+  timbre_especial_id varchar [not null, ref: > public.timbres_especiales.id]
+  dia public.dia_semana [not null]
+
+  indexes {
+    (timbre_especial_id, dia) [pk]
+  }
+}
+
+// ---------- Horario academico por salon ----------
+Table public.horario_salon {
+  id varchar [pk]
+  salon_id varchar [not null, ref: > public.salones.id]
+  dia public.dia_semana [not null]
+  activo boolean [not null, default: true]
+
+  indexes {
+    (salon_id, dia) [unique, name: 'uq_salon_dia']
+  }
+}
+
+Table public.bloques {
+  id varchar [pk]
+  horario_salon_id varchar [not null, ref: > public.horario_salon.id]
+  numero int [not null, note: 'Orden del bloque en el dia: 1, 2, 3...']
+  hora_inicio time [not null]
+  hora_fin time [not null]
+  materia_id varchar [not null, ref: > public.materias.id]
+  profesor_id varchar [not null, ref: > public.profesores.usuario_id]
+
+  indexes {
+    profesor_id [name: 'idx_bloques_profesor']
+    horario_salon_id [name: 'idx_bloques_horario']
+  }
+}
+
+// ---------- Activaciones de timbre (RF-17) ----------
+Table public.activaciones_timbre {
+  id varchar [pk]
+  tipo public.tipo_activacion [not null]
+  origen_usuario_id varchar [ref: > public.usuarios.id, note: 'Null si es automatico/sismico']
+  ocurrido_at timestamptz [not null]
+  horario_timbre_id varchar [ref: > public.horario_timbres.id]
+  duracion_seg int
+
+  indexes {
+    ocurrido_at [name: 'idx_activaciones_fecha']
+  }
+}
+
+// ---------- Eventos sismicos (RF-18..RF-23) ----------
+Table public.eventos_sismicos {
+  id varchar [pk]
+  activacion_id varchar [ref: > public.activaciones_timbre.id, note: 'Activacion generada por el evento (RF-22)']
+  intensidad_g float [not null, note: 'Aceleracion en g detectada']
+  duracion_ms int [not null]
+  ocurrido_at timestamptz [not null]
+  timbre_activado boolean [not null, default: true]
+  notificacion_enviada boolean [not null, default: false]
+
+  indexes {
+    ocurrido_at [name: 'idx_sismos_fecha']
+  }
+}
+
+// ---------- Notificaciones a profesores (RF-36..RF-38) ----------
+Table public.notificaciones_profesores {
+  id varchar [pk]
+  activacion_id varchar [not null, ref: > public.activaciones_timbre.id]
+  profesor_id varchar [not null, ref: > public.profesores.usuario_id]
+  bloque_id varchar [not null, ref: > public.bloques.id, note: 'Solo existe si hay clase siguiente (RF-38)']
+  mensaje varchar [not null]
+  enviada boolean [not null, default: false]
+  enviada_at timestamptz
+
+  indexes {
+    profesor_id [name: 'idx_notif_profesor']
+    activacion_id [name: 'idx_notif_activacion']
+  }
+}
+
+// ---------- Configuracion del Timbre Escolar (fila unica) ----------
+// NO confundir con banos.configuracion: son tablas distintas,
+// en schemas distintos, con dueños distintos.
+Table public.configuracion_sistema {
+  id varchar [pk, default: 'config', note: "CHECK (id = 'config') para forzar fila unica"]
+  nombre_colegio varchar
+  umbral_sismico_g float [not null, default: 1.2]
+  sismo_duracion_min_ms int [not null, default: 800]
+  modo_offline boolean [not null, default: false]
+  ultima_sync timestamptz
+}
+
+
+// ############################################################
+// #                                                          #
+// #   SCHEMA banos — CONTROL BAÑOS SS                        #
+// #                                                          #
+// #   Todo lo que sigue puede eliminarse con                 #
+// #   `DROP SCHEMA banos CASCADE` sin afectar a `public`.    #
+// #                                                          #
+// ############################################################
+
+// ---------- Enums ----------
+Enum banos.tipo_salida {
+  normal      // cuenta contra el límite diario
+  emergencia  // no cuenta contra el límite (RF08)
+}
+
+Enum banos.estado_salida {
+  en_curso    // autorizada y el estudiante sigue fuera del aula
+  finalizada  // el estudiante regresó; hay duracion_seg
+  cancelada   // el docente revocó la autorización (RF11)
+}
+
+Enum banos.tipo_alerta {
+  duracion_excedida   // superó configuracion.alerta_duracion_seg (RF16)
+  salidas_excedidas   // intentó salir por encima del máximo diario (RF17)
+}
+
+Enum banos.jornada_grupo {
+  manana
+  tarde
+  completa
+}
+
+// ---------- Grupos ----------
+// Lo que la propuesta de Control Baños llama "cursos".
+// En un colegio la unidad real es grado + letra: 11A, 11B, 6C.
+// El documento de requerimientos v1.0 decía "ficha", vocabulario
+// del SENA que no aplica a educación básica y media.
+//
+// NO es lo mismo que public.salones: un salón es un aula física,
+// un grupo es un conjunto de estudiantes.
+Table banos.grupos {
+  id varchar [pk, note: 'UUID generado por el backend']
+  nombre varchar [not null, unique, note: 'Ej: 11A']
+  grado int [not null, note: 'De 6 a 11']
+  jornada banos.jornada_grupo [not null]
+  sede varchar [not null, default: 'Villa Fanny']
+  anio_lectivo int [not null, note: 'Ej: 2026']
+  director_usuario_id varchar [note: '[NO FK] public.usuarios.id del director de grupo']
+  activo boolean [not null, default: true]
+  creado_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (anio_lectivo, activo) [name: 'idx_grupos_vigentes']
+  }
+}
+
+// ---------- Estudiantes ----------
+// Propiedad de Control Baños SS. El Sistema de Timbre Escolar
+// NO lee ni referencia esta tabla.
+Table banos.estudiantes {
+  id varchar [pk]
+  codigo varchar [not null, unique, note: 'Código institucional del estudiante (RF05)']
+  nombre_completo varchar [not null]
+  grupo_id varchar [not null, ref: > banos.grupos.id, note: 'FK interna al schema banos']
+  activo boolean [not null, default: true]
+  creado_at timestamptz [not null, default: `now()`]
+  actualizado_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    grupo_id [name: 'idx_estudiantes_grupo']
+    (activo, grupo_id) [name: 'idx_estudiantes_activos']
+  }
+}
+
+// ---------- Salidas (tabla central del sistema) ----------
+// Los campos *_nombre son SNAPSHOTS deliberados: congelan cómo se
+// llamaba el docente y a qué grupo pertenecía el estudiante en el
+// momento de la salida. Así el historial (RF12) y los reportes
+// (RF15) siguen siendo correctos aunque después el estudiante
+// cambie de grupo o el docente sea dado de baja en public.usuarios.
+Table banos.salidas {
+  id varchar [pk]
+  estudiante_id varchar [not null, ref: > banos.estudiantes.id]
+
+  autorizado_por_usuario_id varchar [not null, note: '[NO FK] public.usuarios.id. Se toma del claim `sub` del JWT']
+  autorizado_por_nombre varchar [not null, note: 'Snapshot del nombre del docente']
+  grupo_nombre varchar [not null, note: 'Snapshot del grupo del estudiante (ej: 11A)']
+
+  fecha date [not null, note: 'Día escolar de la salida; base del límite diario (RN09)']
+  hora_salida timestamptz [not null]
+  hora_regreso timestamptz [note: 'NULL mientras estado = en_curso']
+  duracion_seg int [note: 'hora_regreso - hora_salida. NULL hasta que regrese (RF10)']
+
+  numero_salida_dia int [not null, note: 'Orden de la salida del estudiante ese día: 1, 2, 3...']
+  tipo banos.tipo_salida [not null, default: 'normal']
+  estado banos.estado_salida [not null, default: 'en_curso']
+
+  motivo varchar [note: 'Texto libre opcional que escribe el docente']
+  motivo_cancelacion varchar [note: 'Obligatorio cuando estado = cancelada (RN07)']
+  cancelado_por_usuario_id varchar [note: '[NO FK] public.usuarios.id']
+  cancelado_at timestamptz
+
+  creado_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (estudiante_id, fecha) [name: 'idx_salidas_estudiante_dia']
+    fecha [name: 'idx_salidas_fecha']
+    estado [name: 'idx_salidas_estado', note: 'El dashboard filtra estado = en_curso']
+    autorizado_por_usuario_id [name: 'idx_salidas_docente']
+  }
+}
+
+// ---------- Alertas ----------
+// Nace de la propuesta de Control Baños ("alertas de salidas
+// prolongadas"), no del documento de requerimientos v1.0.
+Table banos.alertas {
+  id varchar [pk]
+  salida_id varchar [not null, ref: > banos.salidas.id]
+  tipo banos.tipo_alerta [not null]
+  umbral_seg int [note: 'Valor de configuración vigente cuando se disparó la alerta']
+  generada_at timestamptz [not null, default: `now()`]
+  atendida boolean [not null, default: false]
+  atendida_por_usuario_id varchar [note: '[NO FK] public.usuarios.id']
+  atendida_at timestamptz
+
+  indexes {
+    (atendida, generada_at) [name: 'idx_alertas_pendientes']
+    salida_id [name: 'idx_alertas_salida']
+  }
+}
+
+// ---------- Configuracion de Control Baños (fila unica) ----------
+Table banos.configuracion {
+  id varchar [pk, default: 'config', note: "CHECK (id = 'config') para forzar fila unica"]
+  max_salidas_normales_dia int [not null, default: 2, note: 'Regla de negocio RN01: 2 salidas normales por día']
+  duracion_maxima_seg int [not null, default: 600, note: 'Duración recomendada: 10 minutos']
+  alerta_duracion_seg int [not null, default: 900, note: 'Dispara alerta a los 15 minutos (RF16)']
+  permitir_emergencias boolean [not null, default: true]
+  anio_lectivo int [not null]
+  actualizado_at timestamptz [not null, default: `now()`]
+}
+
+
+// ############################################################
+// #   AGRUPACIÓN VISUAL                                      #
+// ############################################################
+
+TableGroup timbre_escolar [note: 'Sistema de Timbre Escolar — schema public'] {
+  public.usuarios
+  public.dispositivos
+  public.profesores
+  public.materias
+  public.profesor_materias
+  public.salones
+  public.horario_timbres
+  public.timbre_dias
+  public.horario_especial
+  public.timbres_especiales
+  public.timbre_especial_dias
+  public.horario_salon
+  public.bloques
+  public.activaciones_timbre
+  public.eventos_sismicos
+  public.notificaciones_profesores
+  public.configuracion_sistema
+}
+
+TableGroup control_banos [note: 'Control Baños SS — schema banos'] {
+  banos.grupos
+  banos.estudiantes
+  banos.salidas
+  banos.alertas
+  banos.configuracion
+}
+
+
+// ============================================================
+// VÍNCULOS LÓGICOS ENTRE SCHEMAS (NO son foreign keys)
+// ------------------------------------------------------------
+// No se declaran como `Ref` a propósito: si se declararan,
+// PostgreSQL crearía la restricción real y se rompería el
+// aislamiento. Se documentan aquí para que el diagrama se
+// entienda completo.
+//
+//   banos.grupos.director_usuario_id       -> public.usuarios.id
+//   banos.salidas.autorizado_por_usuario_id -> public.usuarios.id
+//   banos.salidas.cancelado_por_usuario_id  -> public.usuarios.id
+//   banos.alertas.atendida_por_usuario_id   -> public.usuarios.id
+//
+// La integridad la garantiza la aplicación: el usuario_id sale
+// del claim `sub` de un JWT ya verificado contra la llave
+// pública del Sistema de Timbre Escolar.
+//
+// Relación de texto libre, sin FK ni en un sentido ni en otro:
+//   public.profesores.director_de_grupo (varchar '11B')
+//     ~ banos.grupos.nombre
+//   Si el schema banos desaparece, esa columna queda como un
+//   texto inofensivo y el Timbre Escolar sigue funcionando.
+// ============================================================
+
+
+// ============================================================
+// TABLAS QUE NO EXISTEN, A PROPÓSITO
+// ------------------------------------------------------------
+// banos.docentes
+//   El documento de requerimientos v1.0 de Control Baños la
+//   modelaba con usuario y contraseña propios. Rompe el
+//   requisito de login único. Los docentes SON public.usuarios
+//   con rol 'profesor'; los coordinadores, con rol 'admin'.
+//
+// banos.matriculas
+//   Descartada: para el alcance del piloto,
+//   banos.estudiantes.grupo_id más el snapshot grupo_nombre en
+//   banos.salidas resuelven la historia sin una tabla extra.
+//
+// banos.usuarios / banos.roles
+//   No se duplica identidad. Un solo emisor: el Timbre Escolar.
+// ============================================================
+
+
+// ============================================================
+// RESUMEN
+// ------------------------------------------------------------
+//   Total de tablas:        22   (17 public + 5 banos)
+//   Total de enums:          9   (5 public + 4 banos)
+//   FK dentro de public:    18
+//   FK dentro de banos:      3
+//   FK entre schemas:        0   <- por diseño
+// ============================================================

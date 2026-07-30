@@ -3,6 +3,42 @@
 // Modelo de datos - Swifty Devs - 2026  (v5)
 // Cambio v5: profesores gana jornada (enum) y director_de_grupo
 //            (varchar nullable + unique).
+//
+// ------------------------------------------------------------
+// CONTEXTO: BASE DE DATOS COMPARTIDA  (agregado 2026-07-28)
+// ------------------------------------------------------------
+// Estas 17 tablas viven en el schema `public` de una base de
+// datos PostgreSQL que se COMPARTE con un segundo módulo del
+// mismo proyecto de grado: Control Baños SS, que ocupa el
+// schema `banos` (5 tablas, otro equipo, otro repositorio).
+//
+// Nada de este archivo cambió por esa convivencia: el schema
+// `public` sigue igual. Lo que cambió es el entorno alrededor.
+//
+// Reglas que protegen a estas tablas:
+//
+//   1. El rol `proyectobanos` solo tiene SELECT sobre
+//      `usuarios` y `profesores`. Sin INSERT, sin UPDATE,
+//      sin DELETE, sin CREATE en `public`.
+//   2. No existe NINGUNA foreign key entre `public` y `banos`,
+//      en ninguna de las dos direcciones. Las tablas de
+//      Control Baños guardan `usuario_id` como texto plano.
+//   3. `DROP SCHEMA banos CASCADE` no afecta a ninguna tabla
+//      de este archivo. Esa es la prueba de que el
+//      aislamiento funciona.
+//   4. Cada backend lleva su propio `_fluent_migrations`:
+//      el rol de Control Baños tiene `search_path = banos`.
+//
+// OJO con `profesores.director_de_grupo`: es un varchar libre
+// (ej. '11B') que conceptualmente se parece a `banos.grupos.
+// nombre`, pero NO es ni debe volverse una FK. Si el schema
+// `banos` desaparece, esa columna queda como texto inofensivo.
+//
+// El modelo de las 22 tablas (public + banos) está en
+// `Docs/04-Integracion/modelo_datos_completo.dbml`. Si se
+// modifica una tabla de este archivo, hay que reflejarlo allá.
+// Contrato completo:
+// `Docs/04-Integracion/Contrato_Integracion_Timbre_ControlBanos.md`
 // ============================================================
 
 // ---------- Enums ----------

@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftyRing — Propuesta de Proyecto Productivo · Swifty Devs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SWIFTY DEVS · SISTEMA DE MARCA PARA DOCUMENTOS
+   Tokens tomados del Manual de Marca v1.0
+   ============================================================ */
+:root{
+  --carbon:#0A0A0A;
+  --obsidian:#1C1C1E;
+  --swift-orange:#FF6B35;
+  --glow:#FF8C5A;
+  --ivory:#F2F2F7;
+  --white:#FFFFFF;
+  --gray-1:#3A3A3C;
+  --gray-2:#6E6E73;
+  --gray-3:#A1A1A6;
+  --hairline:#E5E5EA;
+
+  /* Paleta del PRODUCTO SwiftyRing (para la sección de identidad) */
+  --sr-yellow:#F5B301;
+  --sr-yellow-soft:#FFE7A3;
+  --sr-graphite:#3B3B30;
+  --sr-orange:#DB712F;
+  --sr-ivory:#FAF8F2;
+  --sr-ivory-2:#ECE9E0;
+
+  --font-display:'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body:'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+
+  --radius-card:16px;
+  --radius-sm:10px;
+  --shadow-soft:0 8px 24px rgba(0,0,0,0.08);
+  --shadow-xs:0 2px 8px rgba(0,0,0,0.05);
+
+  --page-w:210mm;
+  --page-pad:20mm;
+}
+
+*{box-sizing:border-box;}
+html{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+*{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body{
+  margin:0;
+  background:#d8d8dc;
+  color:var(--carbon);
+  font-family:var(--font-body);
+  font-weight:300;
+  font-size:11pt;
+  line-height:1.7;
+}
+
+/* ---------- Estructura tipo hoja A4 ---------- */
+.doc{ max-width:calc(var(--page-w) + 40px); margin:0 auto; padding:24px 0 60px; }
+.page{
+  background:var(--white);
+  width:var(--page-w);
+  min-height:297mm;
+  margin:0 auto 22px;
+  padding:var(--page-pad);
+  box-shadow:0 10px 40px rgba(0,0,0,0.16);
+  position:relative;
+  overflow:hidden;
+}
+
+/* ---------- Tipografía ---------- */
+h1,h2,h3,h4{ font-family:var(--font-display); font-weight:500; color:var(--carbon); margin:0; }
+p{ margin:0 0 12px; }
+strong{ font-weight:500; color:var(--carbon); }
+em{ font-style:italic; }
+a{ color:var(--swift-orange); text-decoration:none; }
+small{ font-size:9.5pt; }
+
+.eyebrow{
+  font-family:var(--font-body);
+  font-weight:500;
+  font-size:9pt;
+  letter-spacing:0.34em;
+  text-transform:uppercase;
+  color:var(--swift-orange);
+  margin:0 0 10px;
+  display:block;
+}
+.mono{ font-family:var(--font-mono); }
+
+/* ---------- Encabezado corriente de sección ---------- */
+.runhead{
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--hairline);
+  padding-bottom:10px; margin-bottom:26px;
+}
+.runhead .rh-brand{
+  font-family:var(--font-display); font-size:15pt; letter-spacing:-0.3px; color:var(--carbon);
+}
+.runhead .rh-brand .dot{ color:var(--swift-orange); }
+.runhead .rh-meta{ font-family:var(--font-mono); font-size:8pt; color:var(--gray-3); letter-spacing:0.05em; text-transform:uppercase;}
+
+/* ---------- Numeración de secciones ---------- */
+.sec-head{ margin:0 0 22px; }
+.sec-head .num{
+  font-family:var(--font-mono); font-size:10pt; color:var(--swift-orange); font-weight:500;
+  letter-spacing:0.1em;
+}
+.sec-head h2{
+  font-size:27pt; line-height:1.08; letter-spacing:-0.8px; margin-top:4px;
+}
+.sec-head .sub{ color:var(--gray-2); font-size:11.5pt; margin-top:8px; max-width:62ch;}
+
+h3.block{
+  font-size:16pt; letter-spacing:-0.4px; margin:26px 0 10px;
+  padding-left:14px; border-left:3px solid var(--swift-orange);
+}
+h4.mini{
+  font-family:var(--font-body); font-weight:500; font-size:11.5pt; color:var(--carbon);
+  margin:16px 0 6px; letter-spacing:0;
+}
+
+/* ---------- Componentes ---------- */
+.card{
+  background:var(--white); border:1px solid var(--hairline);
+  border-radius:var(--radius-card); padding:20px 22px; box-shadow:var(--shadow-xs);
+  margin:14px 0;
+}
+.card.tint{ background:var(--ivory); border-color:transparent; }
+.card.dark{ background:var(--obsidian); border-color:transparent; color:var(--ivory); }
+.card.dark h3, .card.dark h4, .card.dark strong{ color:var(--white); }
+
+.callout{
+  border-left:3px solid var(--swift-orange);
+  background:linear-gradient(90deg, rgba(255,107,53,0.06), rgba(255,107,53,0));
+  padding:14px 18px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:16px 0;
+}
+.callout .lbl{ font-weight:500; color:var(--swift-orange); font-size:9pt; letter-spacing:0.2em; text-transform:uppercase; display:block; margin-bottom:4px;}
+
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+
+/* KPI / dato destacado */
+.stat{ background:var(--ivory); border-radius:var(--radius-card); padding:16px 18px; }
+.stat .big{ font-family:var(--font-display); font-size:26pt; line-height:1; color:var(--carbon); letter-spacing:-1px; }
+.stat .big .u{ font-size:13pt; color:var(--swift-orange); }
+.stat .lbl{ font-size:9.5pt; color:var(--gray-2); margin-top:6px; }
+
+/* Tablas */
+table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:10pt; }
+thead th{
+  background:var(--carbon); color:var(--white); text-align:left; font-weight:500;
+  padding:9px 12px; font-size:9pt; letter-spacing:0.04em; text-transform:uppercase;
+}
+thead th:first-child{ border-radius:8px 0 0 0; }
+thead th:last-child{ border-radius:0 8px 0 0; }
+tbody td{ padding:9px 12px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+tbody tr:nth-child(even){ background:var(--ivory); }
+td .rf{ font-family:var(--font-mono); font-size:8.5pt; color:var(--swift-orange); font-weight:500; white-space:nowrap;}
+.tbl-compact tbody td{ padding:7px 12px; }
+
+/* chips */
+.chip{ display:inline-block; font-family:var(--font-mono); font-size:8pt; padding:2px 9px; border-radius:999px;
+  background:var(--ivory); color:var(--gray-1); border:1px solid var(--hairline); margin:2px 4px 2px 0; letter-spacing:0.03em;}
+.chip.o{ background:rgba(255,107,53,0.1); color:var(--swift-orange); border-color:transparent;}
+
+/* listas */
+ul.clean{ list-style:none; padding:0; margin:8px 0; }
+ul.clean li{ position:relative; padding-left:22px; margin-bottom:8px; }
+ul.clean li::before{ content:''; position:absolute; left:2px; top:9px; width:6px; height:6px; border-radius:2px; background:var(--swift-orange); }
+ol.steps{ padding-left:0; counter-reset:s; list-style:none; margin:8px 0;}
+ol.steps li{ position:relative; padding-left:38px; margin-bottom:12px; }
+ol.steps li::before{
+  counter-increment:s; content:counter(s); position:absolute; left:0; top:-2px;
+  width:26px; height:26px; border-radius:50%; background:var(--carbon); color:var(--white);
+  font-family:var(--font-mono); font-size:10pt; display:flex; align-items:center; justify-content:center;
+}
+
+/* ============================================================
+   PORTADA
+   ============================================================ */
+.cover{
+  min-height:297mm; display:flex; flex-direction:column;
+  background:var(--white); padding:var(--page-pad);
+  position:relative; overflow:hidden;
+}
+.cover::before{
+  /* franja de acento */
+  content:''; position:absolute; top:0; left:0; width:12px; height:100%;
+  background:linear-gradient(180deg, var(--swift-orange), var(--glow));
+}
+.cover-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+.cover-studio{ font-family:var(--font-display); font-size:16pt; letter-spacing:-0.3px; }
+.cover-studio .dot{ color:var(--swift-orange); }
+.cover-studio .tag{ display:block; font-family:var(--font-mono); font-size:7.5pt; letter-spacing:0.18em; text-transform:uppercase; color:var(--gray-3); margin-top:2px;}
+.cover-badge{ text-align:right; font-family:var(--font-mono); font-size:8pt; color:var(--gray-2); letter-spacing:0.06em; line-height:1.7; text-transform:uppercase;}
+
+.cover-hero{ flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:10px 0; }
+.cover-logo{ width:210px; height:210px; margin-bottom:20px; }
+.cover-eyebrow{
+  font-family:var(--font-body); font-weight:500; font-size:10pt; letter-spacing:0.32em; text-transform:uppercase;
+  color:var(--swift-orange); margin-bottom:14px;
+}
+.cover-title{ font-family:var(--font-display); font-weight:600; font-size:52pt; line-height:0.98; letter-spacing:-2px; color:var(--carbon); }
+.cover-title .ring{ color:var(--sr-orange); }
+.cover-sub{ font-family:var(--font-display); font-style:italic; font-weight:400; font-size:18pt; color:var(--gray-1); margin-top:14px; }
+.cover-line{ width:64px; height:3px; background:var(--swift-orange); border-radius:2px; margin:22px auto 16px;}
+.cover-desc{ max-width:60ch; color:var(--gray-2); font-size:11pt; }
+
+.cover-meta{ border-top:1px solid var(--hairline); padding-top:20px; }
+.cover-meta .mrow{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px 40px; }
+.meta-item .k{ font-family:var(--font-mono); font-size:7.5pt; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-3); }
+.meta-item .v{ font-size:11pt; color:var(--carbon); font-weight:400; margin-top:2px; }
+.meta-item .v .edit{ color:var(--gray-3); font-style:italic; font-weight:300; }
+.cover-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:22px; font-family:var(--font-mono); font-size:8pt; color:var(--gray-3); letter-spacing:0.06em; text-transform:uppercase;}
+.endorse{ font-family:var(--font-display); font-size:11pt; color:var(--carbon); letter-spacing:-0.2px;}
+.endorse .dot{ color:var(--swift-orange); }
+
+/* ============================================================
+   ÍNDICE
+   ============================================================ */
+.toc-list{ margin-top:10px; }
+.toc-row{ display:flex; align-items:baseline; padding:11px 0; border-bottom:1px solid var(--hairline); }
+.toc-row .tn{ font-family:var(--font-mono); font-size:11pt; color:var(--swift-orange); width:44px; font-weight:500;}
+.toc-row .tt{ font-family:var(--font-display); font-size:14pt; color:var(--carbon); }
+.toc-row .td{ flex:1; border-bottom:1px dotted var(--gray-3); margin:0 10px; transform:translateY(-4px);}
+.toc-row .tp{ font-family:var(--font-mono); font-size:10pt; color:var(--gray-2); }
+
+/* ============================================================
+   DIAGRAMAS (arquitectura, organigrama, flujo)
+   ============================================================ */
+.arch{ display:flex; flex-direction:column; gap:12px; margin:16px 0; }
+.arch-row{ display:flex; gap:12px; align-items:stretch; justify-content:center; flex-wrap:wrap;}
+.node{
+  border:1.5px solid var(--hairline); border-radius:12px; padding:12px 14px; background:var(--white);
+  min-width:150px; text-align:center; box-shadow:var(--shadow-xs);
+}
+.node .nt{ font-weight:500; font-size:10.5pt; color:var(--carbon); }
+.node .nd{ font-size:8.5pt; color:var(--gray-2); margin-top:3px; line-height:1.4;}
+.node.accent{ border-color:var(--swift-orange); background:rgba(255,107,53,0.05);}
+.node.dark{ background:var(--carbon); border-color:var(--carbon);}
+.node.dark .nt{ color:var(--white);} .node.dark .nd{ color:var(--gray-3);}
+.node.sr{ border-color:var(--sr-yellow); background:rgba(245,179,1,0.08);}
+.arch-arrow{ text-align:center; color:var(--gray-3); font-size:14pt; line-height:1; }
+
+/* Organigrama */
+.org{ display:flex; flex-direction:column; align-items:center; gap:0; margin:18px 0; }
+.org-node{
+  background:var(--white); border:1.5px solid var(--hairline); border-radius:12px;
+  padding:10px 16px; text-align:center; min-width:180px; box-shadow:var(--shadow-xs);
+}
+.org-node .r{ font-weight:500; font-size:10.5pt; color:var(--carbon);}
+.org-node .n{ font-size:8.5pt; color:var(--gray-2); margin-top:2px;}
+.org-node.top{ background:var(--carbon); border-color:var(--carbon);}
+.org-node.top .r{ color:var(--white);} .org-node.top .n{ color:var(--glow);}
+.org-connector{ width:1.5px; height:18px; background:var(--gray-3); }
+.org-branch{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; position:relative; }
+.org-branch::before{ content:''; position:absolute; top:-18px; left:12%; right:12%; height:1.5px; background:var(--gray-3);}
+.org-leaf{ display:flex; flex-direction:column; align-items:center; }
+.org-leaf .org-connector{ height:18px; }
+
+/* FODA */
+.foda{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0; }
+.foda-q{ border-radius:var(--radius-card); padding:16px 18px; border:1px solid var(--hairline);}
+.foda-q h4{ font-family:var(--font-body); font-weight:500; font-size:12pt; margin:0 0 8px; display:flex; align-items:center; gap:8px;}
+.foda-q .tagq{ font-family:var(--font-mono); font-size:8pt; width:22px; height:22px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; color:#fff;}
+.foda-f{ background:rgba(46,125,50,0.05);} .foda-f .tagq{ background:#2E7D32;}
+.foda-o{ background:rgba(255,107,53,0.05);} .foda-o .tagq{ background:var(--swift-orange);}
+.foda-d{ background:rgba(198,40,40,0.045);} .foda-d .tagq{ background:#C62828;}
+.foda-a{ background:rgba(28,28,30,0.05);} .foda-a .tagq{ background:var(--carbon);}
+.foda-q ul.clean li{ font-size:9.5pt; padding-left:18px; margin-bottom:6px;}
+.foda-q ul.clean li::before{ top:7px; width:5px; height:5px;}
+
+/* Paleta de color swatches */
+.swatches{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0;}
+.sw{ border-radius:12px; overflow:hidden; border:1px solid var(--hairline);}
+.sw .chip-c{ height:56px; }
+.sw .meta{ padding:8px 10px; }
+.sw .meta .nm{ font-size:9.5pt; font-weight:500; }
+.sw .meta .hx{ font-family:var(--font-mono); font-size:8pt; color:var(--gray-2);}
+
+/* MV cards */
+.mv{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.mv .card{ margin:0; }
+.mv .icon{ font-family:var(--font-mono); font-size:9pt; letter-spacing:0.2em; text-transform:uppercase; color:var(--swift-orange);}
+
+/* Cronograma / Gantt */
+.gantt{ font-size:9pt; }
+.gantt th, .gantt td{ text-align:center; }
+.gantt td.act{ text-align:left; }
+.bar{ height:14px; border-radius:7px; background:var(--swift-orange); display:block;}
+.bar.g2{ background:var(--glow);} .bar.g3{ background:var(--carbon);} .bar.g4{ background:var(--sr-yellow);}
+.gantt .ph{ font-family:var(--font-mono); font-size:8pt; color:var(--swift-orange);}
+
+.two-col{ column-count:2; column-gap:26px; }
+.two-col p{ break-inside:avoid; }
+
+.footnote{ font-size:8.5pt; color:var(--gray-3); border-top:1px solid var(--hairline); padding-top:8px; margin-top:20px;}
+
+/* Cierre */
+.closing{ min-height:297mm; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; background:var(--carbon); color:var(--ivory); padding:var(--page-pad);}
+.closing .big{ font-family:var(--font-display); font-size:40pt; line-height:1.05; letter-spacing:-1.5px; color:var(--white);}
+.closing .big .o{ color:var(--swift-orange); font-style:italic;}
+.closing .sig{ font-family:var(--font-display); font-size:16pt; margin-top:28px;}
+.closing .sig .dot{ color:var(--swift-orange);}
+.closing .meta{ font-family:var(--font-mono); font-size:8.5pt; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray-3); margin-top:8px;}
+.closing .line{ width:60px; height:3px; background:var(--swift-orange); border-radius:2px; margin:24px auto;}
+
+/* ---------- Barra de acción (solo pantalla) ---------- */
+.toolbar{
+  position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+  background:var(--carbon); color:#fff; border-radius:999px; padding:8px 10px 8px 18px;
+  display:flex; align-items:center; gap:14px; box-shadow:0 8px 30px rgba(0,0,0,0.3); z-index:99;
+  font-family:var(--font-body); font-size:10pt;
+}
+.toolbar b{ font-weight:500;}
+.toolbar button{
+  font-family:var(--font-body); font-weight:500; font-size:10pt; cursor:pointer;
+  background:var(--swift-orange); color:#fff; border:none; border-radius:999px; padding:8px 16px;
+}
+.toolbar button:hover{ background:var(--glow); }
+
+/* ============================================================
+   IMPRESIÓN A4 / PDF
+   ============================================================ */
+@media print{
+  @page{ size:A4; margin:14mm 15mm; }
+  @page cover{ margin:0; }
+  @page closing{ margin:0; }
+  body{ background:#fff; }
+  .doc{ padding:0; margin:0; max-width:none; }
+  .toolbar{ display:none !important; }
+  .runhead{ display:none; }               /* sin cabecera repetida por sección: el contenido fluye */
+
+  /* Secciones interiores en flujo continuo → sin páginas semivacías */
+  .page{ width:auto; min-height:0; margin:0; padding:0; box-shadow:none; overflow:visible; }
+  .sec-head{ padding-top:3mm; }
+
+  /* Portada y cierre: página completa a sangre */
+  .cover{ page:cover; height:296mm; min-height:0; margin:0; padding:20mm; box-shadow:none; overflow:hidden; break-after:page; }
+  .closing{ page:closing; height:296mm; min-height:0; margin:0; padding:20mm; box-shadow:none; overflow:hidden; break-before:page; }
+
+  /* No partir componentes atómicos a mitad de página */
+  .card,.foda-q,.node,.org-node,.stat,.callout,.toc-row,.sw,.org,.arch,.mv,.stat{ break-inside:avoid; }
+  table,tr,thead,ol.steps li,ul.clean li{ break-inside:avoid; }
+  h3.block,h4.mini,.sec-head{ break-after:avoid; }
+}
+@media screen and (max-width:760px){
+  .page,.cover,.closing{ width:auto; padding:22px; }
+  .grid-2,.grid-3,.grid-4,.foda,.mv,.cover-meta .mrow{ grid-template-columns:1fr; }
+  .swatches{ grid-template-columns:repeat(2,1fr);}
+  .two-col{ column-count:1; }
+  .cover-title{ font-size:40pt; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span><b>SwiftyRing</b> · Propuesta de Proyecto Productivo</span>
+  <button onclick="window.print()">Descargar PDF</button>
+</div>
+
+<div class="doc">
+
+<!-- ============================== PORTADA ============================== -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="cover-studio">Swifty<span class="dot">.</span>Devs
+      <span class="tag">Built for Apple. Day 0.</span>
+    </div>
+    <div class="cover-badge">
+      Propuesta de Proyecto Productivo<br>
+      Articulación con la Media · Grado 11<br>
+      SENA — CDITI
+    </div>
+  </div>
+
+  <div class="cover-hero">
+    <img class="cover-logo" src="../01-Marca/SwiftyRing/Logo con texto.svg" alt="Logo de SwiftyRing: campana con un ave en vuelo">
+    <div class="cover-eyebrow">Sistema de Timbre Escolar Inteligente</div>
+    <div class="cover-title">Swifty<span class="ring">Ring</span></div>
+    <div class="cover-sub">El timbre inteligente de tu colegio.</div>
+    <div class="cover-line"></div>
+    <p class="cover-desc">Automatiza el timbre, avisa a cada docente su próxima clase y activa la
+      evacuación ante un sismo de forma autónoma. Funciona aun sin internet. Una solución de
+      software y hardware a la medida de la institución educativa.</p>
+  </div>
+
+  <div class="cover-meta">
+    <div class="mrow">
+      <div class="meta-item">
+        <div class="k">Título del proyecto</div>
+        <div class="v">SwiftyRing — Sistema de Timbre Escolar Inteligente</div>
+      </div>
+      <div class="meta-item">
+        <div class="k">Programa de formación</div>
+        <div class="v">Técnico en Programación de Software</div>
+      </div>
+      <div class="meta-item">
+        <div class="k">Integrante</div>
+        <div class="v">Miguel Ángel Salazar García</div>
+      </div>
+      <div class="meta-item">
+        <div class="k">Institución educativa</div>
+        <div class="v">I.E. Santa Sofía (media) · SENA — CDITI (centro de formación)</div>
+      </div>
+      <div class="meta-item">
+        <div class="k">Empresa desarrolladora</div>
+        <div class="v">Swifty Devs — Estudio de desarrollo de software</div>
+      </div>
+      <div class="meta-item">
+        <div class="k">Lugar y fecha</div>
+        <div class="v">Dosquebradas, Risaralda · Julio de 2026</div>
+      </div>
+    </div>
+    <div class="cover-foot">
+      <span class="endorse">Un producto de Swifty<span class="dot">.</span>Devs</span>
+      <span>Propuesta · v1.0</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== ÍNDICE ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">SwiftyRing · Propuesta · CDITI</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="eyebrow">Contenido</span>
+    <h2>Índice</h2>
+    <p class="sub">Estructura conforme a la guía de Propuesta de Proyecto Productivo del SENA
+      (Articulación con la Media, grado 11).</p>
+  </div>
+
+  <div class="toc-list">
+    <div class="toc-row"><span class="tn">01</span><span class="tt">Resumen ejecutivo</span><span class="td"></span><span class="tp">03</span></div>
+    <div class="toc-row"><span class="tn">02</span><span class="tt">Planteamiento del problema</span><span class="td"></span><span class="tp">04</span></div>
+    <div class="toc-row"><span class="tn">03</span><span class="tt">Justificación</span><span class="td"></span><span class="tp">05</span></div>
+    <div class="toc-row"><span class="tn">04</span><span class="tt">Objetivos</span><span class="td"></span><span class="tp">06</span></div>
+    <div class="toc-row"><span class="tn">05</span><span class="tt">Marco teórico</span><span class="td"></span><span class="tp">07</span></div>
+    <div class="toc-row"><span class="tn">06</span><span class="tt">Planeación estratégica</span><span class="td"></span><span class="tp">09</span></div>
+    <div class="toc-row"><span class="tn">07</span><span class="tt">Descripción del proyecto</span><span class="td"></span><span class="tp">11</span></div>
+    <div class="toc-row"><span class="tn">08</span><span class="tt">Metas y cronograma</span><span class="td"></span><span class="tp">13</span></div>
+    <div class="toc-row"><span class="tn">09</span><span class="tt">Recursos</span><span class="td"></span><span class="tp">15</span></div>
+    <div class="toc-row"><span class="tn">10</span><span class="tt">Evaluación y seguimiento</span><span class="td"></span><span class="tp">16</span></div>
+  </div>
+
+  <div class="callout" style="margin-top:26px;">
+    <span class="lbl">Sobre este documento</span>
+    <p style="margin:0;">SwiftyRing es un producto del estudio <strong>Swifty Devs</strong>, desarrollado como
+    proyecto productivo para la articulación con la media del SENA CDITI. El documento sigue la
+    identidad de marca del estudio y toma como base técnica el <em>Documento de Requerimientos v3.0</em>
+    y el <em>Proyecto Final</em> del sistema.</p>
+  </div>
+</section>
+
+<!-- ============================== 1. RESUMEN EJECUTIVO ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">01 · Resumen ejecutivo</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">01</span>
+    <h2>Resumen ejecutivo</h2>
+    <p class="sub">Qué es SwiftyRing, a quién sirve y qué resuelve.</p>
+  </div>
+
+  <p><strong>SwiftyRing</strong> es un sistema de timbre escolar inteligente que automatiza la
+  operación del timbre, informa a cada docente su próxima clase y activa la señal de evacuación
+  ante un sismo de forma autónoma. Nace de una necesidad real de la <strong>Institución Educativa
+  Santa Sofía</strong> (Dosquebradas, Risaralda), donde el timbre se opera hoy de forma manual, y
+  se diseñó como una solución <strong>replicable</strong> a otras instituciones de la región.</p>
+
+  <p>El sistema integra cuatro componentes: una <strong>aplicación móvil Flutter</strong> (Android e
+  iOS) con tres roles —Administrador, Operador y Profesor—; un <strong>backend propio</strong> en
+  Vapor + PostgreSQL con autenticación JWT; un <strong>módulo físico ESP32</strong> que acciona el
+  timbre, opera sin internet e incluye pantalla OLED y un sensor sísmico; y <strong>notificaciones
+  push</strong> que llegan al celular de cada profesor. Todo bajo estándares de calidad visual
+  (Material Design 3) y de arquitectura (Clean Architecture).</p>
+
+  <h3 class="block">Mercado objetivo</h3>
+  <p>Instituciones educativas —oficiales y privadas— que hoy operan su timbre de forma manual o con
+  temporizadores autónomos: sin administración remota, sin horarios especiales, sin aviso a los
+  docentes y sin ningún protocolo ante sismos. En Colombia no existe una solución local integrada,
+  económica y administrable desde el celular que resuelva esos cuatro frentes a la vez.</p>
+
+  <div class="grid-4" style="margin-top:18px;">
+    <div class="stat"><div class="big">4</div><div class="lbl">Componentes integrados: app, backend, base de datos y módulo físico</div></div>
+    <div class="stat"><div class="big">&lt;2<span class="u">s</span></div><div class="lbl">Del comando de la app a que suene el timbre</div></div>
+    <div class="stat"><div class="big">3</div><div class="lbl">Roles de usuario: Administrador, Operador y Profesor</div></div>
+    <div class="stat"><div class="big">100<span class="u">%</span></div><div class="lbl">Operación garantizada aun sin conexión a internet</div></div>
+  </div>
+
+  <h3 class="block">Metas y beneficios principales</h3>
+  <div class="grid-2">
+    <ul class="clean">
+      <li><strong>Puntualidad total:</strong> el colegio suena siempre a la hora exacta, sin depender de una persona atenta al reloj.</li>
+      <li><strong>Docentes informados:</strong> cada profesor recibe hora, materia y salón de su próxima clase.</li>
+    </ul>
+    <ul class="clean">
+      <li><strong>Seguridad sísmica:</strong> detección autónoma de sismos y activación inmediata de la evacuación.</li>
+      <li><strong>Trazabilidad:</strong> bitácora auditable de cada activación y cada evento sísmico.</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <span class="lbl">Promesa de marca</span>
+    <p style="margin:0; font-family:var(--font-display); font-style:italic; font-size:13pt; color:var(--carbon);">
+    Que el colegio suene siempre a tiempo, y esté protegido cuando más importa.</p>
+  </div>
+</section>
+
+<!-- ============================== 2. PLANTEAMIENTO DEL PROBLEMA ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">02 · Planteamiento del problema</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">02</span>
+    <h2>Planteamiento del problema</h2>
+    <p class="sub">El timbre de la I.E. Santa Sofía se opera hoy de forma completamente manual.</p>
+  </div>
+
+  <p>Una persona de coordinación o portería debe vigilar el reloj durante toda la jornada y accionar
+  el pulsador del timbre en cada cambio de clase, descanso, entrada y salida. Esta operación
+  presenta deficiencias que afectan a toda la institución:</p>
+
+  <table class="tbl-compact">
+    <thead><tr><th style="width:230px;">Deficiencia</th><th>Consecuencia</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Dependencia de una persona</strong></td><td>Si el encargado se distrae, se ausenta o llega tarde, el timbre no suena o suena a destiempo y toda la institución pierde sincronía.</td></tr>
+      <tr><td><strong>Errores de puntualidad</strong></td><td>Los toques manuales varían minutos arriba o abajo; acortan o alargan clases y descansos de forma arbitraria.</td></tr>
+      <tr><td><strong>Horarios especiales difíciles de coordinar</strong></td><td>Exámenes, actos cívicos o reuniones exigen "recordar" un horario distinto por días, lo que multiplica los errores.</td></tr>
+      <tr><td><strong>Docentes sin información</strong></td><td>El timbre suena, pero ningún profesor es avisado de cuál es su siguiente clase ni a qué salón dirigirse.</td></tr>
+      <tr><td><strong>Sin registro histórico</strong></td><td>No queda constancia de cuándo sonó el timbre, quién lo activó ni por qué. Cero trazabilidad.</td></tr>
+      <tr><td><strong>Sin protocolo ante sismos</strong></td><td>En zona de amenaza sísmica alta, la reacción depende por completo del criterio humano en un momento de pánico.</td></tr>
+      <tr><td><strong>Vulnerable a cortes de internet</strong></td><td>Cualquier solución que dependa solo de internet dejaría al colegio sin timbre ante un corte, algo frecuente en la zona.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="lbl">Formulación del problema</span>
+    <p style="margin:0;">La I.E. Santa Sofía necesita un sistema que <strong>automatice el timbre</strong>
+    según horarios configurables, permita activaciones manuales controladas, <strong>notifique a cada
+    docente</strong> su próxima clase, <strong>detecte sismos</strong> activando la alarma de forma
+    autónoma, <strong>funcione aun sin conexión</strong> a internet y deje <strong>registro auditable</strong>
+    de toda su operación.</p>
+  </div>
+
+  <div class="card tint">
+    <h4 class="mini">Contexto geográfico determinante</h4>
+    <p style="margin:0;">Dosquebradas pertenece al Eje Cafetero, una zona de <strong>amenaza sísmica
+    alta</strong> en Colombia. Por eso la institución no solo requiere automatizar el timbre, sino
+    contar con un mecanismo de alerta temprana que active la señal de evacuación ante un evento
+    sísmico.</p>
+  </div>
+</section>
+
+<!-- ============================== 3. JUSTIFICACIÓN ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">03 · Justificación</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">03</span>
+    <h2>Justificación</h2>
+    <p class="sub">Por qué este proyecto importa para la institución y para la comunidad.</p>
+  </div>
+
+  <p>El timbre no es un detalle menor: es el instrumento que ordena la jornada escolar completa.
+  Automatizarlo con SwiftyRing tiene un impacto directo en la calidad del tiempo educativo, en la
+  seguridad de la comunidad y en la formación técnica de quienes construyen la solución.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4 class="mini">Recupera tiempo de clase</h4>
+      <p style="margin:0;">La puntualidad exacta elimina los minutos que hoy se pierden o se roban en
+      cada cambio de clase. A lo largo del año, esos minutos se traducen en horas efectivas de
+      aprendizaje recuperadas.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Protege vidas ante un sismo</h4>
+      <p style="margin:0;">En una zona de amenaza sísmica alta, disparar la evacuación de forma
+      autónoma —sin depender de que alguien reaccione a tiempo— puede marcar la diferencia. Es el
+      diferenciador de valor del sistema.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Ordena y da transparencia</h4>
+      <p style="margin:0;">Cada activación queda registrada con usuario, hora y origen. La institución
+      pasa de acuerdos verbales y papel a una única fuente de verdad, auditable y consultable.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Acompaña al docente</h4>
+      <p style="margin:0;">El profesor deja de depender del horario impreso pegado en su mesa: recibe
+      en el celular la hora, la materia y el salón de su próxima clase, en el momento justo.</p>
+    </div>
+  </div>
+
+  <h3 class="block">Valor para la comunidad y la región</h3>
+  <p>La arquitectura de backend propio y un modelo de datos parametrizable permiten <strong>escalar la
+  solución a otras instituciones</strong> educativas de la región como producto replicable. Lo que
+  empieza resolviendo el problema de un colegio se convierte en una plataforma que puede beneficiar a
+  muchos, generando además una oportunidad de emprendimiento tecnológico local.</p>
+
+  <h3 class="block">Valor formativo (articulación con la media)</h3>
+  <p>Como proyecto productivo del SENA, SwiftyRing integra en un solo desarrollo las competencias
+  centrales del programa de formación: análisis y diseño de bases de datos, desarrollo móvil
+  multiplataforma, servicios web (API REST), seguridad de la información, sistemas embebidos (IoT) y
+  diseño de interfaces. El aprendiz no resuelve un ejercicio aislado, sino un <strong>producto real,
+  end-to-end, con un cliente real</strong>.</p>
+
+  <div class="callout">
+    <span class="lbl">En una línea</span>
+    <p style="margin:0;">SwiftyRing convierte un problema cotidiano —el timbre— en una plataforma que
+    ahorra tiempo, protege a la comunidad y forma talento técnico de la región.</p>
+  </div>
+</section>
+
+<!-- ============================== 4. OBJETIVOS ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">04 · Objetivos</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">04</span>
+    <h2>Objetivos</h2>
+    <p class="sub">Qué se espera lograr y con qué pasos concretos.</p>
+  </div>
+
+  <div class="card dark">
+    <span class="eyebrow" style="color:var(--glow);">Objetivo general</span>
+    <p style="margin:0; font-size:13.5pt; line-height:1.6; color:var(--white); font-family:var(--font-display);">
+    Desarrollar e implementar <strong style="color:var(--glow);">SwiftyRing</strong>, un sistema de
+    timbre escolar inteligente que automatice la operación del timbre según horarios configurables,
+    notifique a cada docente su próxima clase, detecte eventos sísmicos activando la evacuación de
+    forma autónoma, funcione aun sin conexión a internet y deje registro auditable de toda su
+    operación.</p>
+  </div>
+
+  <h3 class="block">Objetivos específicos</h3>
+  <ol class="steps">
+    <li><strong>Implementar la autenticación y el control de acceso por roles</strong> (Administrador,
+    Operador y Profesor) con JWT y contraseñas cifradas con bcrypt sobre el backend Vapor.</li>
+    <li><strong>Construir el módulo de horarios</strong>, que permita definir un horario habitual
+    semanal y horarios especiales con rango de vigencia que expiran de forma automática.</li>
+    <li><strong>Desarrollar el módulo físico ESP32</strong> que accione el timbre —automático, manual
+    y por sismo—, opere sin internet y muestre información en una pantalla OLED.</li>
+    <li><strong>Diseñar el algoritmo de detección de sismos</strong> con el acelerómetro MPU-6050,
+    capaz de distinguir un sismo de la vibración de un vehículo por frecuencia y duración.</li>
+    <li><strong>Implementar las notificaciones a docentes</strong>, enviando a cada profesor la hora,
+    materia y salón de su próxima clase mediante FCM al activarse el timbre.</li>
+    <li><strong>Garantizar la operación offline</strong> y la sincronización automática de la app y el
+    módulo físico al recuperar la conexión.</li>
+    <li><strong>Aplicar los estándares de calidad</strong> de Material Design 3 en la interfaz y de
+    Clean Architecture en el código, con comunicación cifrada por HTTPS.</li>
+    <li><strong>Documentar y entregar</strong> la solución completa: app, backend, base de datos,
+    firmware, manual de usuario y diagramas del sistema.</li>
+  </ol>
+</section>
+
+<!-- ============================== 5. MARCO TEÓRICO ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">05 · Marco teórico</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">05</span>
+    <h2>Marco teórico</h2>
+    <p class="sub">Fundamentación conceptual y antecedentes que sostienen la solución.</p>
+  </div>
+
+  <h3 class="block">Conceptos base</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4 class="mini">El timbre como reloj institucional</h4>
+      <p style="margin:0;">El timbre escolar regula el tiempo pedagógico: marca inicio de jornada,
+      cambios de clase, descansos y salida. Su puntualidad determina la sincronía de toda la
+      institución.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Internet de las Cosas (IoT)</h4>
+      <p style="margin:0;">Objetos físicos con capacidad de cómputo y conexión. El <span class="mono">ESP32</span>
+      es un microcontrolador con WiFi que ejecuta lógica local y se comunica con un servidor por
+      HTTP, base del módulo físico.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Acelerometría y detección sísmica</h4>
+      <p style="margin:0;">Un acelerómetro (<span class="mono">MPU-6050</span>) mide aceleración en g.
+      Analizando <strong>frecuencia y duración</strong> de la vibración se puede distinguir un sismo
+      real del paso de un vehículo, evitando falsas alarmas.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Desarrollo móvil multiplataforma</h4>
+      <p style="margin:0;"><span class="mono">Flutter</span> (lenguaje Dart) permite una sola base de
+      código para Android e iOS, con rendimiento nativo. Es lo que garantiza cobertura en los
+      dispositivos del personal del colegio.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Cliente–servidor y API REST</h4>
+      <p style="margin:0;"><span class="mono">Vapor</span> —framework web escrito en
+      <span class="mono">Swift</span>, el lenguaje del estudio— expone la lógica de negocio como una
+      API REST sobre HTTPS; <span class="mono">PostgreSQL</span> almacena los datos con integridad
+      referencial a través de <span class="mono">Fluent</span>, el ORM de Vapor. La app y el ESP32
+      son clientes de esa API.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Seguridad: JWT, bcrypt y HTTPS</h4>
+      <p style="margin:0;">La sesión se gestiona con tokens <span class="mono">JWT</span>; las
+      contraseñas se guardan como hash <span class="mono">bcrypt</span>, nunca en texto plano; y toda
+      comunicación viaja cifrada por HTTPS.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Notificaciones push (FCM)</h4>
+      <p style="margin:0;"><span class="mono">Firebase Cloud Messaging</span> se usa únicamente como
+      canal de entrega del mensaje al celular; no hay ninguna otra dependencia de Firebase, lo que
+      preserva el control total sobre los datos.</p>
+    </div>
+    <div class="card">
+      <h4 class="mini">Material Design 3 y Clean Architecture</h4>
+      <p style="margin:0;">MD3 es el sistema de diseño de referencia para una interfaz consistente y
+      accesible. Clean Architecture separa el código en capas (<span class="mono">data · domain ·
+      presentation</span>) para que sea mantenible y escalable.</p>
+    </div>
+  </div>
+
+  <h3 class="block">Antecedentes</h3>
+  <ul class="clean">
+    <li><strong>Timbres manuales y temporizadores.</strong> La mayoría de instituciones oficiales en
+    Colombia operan con un pulsador manual o un temporizador autónomo que no se administra
+    remotamente, no contempla horarios especiales, no avisa a los docentes y no reacciona ante
+    sismos.</li>
+    <li><strong>Sistemas de alerta sísmica temprana.</strong> Existen sistemas nacionales de alerta
+    sísmica (por ejemplo, esquemas de alertamiento en México y Japón) que demuestran el valor de
+    disparar avisos de forma automática. SwiftyRing lleva ese principio, a escala local, al edificio
+    escolar.</li>
+    <li><strong>Vacío en el mercado local.</strong> No existe una solución integrada, económica y
+    administrable desde el celular que resuelva a la vez automatización, horarios especiales, aviso
+    a docentes y alarma sísmica. Ahí se ubica la oportunidad de SwiftyRing.</li>
+  </ul>
+
+  <div class="footnote">Fundamentación derivada del <em>Documento de Requerimientos v3.0</em> (junio
+  2026) y del <em>Proyecto Final</em> del Sistema de Timbre Escolar Inteligente, Swifty Devs.</div>
+</section>
+
+<!-- ============================== 6. PLANEACIÓN ESTRATÉGICA ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">06 · Planeación estratégica</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">06</span>
+    <h2>Planeación estratégica</h2>
+    <p class="sub">Análisis FODA, misión y visión del proyecto, y organización del trabajo.</p>
+  </div>
+
+  <h3 class="block">Análisis FODA</h3>
+  <div class="foda">
+    <div class="foda-q foda-f">
+      <h4><span class="tagq">F</span>Fortalezas</h4>
+      <ul class="clean">
+        <li>Backend propio: control total de los datos, sin ataduras a plataformas externas.</li>
+        <li>Opera sin internet: el timbre nunca se detiene por un corte de red.</li>
+        <li>Solución integral: app, servidor, base de datos y hardware en un mismo sistema.</li>
+        <li>Estándares de calidad: Material Design 3 y Clean Architecture desde el diseño.</li>
+      </ul>
+    </div>
+    <div class="foda-q foda-o">
+      <h4><span class="tagq">O</span>Oportunidades</h4>
+      <ul class="clean">
+        <li>Producto replicable a otras instituciones de la región.</li>
+        <li>No existe un competidor local integrado y económico.</li>
+        <li>Creciente conciencia sobre seguridad sísmica en el Eje Cafetero.</li>
+        <li>Base para nuevos productos de la familia de marca Swifty Devs.</li>
+      </ul>
+    </div>
+    <div class="foda-q foda-d">
+      <h4><span class="tagq">D</span>Debilidades</h4>
+      <ul class="clean">
+        <li>Dependencia de un servidor y su mantenimiento (hosting).</li>
+        <li>Curva de calibración del algoritmo anti-vibración vehicular.</li>
+        <li>Un solo aprendiz a cargo de todo el desarrollo.</li>
+        <li>Costo inicial de hardware por cada sede.</li>
+      </ul>
+    </div>
+    <div class="foda-q foda-a">
+      <h4><span class="tagq">A</span>Amenazas</h4>
+      <ul class="clean">
+        <li>Cortes prolongados de energía eléctrica en la zona.</li>
+        <li>Falsos positivos/negativos en la detección sísmica si no se calibra bien.</li>
+        <li>Resistencia al cambio de usuarios no técnicos.</li>
+        <li>Disponibilidad y precio de componentes electrónicos importados.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="block">Misión y visión del proyecto</h3>
+  <div class="mv">
+    <div class="card">
+      <span class="icon">Misión</span>
+      <p style="margin:8px 0 0; font-family:var(--font-display); font-size:12.5pt; line-height:1.5;">
+      Que ninguna institución educativa dependa de una persona atenta al reloj para sonar a tiempo,
+      ni quede sin protocolo ante un sismo. Entregamos un timbre puntual, confiable y seguro, con
+      software y hardware hechos con intención.</p>
+    </div>
+    <div class="card">
+      <span class="icon">Visión</span>
+      <p style="margin:8px 0 0; font-family:var(--font-display); font-size:12.5pt; line-height:1.5;">
+      Ser el estándar de timbre escolar inteligente en el Eje Cafetero y Colombia: que instalar
+      SwiftyRing sea sinónimo de puntualidad, orden y seguridad para cualquier colegio de la
+      región.</p>
+    </div>
+  </div>
+
+  <div class="card tint">
+    <p style="margin:0;"><strong>Valores heredados de Swifty Devs.</strong>
+    <span class="chip o">Cuidado</span> cada pixel es una decisión ·
+    <span class="chip o">Confianza</span> el diseño como primera señal de seriedad ·
+    <span class="chip o">Artesanía</span> cada entrega es un acto de orgullo.</p>
+  </div>
+</section>
+
+<!-- ============================== 6.b ORGANIGRAMA ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">06 · Planeación estratégica</div>
+  </div>
+
+  <h3 class="block" style="margin-top:0;">Organigrama y roles del proyecto</h3>
+  <p>El proyecto lo desarrolla un solo aprendiz, que asume todas las funciones de principio a fin.
+  El organigrama no representa personas distintas, sino las áreas de responsabilidad que cubre el
+  mismo integrante a lo largo del proyecto.</p>
+
+  <div class="org">
+    <div class="org-node top"><div class="r">Miguel Ángel Salazar García</div><div class="n">Aprendiz SENA · Desarrollador full-stack · asume todas las funciones</div></div>
+    <div class="org-connector"></div>
+    <div class="org-branch">
+      <div class="org-leaf"><div class="org-connector"></div><div class="org-node"><div class="r">Desarrollo Frontend</div><div class="n">App Flutter · Android / iOS</div></div></div>
+      <div class="org-leaf"><div class="org-connector"></div><div class="org-node"><div class="r">Desarrollo Backend</div><div class="n">Vapor · PostgreSQL · JWT</div></div></div>
+      <div class="org-leaf"><div class="org-connector"></div><div class="org-node"><div class="r">Firmware & Hardware</div><div class="n">ESP32 · sensores · timbre</div></div></div>
+      <div class="org-leaf"><div class="org-connector"></div><div class="org-node"><div class="r">Diseño UI/UX & Marca</div><div class="n">MD3 · identidad SwiftyRing</div></div></div>
+      <div class="org-leaf"><div class="org-connector"></div><div class="org-node"><div class="r">QA & Documentación</div><div class="n">Pruebas · manuales · bitácoras</div></div></div>
+    </div>
+  </div>
+
+  <table class="tbl-compact" style="margin-top:22px;">
+    <thead><tr><th style="width:190px;">Función / área</th><th>Responsabilidades principales</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Líder de Proyecto</strong></td><td>Planeación, seguimiento del cronograma, comunicación con el cliente (Doña Andrea) y con el instructor SENA, control de versiones.</td></tr>
+      <tr><td><strong>Desarrollo Frontend</strong></td><td>App Flutter con los tres roles, caché local para operación offline, integración con la API y con las notificaciones.</td></tr>
+      <tr><td><strong>Desarrollo Backend</strong></td><td>API REST en Vapor, modelo de datos en PostgreSQL, autenticación JWT y despacho de notificaciones FCM.</td></tr>
+      <tr><td><strong>Firmware & Hardware</strong></td><td>Programación del ESP32, integración del MPU-6050, la OLED y el relé; algoritmo sísmico y operación autónoma.</td></tr>
+      <tr><td><strong>Diseño UI/UX & Marca</strong></td><td>Interfaz bajo Material Design 3, identidad visual de SwiftyRing y consistencia con la marca Swifty Devs.</td></tr>
+      <tr><td><strong>QA & Documentación</strong></td><td>Pruebas por fase, criterios de aceptación, manual de usuario, diagramas y diligenciamiento de bitácoras.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================== 7. DESCRIPCIÓN DEL PROYECTO ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">07 · Descripción del proyecto</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">07</span>
+    <h2>Descripción del proyecto</h2>
+    <p class="sub">Qué se hace, cómo, dónde, quiénes y a quién va dirigido.</p>
+  </div>
+
+  <h3 class="block">Qué se quiere hacer</h3>
+  <p>Construir <strong>SwiftyRing</strong>, una plataforma de timbre escolar inteligente compuesta por
+  cuatro componentes que trabajan en conjunto:</p>
+
+  <p>El <strong>backend Vapor</strong> es el centro del sistema: la app y el módulo ESP32 se comunican
+  con él, guarda todo en PostgreSQL y despacha las notificaciones a los profesores por FCM.</p>
+
+  <div class="arch">
+    <svg viewBox="0 0 840 360" width="100%" style="max-width:720px; display:block; margin:6px auto 0;" font-family="'DM Sans', -apple-system, sans-serif">
+      <defs>
+        <marker id="arhp" markerWidth="8" markerHeight="8" refX="6.4" refY="3" orient="auto-start-reverse" markerUnits="strokeWidth">
+          <path d="M0,0 L6.4,3 L0,6 Z" fill="#6E6E73"/>
+        </marker>
+      </defs>
+
+      <!-- Conexiones -->
+      <line x1="207" y1="113" x2="329" y2="113" stroke="#6E6E73" stroke-width="1.6" marker-start="url(#arhp)" marker-end="url(#arhp)"/>
+      <text x="268" y="101" text-anchor="middle" font-size="11.5" fill="#6E6E73">JWT · HTTPS / REST</text>
+
+      <line x1="516" y1="113" x2="639" y2="113" stroke="#6E6E73" stroke-width="1.6" marker-start="url(#arhp)" marker-end="url(#arhp)"/>
+      <text x="577" y="101" text-anchor="middle" font-size="11.5" fill="#6E6E73">datos · Fluent</text>
+
+      <path d="M422,166 V214 H515 V257" fill="none" stroke="#6E6E73" stroke-width="1.6" marker-end="url(#arhp)"/>
+      <text x="470" y="208" text-anchor="middle" font-size="11.5" fill="#6E6E73">notifica</text>
+
+      <line x1="576" y1="294" x2="644" y2="294" stroke="#6E6E73" stroke-width="1.6" marker-end="url(#arhp)"/>
+      <text x="610" y="283" text-anchor="middle" font-size="11.5" fill="#6E6E73">push</text>
+
+      <path d="M206,294 H360 V167" fill="none" stroke="#6E6E73" stroke-width="1.6" marker-end="url(#arhp)"/>
+      <text x="250" y="283" text-anchor="middle" font-size="11.5" fill="#6E6E73">HTTP REST</text>
+
+      <!-- Cajas -->
+      <rect x="31" y="68" width="175" height="90" rx="12" fill="#FFFFFF" stroke="#FF6B35" stroke-width="1.6"/>
+      <text x="118" y="100" text-anchor="middle" font-size="15" font-weight="600" fill="#0A0A0A">App Flutter</text>
+      <text x="118" y="119" text-anchor="middle" font-size="10.5" fill="#6E6E73">Admin · Operador · Profesor</text>
+      <text x="118" y="135" text-anchor="middle" font-size="10.5" fill="#6E6E73">Android 8.0+ / iOS 15+</text>
+
+      <rect x="330" y="58" width="185" height="108" rx="14" fill="#FFF3EE" stroke="#FF6B35" stroke-width="2.2"/>
+      <text x="422" y="94" text-anchor="middle" font-size="18" font-weight="700" fill="#0A0A0A">Vapor</text>
+      <text x="422" y="116" text-anchor="middle" font-size="10.5" fill="#6E6E73">Backend propio · Swift</text>
+      <text x="422" y="134" text-anchor="middle" font-size="10.5" fill="#6E6E73">Lógica de negocio · JWT</text>
+
+      <rect x="640" y="68" width="170" height="90" rx="12" fill="#0A0A0A"/>
+      <text x="725" y="100" text-anchor="middle" font-size="15" font-weight="600" fill="#FFFFFF">PostgreSQL</text>
+      <text x="725" y="119" text-anchor="middle" font-size="10.5" fill="#A1A1A6">17 tablas · Fluent ORM</text>
+      <text x="725" y="135" text-anchor="middle" font-size="10.5" fill="#A1A1A6">integridad referencial</text>
+
+      <rect x="31" y="250" width="175" height="88" rx="12" fill="#FEF7E6" stroke="#F5B301" stroke-width="1.6"/>
+      <text x="118" y="283" text-anchor="middle" font-size="15" font-weight="600" fill="#0A0A0A">Módulo ESP32</text>
+      <text x="118" y="303" text-anchor="middle" font-size="10.5" fill="#6E6E73">Timbre · OLED · MPU-6050</text>
+      <text x="118" y="319" text-anchor="middle" font-size="10.5" fill="#6E6E73">opera sin internet</text>
+
+      <rect x="455" y="258" width="121" height="72" rx="12" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1.6"/>
+      <text x="515" y="290" text-anchor="middle" font-size="14" font-weight="600" fill="#0A0A0A">FCM</text>
+      <text x="515" y="309" text-anchor="middle" font-size="10" fill="#6E6E73">entrega push</text>
+
+      <rect x="645" y="258" width="165" height="72" rx="12" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1.6"/>
+      <text x="727" y="290" text-anchor="middle" font-size="14" font-weight="600" fill="#0A0A0A">Profesores</text>
+      <text x="727" y="309" text-anchor="middle" font-size="10" fill="#6E6E73">reciben el aviso de clase</text>
+    </svg>
+    <p class="footnote" style="text-align:center; max-width:640px; margin:12px auto 0;">El módulo ESP32 llama a Vapor
+    cada vez que el timbre suena —automático, manual o sísmico— y opera de forma autónoma aunque pierda la conexión.</p>
+  </div>
+
+  <p><strong>Productos/servicios que se ofrecerán</strong> (entregables):</p>
+  <div class="grid-3">
+    <div class="card"><h4 class="mini">App Flutter</h4><p style="margin:0; font-size:9.5pt;">Android + iOS, con usuarios, horarios, timbre manual y vista de profesores.</p></div>
+    <div class="card"><h4 class="mini">Backend Vapor</h4><p style="margin:0; font-size:9.5pt;">API REST documentada con todos los endpoints del sistema.</p></div>
+    <div class="card"><h4 class="mini">Base de datos</h4><p style="margin:0; font-size:9.5pt;">Modelo relacional PostgreSQL con migraciones y datos iniciales.</p></div>
+    <div class="card"><h4 class="mini">Firmware ESP32</h4><p style="margin:0; font-size:9.5pt;">Código fuente documentado del módulo físico.</p></div>
+    <div class="card"><h4 class="mini">Manual de usuario</h4><p style="margin:0; font-size:9.5pt;">Guía para el administrador del sistema (Doña Andrea).</p></div>
+    <div class="card"><h4 class="mini">Diagramas</h4><p style="margin:0; font-size:9.5pt;">Arquitectura, modelo de datos y algoritmo anti-vibración vehicular.</p></div>
+  </div>
+
+  <h3 class="block">Cómo se va a hacer</h3>
+  <p>Con desarrollo <strong>por fases</strong> (seis fases en seis meses), control de versiones con
+  Git, y estándares definidos: <strong>Clean Architecture</strong> en el código Flutter (capas
+  data / domain / presentation), <strong>Material Design 3</strong> en la interfaz, autenticación
+  <strong>JWT</strong> y comunicación cifrada por <strong>HTTPS</strong>. Cada fase cierra con pruebas
+  y con la validación del cliente.</p>
+
+  <div class="grid-2">
+    <div>
+      <h3 class="block">Dónde se va a realizar</h3>
+      <ul class="clean">
+        <li><strong>Implementación:</strong> todas las sedes de la I.E. Santa Sofía, Dosquebradas (Risaralda). Cada sede tendrá su propio módulo físico, administrado desde la misma plataforma.</li>
+        <li><strong>Desarrollo y formación:</strong> ambientes del SENA CDITI y equipos de cómputo propios, con repositorio de código centralizado.</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="block">Quiénes lo harán</h3>
+      <ul class="clean">
+        <li>Miguel Ángel Salazar García, aprendiz del SENA, como desarrollador full-stack responsable de todas las funciones del proyecto: liderazgo, frontend, backend, firmware/hardware, diseño y QA/documentación (ver organigrama).</li>
+        <li>Acompañamiento del instructor del SENA y validación continua del cliente.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="block">A quién va dirigido</h3>
+  <table class="tbl-compact">
+    <thead><tr><th style="width:180px;">Beneficiario</th><th>Cómo se beneficia</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Administrador</strong> (Doña Andrea)</td><td>Gestiona horarios, usuarios, docentes y configuración; recibe las alertas sísmicas.</td></tr>
+      <tr><td><strong>Operadores</strong></td><td>Consultan horarios y accionan el timbre manual de forma controlada y registrada.</td></tr>
+      <tr><td><strong>Profesores</strong></td><td>Reciben en el celular la hora, materia y salón de su próxima clase; ven su horario en tiempo real.</td></tr>
+      <tr><td><strong>Estudiantes</strong></td><td>Se benefician de una jornada puntual y de un protocolo de evacuación confiable.</td></tr>
+      <tr><td><strong>Otras instituciones</strong></td><td>A futuro, colegios de la región que adopten SwiftyRing como producto replicable.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">Convivencia con un segundo módulo</h3>
+  <p>Desde julio de 2026 la aplicación institucional aloja también <strong>Control Baños SS</strong>, un módulo de gestión de salidas al baño desarrollado por otro equipo de aprendices de la misma institución (Jhoan Santiago Chalarca, Isabel Galeano y Juan Esteban Estrada), que se sustenta como proyecto productivo aparte.</p>
+  <p>Los dos módulos comparten la pantalla de ingreso y la instancia de base de datos, pero son sistemas distintos: repositorios separados, backends separados, tablas separadas y equipos separados. <strong>El alcance de este proyecto no cambia</strong>; lo que se agrega es una responsabilidad y una restricción.</p>
+
+  <table class="tbl-compact">
+    <thead><tr><th style="width:180px;">Aspecto</th><th>Qué implica para este proyecto</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Responsabilidad</strong></td><td>El backend de SwiftyRing es el <strong>emisor único de identidad</strong> de la aplicación: firma los tokens que el otro módulo verifica, para que el docente use un solo usuario y una sola contraseña.</td></tr>
+      <tr><td><strong>Restricción</strong></td><td>El módulo ajeno no puede escribir sobre los datos de SwiftyRing ni romper su compilación. Se garantiza con permisos de PostgreSQL y con reglas de dependencia entre carpetas, no con acuerdos de palabra.</td></tr>
+      <tr><td><strong>Prueba</strong></td><td>Antes de cada entrega se verifica que eliminar por completo el otro módulo —su schema de base de datos y su carpeta de código— deje a SwiftyRing compilando y operando igual.</td></tr>
+      <tr><td><strong>Marca</strong></td><td>Son marcas independientes, no una familia. Ni Swifty Devs ni SwiftyRing se aplican al módulo ajeno.</td></tr>
+    </tbody>
+  </table>
+  <p class="footnote">Las condiciones técnicas de la frontera entre los dos módulos están en el <em>Contrato de integración — Sistema de Timbre Escolar ↔ Control Baños SS</em>.</p>
+</section>
+
+<!-- ============================== 7.b IDENTIDAD DEL PRODUCTO ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">07 · Descripción · Identidad del producto</div>
+  </div>
+
+  <h3 class="block" style="margin-top:0;">Identidad de marca de SwiftyRing</h3>
+  <p>Para su lanzamiento como producto replicable, el sistema tiene identidad propia. El nombre une
+  <strong>Swifty</strong> (el estudio y la idea de rapidez) con <strong>Ring</strong> (hacer sonar el
+  timbre y, a la vez, la idea de señal/alerta). Se presenta como un producto respaldado por el
+  estudio: <em>SwiftyRing, un producto de Swifty Devs</em>.</p>
+
+  <div class="grid-2" style="align-items:center; margin:16px 0;">
+    <div class="card" style="text-align:center;">
+      <img src="../01-Marca/SwiftyRing/Logo sin texto.svg" alt="Isotipo de SwiftyRing" style="width:120px; height:120px;">
+      <p style="margin:8px 0 0; font-size:9pt; color:var(--gray-2);">Isotipo: una <strong>campana</strong> (el timbre) atravesada por un <strong>ave en vuelo</strong> (el aviso que vuela hacia cada docente).</p>
+    </div>
+    <div>
+      <h4 class="mini">Atributos del producto</h4>
+      <p style="margin:0 0 6px;"><span class="chip">Puntual</span><span class="chip">Confiable</span><span class="chip">Cercano</span><span class="chip">Seguro</span><span class="chip">Cuidado</span></p>
+      <p style="margin:8px 0 0; font-size:9.5pt; color:var(--gray-2);"><strong>Tono de voz:</strong> claro,
+      cálido y directo. Textos sin jerga técnica, pensados para usuarios no técnicos.</p>
+      <p style="margin:8px 0 0; font-family:var(--font-display); font-style:italic; font-size:11.5pt;">
+      "Suena a tiempo. Protege cuando importa."</p>
+    </div>
+  </div>
+
+  <h4 class="mini">Paleta del producto (Material Design 3)</h4>
+  <p style="font-size:9.5pt; color:var(--gray-2); margin-bottom:8px;">El amarillo es el color de marca:
+  energía, calidez y atención —un timbre existe para llamar la atención—. El grafito y el naranja se
+  extraen del logo.</p>
+  <div class="swatches">
+    <div class="sw"><div class="chip-c" style="background:#F5B301;"></div><div class="meta"><div class="nm">Amarillo</div><div class="hx">#F5B301</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#DB712F;"></div><div class="meta"><div class="nm">Naranja</div><div class="hx">#DB712F</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#3B3B30;"></div><div class="meta"><div class="nm">Grafito</div><div class="hx">#3B3B30</div></div></div>
+    <div class="sw"><div class="chip-c" style="background:#FAF8F2; border-bottom:1px solid var(--hairline);"></div><div class="meta"><div class="nm">Marfil</div><div class="hx">#FAF8F2</div></div></div>
+  </div>
+
+  <div class="callout">
+    <span class="lbl">Arquitectura de marca</span>
+    <p style="margin:0;">SwiftyRing es un <strong>producto respaldado</strong> (endorsed brand) por
+    Swifty Devs. Este documento usa la identidad del <strong>estudio</strong> (fondo blanco, acento
+    Swift Orange, tipografías del sistema de marca); las pantallas del producto usan la
+    <strong>paleta amarilla</strong> de SwiftyRing.</p>
+  </div>
+</section>
+
+<!-- ============================== 8. METAS Y CRONOGRAMA ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">08 · Metas y cronograma</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">08</span>
+    <h2>Metas y cronograma</h2>
+    <p class="sub">Metas medibles y un cronograma con fechas y responsables.</p>
+  </div>
+
+  <h3 class="block">Metas cuantificables</h3>
+  <table class="tbl-compact">
+    <thead><tr><th style="width:150px;">Meta</th><th>Indicador objetivo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Latencia del timbre</strong></td><td>≤ 2 segundos entre el comando de la app y la activación física, con conexión estable.</td></tr>
+      <tr><td><strong>Entrega de avisos</strong></td><td>Notificación a todos los profesores en ≤ 5 segundos desde la activación del timbre.</td></tr>
+      <tr><td><strong>Cobertura de sedes</strong></td><td>100% de las sedes de la I.E. Santa Sofía con módulo físico operativo.</td></tr>
+      <tr><td><strong>Roles funcionales</strong></td><td>Los 3 roles (Admin, Operador, Profesor) operativos y probados.</td></tr>
+      <tr><td><strong>Operación offline</strong></td><td>El timbre automático funciona el 100% del tiempo aun sin internet.</td></tr>
+      <tr><td><strong>Detección sísmica</strong></td><td>Umbral configurable (por defecto 1.2 g / 800 ms) con distinción de vibración vehicular.</td></tr>
+      <tr><td><strong>Seguridad</strong></td><td>0 contraseñas en texto plano · 100% del tráfico por HTTPS.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">Cronograma de actividades</h3>
+  <p style="font-size:9.5pt; color:var(--gray-2);">Seis fases alineadas con la ventana de la
+  articulación (julio–diciembre de 2026), diligenciando dos bitácoras por mes.</p>
+
+  <table class="gantt tbl-compact">
+    <thead>
+      <tr>
+        <th class="act" style="width:150px;">Fase / actividad</th>
+        <th>Responsable</th>
+        <th>Jul</th><th>Ago</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dic</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="act"><span class="ph">Fase 1</span><br>Base del proyecto</td><td>Backend + Frontend</td>
+        <td><span class="bar"></span></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td class="act"><span class="ph">Fase 2</span><br>Módulo de timbre</td><td>Firmware/Hardware</td>
+        <td></td><td><span class="bar g2"></span></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td class="act"><span class="ph">Fase 3–4</span><br>Módulo de profesores</td><td>Backend + Frontend</td>
+        <td></td><td></td><td><span class="bar"></span></td><td><span class="bar"></span></td><td></td><td></td></tr>
+      <tr><td class="act"><span class="ph">Fase 5</span><br>Módulos avanzados</td><td>Firmware + Backend</td>
+        <td></td><td></td><td></td><td></td><td><span class="bar g4"></span></td><td></td></tr>
+      <tr><td class="act"><span class="ph">Fase 6</span><br>Pulido y entrega</td><td>Todas las áreas</td>
+        <td></td><td></td><td></td><td></td><td></td><td><span class="bar g3"></span></td></tr>
+    </tbody>
+  </table>
+
+  <table class="tbl-compact" style="margin-top:14px;">
+    <thead><tr><th style="width:110px;">Fase · Mes</th><th>Entregable de la fase</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Fase 1</strong> · Julio</td><td>Proyecto Flutter + Vapor configurados, PostgreSQL con el modelo de datos, JWT funcionando y los 3 roles operativos.</td></tr>
+      <tr><td><strong>Fase 2</strong> · Agosto</td><td>ESP32 sincronizado con Vapor, timbre automático y manual, operación offline y pantalla OLED funcionando.</td></tr>
+      <tr><td><strong>Fase 3–4</strong> · Sep–Oct</td><td>CRUD de perfiles y horarios de profesores, vista semanal con clase en curso, notificaciones FCM desde Vapor.</td></tr>
+      <tr><td><strong>Fase 5</strong> · Noviembre</td><td>Horarios especiales con date picker, módulo sísmico con algoritmo anti-vehicular e historial de eventos.</td></tr>
+      <tr><td><strong>Fase 6</strong> · Diciembre</td><td>Interfaz con la paleta institucional, pruebas reales con ESP32 físico, corrección de bugs y documentación final.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================== 9. RECURSOS ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">09 · Recursos</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">09</span>
+    <h2>Recursos</h2>
+    <p class="sub">Materiales, humanos y financieros necesarios para ejecutar el proyecto.</p>
+  </div>
+
+  <h3 class="block">Recursos materiales</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4 class="mini">Hardware por módulo (cada sede)</h4>
+      <ul class="clean" style="margin:0;">
+        <li>ESP32 DevKit v1 / v4 (microcontrolador con WiFi)</li>
+        <li>Sensor MPU-6050 (acelerómetro + giroscopio)</li>
+        <li>Pantalla OLED 1.3" I2C (SH1106)</li>
+        <li>Relé de estado sólido 3.3V</li>
+        <li>Timbre / campana, fuente, cableado y caja de montaje</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 class="mini">Equipos y servicios</h4>
+      <ul class="clean" style="margin:0;">
+        <li>Computadores de desarrollo</li>
+        <li>Servidor AlmaLinux + Nginx (dominio <span class="mono">host.swiftydevs.dev</span>)</li>
+        <li>Herramientas: Flutter SDK, Vapor, PostgreSQL, Git</li>
+        <li>Server Key de FCM para notificaciones push</li>
+        <li>Dispositivos Android / iOS de prueba</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="block">Recursos humanos</h3>
+  <p style="margin-bottom:8px;">Un aprendiz responsable de todas las funciones del proyecto (ver
+  organigrama), con acompañamiento del instructor SENA. Áreas de responsabilidad que asume:</p>
+  <p><span class="chip">Líder de proyecto</span><span class="chip">Desarrollo frontend</span><span class="chip">Desarrollo backend</span><span class="chip">Firmware &amp; hardware</span><span class="chip">Diseño UI/UX &amp; marca</span><span class="chip">QA &amp; documentación</span></p>
+
+  <h3 class="block">Recursos financieros (presupuesto estimado)</h3>
+  <table class="tbl-compact">
+    <thead><tr><th>Concepto</th><th style="width:90px;">Tipo</th><th style="width:130px; text-align:right;">Estimado (COP)</th></tr></thead>
+    <tbody>
+      <tr><td>Kit de hardware por módulo (ESP32, MPU-6050, OLED, relé, timbre, caja)</td><td>Material</td><td style="text-align:right;" class="mono">≈ 180.000 / sede</td></tr>
+      <tr><td>Dispositivos y equipos de prueba</td><td>Material</td><td style="text-align:right;" class="mono">Disponibles</td></tr>
+      <tr><td>Alojamiento del backend (servidor + dominio)</td><td>Servicio</td><td style="text-align:right;" class="mono">Mensual · por definir</td></tr>
+      <tr><td>Herramientas y librerías de desarrollo</td><td>Servicio</td><td style="text-align:right;" class="mono">Open source · $0</td></tr>
+      <tr><td>Talento humano (horas de formación del aprendiz)</td><td>Humano</td><td style="text-align:right;" class="mono">Aporte formativo</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <span class="lbl">Modalidades de despliegue</span>
+    <p style="margin:0;">Swifty Devs ofrece dos opciones al cliente: <strong>(a)</strong> alojamiento en
+    los servidores del estudio (<span class="mono">host.swiftydevs.dev</span>) con costo mensual, o
+    <strong>(b)</strong> entrega del código fuente del backend para que la institución lo aloje en su
+    propia infraestructura.</p>
+  </div>
+  <div class="footnote">Los valores son estimaciones de referencia y pueden variar según la
+  disponibilidad y el precio de los componentes electrónicos al momento de la compra.</div>
+</section>
+
+<!-- ============================== 10. EVALUACIÓN Y SEGUIMIENTO ============================== -->
+<section class="page">
+  <div class="runhead">
+    <div class="rh-brand">Swifty<span class="dot">.</span>Devs</div>
+    <div class="rh-meta">10 · Evaluación y seguimiento</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="num">10</span>
+    <h2>Evaluación y seguimiento</h2>
+    <p class="sub">Indicadores de éxito y plan para medir el avance y los resultados.</p>
+  </div>
+
+  <h3 class="block">Indicadores (KPI)</h3>
+  <table class="tbl-compact">
+    <thead><tr><th style="width:180px;">Indicador</th><th>Meta</th><th style="width:120px;">Cómo se mide</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Latencia del timbre</strong></td><td>≤ 2 s</td><td>Prueba cronometrada app → relé</td></tr>
+      <tr><td><strong>Entrega de notificaciones</strong></td><td>≤ 5 s a todos los profesores</td><td>Log de Vapor + FCM</td></tr>
+      <tr><td><strong>Precisión sísmica</strong></td><td>Sin falsas alarmas por vehículos</td><td>Pruebas de vibración controlada</td></tr>
+      <tr><td><strong>Disponibilidad offline</strong></td><td>100% del timbre automático sin red</td><td>Prueba de desconexión</td></tr>
+      <tr><td><strong>Seguridad</strong></td><td>0 contraseñas en texto plano · 100% HTTPS</td><td>Revisión de código y de tráfico</td></tr>
+      <tr><td><strong>Adopción del usuario</strong></td><td>Administrador operando sin soporte</td><td>Validación con Doña Andrea</td></tr>
+      <tr><td><strong>Avance por fase</strong></td><td>Entregable cumplido en cada fase</td><td>Criterios de aceptación por fase</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">Plan de seguimiento y evaluación</h3>
+  <div class="grid-2">
+    <ul class="clean">
+      <li><strong>Bitácoras SENA.</strong> Diligenciamiento de los formatos 165, 023 y 147, dos bitácoras por mes hasta diciembre.</li>
+      <li><strong>Cierre por fase.</strong> Cada fase termina con pruebas y con la validación del cliente contra sus criterios de aceptación.</li>
+      <li><strong>Control de versiones.</strong> Historial en Git como evidencia del avance y trazabilidad del código.</li>
+    </ul>
+    <ul class="clean">
+      <li><strong>Reuniones de seguimiento.</strong> Encuentros periódicos con el instructor SENA y con la administradora del sistema.</li>
+      <li><strong>Pruebas con hardware real.</strong> Validación del módulo ESP32 físico en condiciones reales antes de la entrega.</li>
+      <li><strong>Evaluación final.</strong> Verificación de todos los indicadores y entrega de la documentación completa.</li>
+    </ul>
+  </div>
+
+  <div class="card dark">
+    <h4 class="mini" style="color:#fff;">Criterio de éxito del proyecto</h4>
+    <p style="margin:0; color:var(--ivory);">SwiftyRing se considerará exitoso cuando la I.E. Santa
+    Sofía opere su jornada completa con el timbre automático, los profesores reciban sus avisos de
+    clase, el sistema responda ante una prueba sísmica controlada y todo funcione aun sin conexión a
+    internet —con la documentación entregada y el administrador operando de forma autónoma.</p>
+  </div>
+</section>
+
+<!-- ============================== CIERRE ============================== -->
+<section class="closing">
+  <div class="line"></div>
+  <div class="big">Un timbre que suena <span class="o">a tiempo</span>,<br>y protege cuando importa.</div>
+  <div class="sig">Swifty<span class="dot">.</span>Devs</div>
+  <div class="meta">SwiftyRing · Propuesta de Proyecto Productivo · CDITI · 2026</div>
+  <div class="meta" style="margin-top:2px;">Built for Apple. Day 0.</div>
+</section>
+
+</div>
+</body>
+</html>
