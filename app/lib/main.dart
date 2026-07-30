@@ -1,23 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:swiftyring/core/modulos/modulo_app.dart';
+import 'package:swiftyring/core/router/app_router.dart';
+import 'package:swiftyring/core/theme/app_theme.dart';
+import 'package:swiftyring/modules/proyecto_banos/proyecto_banos_routes.dart';
+import 'package:swiftyring/modules/timbre_escolar/timbre_escolar_routes.dart';
 
-import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/pages/login_page.dart';
-
+/// Raíz de composición de la aplicación institucional.
+///
+/// Este es el **único** archivo que conoce a todos los módulos a la vez. Ni
+/// `core/` ni `modules/timbre_escolar/` importan `modules/proyecto_banos/`
+/// (RNF-12); la unión ocurre aquí y en ningún otro sitio.
+///
+/// Para eliminar un módulo de la app hacen falta dos pasos, y ninguno toca
+/// `core/`:
+///   1. borrar su carpeta bajo `lib/modules/`;
+///   2. quitar su import y su línea en [modulosInstalados].
+///
+/// Lo verifica `tool/check_module_isolation.sh`.
 void main() {
-  runApp(const ProviderScope(child: SwiftyRingApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        routerProvider.overrideWith(
+          (ref) => crearRouter(ref, modulos: modulosInstalados),
+        ),
+      ],
+      child: const SwiftyRingApp(),
+    ),
+  );
 }
 
-class SwiftyRingApp extends StatelessWidget {
+/// Las aplicaciones montadas en la plataforma.
+///
+/// De esta única lista salen dos cosas: las tarjetas del lanzador y las rutas
+/// del router. Estaban en dos listas separadas y se juntaron para que agregar
+/// un módulo no exija acordarse de tocar dos sitios.
+///
+/// Es pública a propósito: las pruebas la reutilizan en vez de repetirla.
+final List<ModuloApp> modulosInstalados = [
+  timbreEscolarModulo,
+  proyectoBanosModulo, // ← módulo de otro equipo; esta línea es borrable
+];
+
+class SwiftyRingApp extends ConsumerWidget {
   const SwiftyRingApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
       title: 'SwiftyRing',
-      theme: AppTheme.light,
-      home: const LoginPage(),
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

@@ -1,0 +1,42 @@
+{
+  // El proyecto Flutter NO está en la raíz de este workspace: vive en `app/`.
+  // Por eso hacen falta configuraciones explícitas con `program` y `cwd`; sin
+  // ellas la extensión de Dart no sabe qué lanzar desde SwiftyRing/.
+  //
+  // La primera deja que VS Code use el dispositivo elegido en la barra de
+  // estado (o pregunte). Las demás lo fijan, para no depender de ese selector.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "SwiftyRing",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "app"
+    },
+    {
+      "name": "SwiftyRing · iPhone (simulador)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "app",
+      "deviceId": "ios"
+    },
+    {
+      "name": "SwiftyRing · macOS",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "app",
+      "deviceId": "macos"
+    },
+    {
+      "name": "SwiftyRing · Chrome",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "app",
+      "deviceId": "chrome"
+    }
+  ]
+}

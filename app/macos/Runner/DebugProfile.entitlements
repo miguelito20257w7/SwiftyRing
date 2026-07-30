@@ -6,7 +6,18 @@
 	<true/>
 	<key>com.apple.security.cs.allow-jit</key>
 	<true/>
+	<!-- Necesario para que el hot reload y el depurador de Flutter se conecten. -->
 	<key>com.apple.security.network.server</key>
 	<true/>
+	<!-- Sin esto la app en sandbox no puede hacer peticiones salientes y toda
+	     llamada al backend Vapor falla con un error de conexión. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Requerido por flutter_secure_storage para guardar el JWT en el llavero
+	     (RNF-03). Sin el entitlement, la lectura del llavero lanza excepción. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)dev.swiftydevs.swiftyring</string>
+	</array>
 </dict>
 </plist>
