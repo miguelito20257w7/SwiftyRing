@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:swiftyring/core/auth/domain/rol_usuario.dart';
+import 'package:swiftyring/core/red/servidor.dart';
+import 'package:swiftyring/core/router/rutas.dart';
 import 'package:swiftyring/core/theme/app_theme.dart';
 import 'package:swiftyring/modules/timbre_escolar/data/timbre_api.dart';
 import 'package:swiftyring/modules/timbre_escolar/domain/modelos.dart';
@@ -30,11 +33,72 @@ class AjustesPage extends ConsumerWidget {
           Text('Sistema, usuarios y módulo físico', style: AppTextStyles.cuerpo),
           const SizedBox(height: 24),
           const _TarjetaModulo(),
+          const SizedBox(height: 16),
+          const _AccesoAjustesRed(),
           const SizedBox(height: 24),
           const _SeccionSistema(),
           const SizedBox(height: 24),
           const _SeccionUsuarios(),
         ],
+      ),
+    );
+  }
+}
+
+/// Atajo a los ajustes de red, que viven en `core/` porque la dirección del
+/// servidor es de toda la aplicación institucional y no solo del timbre.
+class _AccesoAjustesRed extends ConsumerWidget {
+  const _AccesoAjustesRed();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final servidor = ref.watch(servidorProvider);
+
+    return Material(
+      color: AppColors.blanco,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.push(Rutas.ajustesRed),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.chipFondo),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.dns_outlined, color: AppColors.dorado),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Servidor', style: TimbreTextos.rotulo),
+                    Text(
+                      servidor,
+                      style: GoogleFonts.workSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: TimbreColors.tinta,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (Servidor.esInseguro(servidor))
+                const Icon(
+                  Icons.lock_open_outlined,
+                  size: 20,
+                  color: Color(0xFF8A6D00),
+                ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right, color: AppColors.chipTexto),
+            ],
+          ),
+        ),
       ),
     );
   }

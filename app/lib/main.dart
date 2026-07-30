@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:swiftyring/core/modulos/modulo_app.dart';
+import 'package:swiftyring/core/red/servidor.dart';
 import 'package:swiftyring/core/router/app_router.dart';
 import 'package:swiftyring/core/theme/app_theme.dart';
 import 'package:swiftyring/modules/proyecto_banos/proyecto_banos_routes.dart';
@@ -18,10 +19,19 @@ import 'package:swiftyring/modules/timbre_escolar/timbre_escolar_routes.dart';
 ///   2. quitar su import y su línea en [modulosInstalados].
 ///
 /// Lo verifica `tool/check_module_isolation.sh`.
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // La dirección del servidor se lee del disco **antes** de montar nada. Si se
+  // cargara dentro de un provider existiría un instante en que la app ya está
+  // viva pero todavía no sabe a quién preguntarle, y cualquier petición que
+  // cayera ahí iría al servidor equivocado.
+  final servidor = await AlmacenServidor().leer();
+
   runApp(
     ProviderScope(
       overrides: [
+        servidorInicialProvider.overrideWithValue(servidor),
         routerProvider.overrideWith(
           (ref) => crearRouter(ref, modulos: modulosInstalados),
         ),

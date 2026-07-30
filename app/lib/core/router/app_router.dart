@@ -7,6 +7,7 @@ import 'package:swiftyring/core/auth/presentation/pages/login_page.dart';
 import 'package:swiftyring/core/auth/presentation/pages/welcome_page.dart';
 import 'package:swiftyring/core/modulos/lanzador_page.dart';
 import 'package:swiftyring/core/modulos/modulo_app.dart';
+import 'package:swiftyring/core/red/presentation/ajustes_red_page.dart';
 import 'package:swiftyring/core/router/rutas.dart';
 
 /// Construye el router de la aplicación.
@@ -39,8 +40,12 @@ GoRouter crearRouter(Ref ref, {required List<ModuloApp> modulos}) {
       }
 
       // Ya autenticado: las pantallas de entrada dejan de tener sentido y se
-      // sustituyen por el lanzador.
-      return Rutas.publicas.contains(destino) ? Rutas.lanzador : null;
+      // sustituyen por el lanzador. Ajustes de red no: la dirección del
+      // servidor se corrige con sesión o sin ella.
+      return Rutas.publicas.contains(destino) &&
+              !Rutas.conYSinSesion.contains(destino)
+          ? Rutas.lanzador
+          : null;
     },
     routes: [
       GoRoute(
@@ -54,6 +59,10 @@ GoRouter crearRouter(Ref ref, {required List<ModuloApp> modulos}) {
       GoRoute(
         path: Rutas.login,
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: Rutas.ajustesRed,
+        builder: (context, state) => const AjustesRedPage(),
       ),
       GoRoute(
         path: Rutas.lanzador,

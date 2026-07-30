@@ -253,6 +253,19 @@ cd app && flutter run
 
 **Usuario de prueba:** `andrea@santasofia.edu.co` / `Admin123*` (rol admin, solo para desarrollo).
 
+**A qué servidor le habla la app.** Ya no está escrito en el código: se elige
+desde el chip **"Ajustes de red"** de la pantalla de bienvenida, o desde
+Configuración si ya entraste. Recién instalada apunta al computador de
+desarrollo (`10.0.2.2:8080` en el emulador de Android, `127.0.0.1:8080` en el
+resto), así que para trabajar no hay que tocar nada.
+
+Se escribe solo la dirección del servidor —la app le agrega `/api` sola— y el
+botón *Probar conexión* comprueba que ahí hay de verdad un servidor de
+SwiftyRing antes de guardar. Si la dirección no es `https://`, avisa: RNF-06
+pide HTTPS, y una contraseña que viaja sin cifrar la lee cualquiera en la red
+del colegio. No avisa cuando apuntás a la red local, donde no hay certificado
+posible.
+
 **Antes de entregar:**
 
 ```bash

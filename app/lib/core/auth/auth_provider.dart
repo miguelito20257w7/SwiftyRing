@@ -6,6 +6,7 @@ import 'package:swiftyring/core/auth/domain/auth_exception.dart';
 import 'package:swiftyring/core/auth/domain/auth_repository.dart';
 import 'package:swiftyring/core/auth/domain/auth_session.dart';
 import 'package:swiftyring/core/network/api_client.dart';
+import 'package:swiftyring/core/red/servidor.dart';
 
 // ---------------------------------------------------------------------------
 // Providers de la aplicación
@@ -21,7 +22,13 @@ import 'package:swiftyring/core/network/api_client.dart';
 
 /// El cliente HTTP. Es un provider porque **los módulos lo necesitan** para
 /// llamar a sus propios endpoints.
-final apiProvider = Provider<ApiClient>((ref) => ApiClient());
+///
+/// Nace apuntando al servidor vigente. Cuando el administrador lo cambia desde
+/// Ajustes de red no se construye otro cliente: `ServidorNotifier` le cambia la
+/// dirección a este, para no perder el token de la sesión abierta.
+final apiProvider = Provider<ApiClient>(
+  (ref) => ApiClient(origen: ref.read(servidorProvider)),
+);
 
 /// Dónde se guarda la sesión entre arranques. Es un provider porque **las
 /// pruebas lo sustituyen** por una versión en memoria: el almacenamiento real

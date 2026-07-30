@@ -133,6 +133,75 @@ void main() {
     expect(find.text('BIENVENIDO'), findsOneWidget);
   });
 
+  group('Ajustes de red', () {
+    testWidgets('El chip de la bienvenida lleva a elegir el servidor', (
+      tester,
+    ) async {
+      // Era decorativo: se dibujaba en el prototipo pero no hacía nada, así
+      // que la app solo podía hablar con el computador de desarrollo.
+      await montarApp(tester);
+
+      await tester.ensureVisible(find.text('Ajustes de red'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ajustes de red'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Servidor'), findsOneWidget);
+      expect(find.text('Probar conexión'), findsOneWidget);
+    });
+
+    testWidgets('Se llega sin sesión, que es cuando más falta hace', (
+      tester,
+    ) async {
+      // Con la dirección mal puesta el login no falla: no llega a ninguna
+      // parte. Si esta pantalla exigiera sesión, no habría forma de salir.
+      await montarApp(tester);
+
+      await tester.ensureVisible(find.text('Ajustes de red'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ajustes de red'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Servidor'), findsOneWidget);
+    });
+
+    testWidgets('Avisa cuando la dirección no va cifrada (RNF-06)', (
+      tester,
+    ) async {
+      await montarApp(tester);
+      await tester.ensureVisible(find.text('Ajustes de red'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ajustes de red'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextField).first,
+        'http://colegio.edu.co',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('no va cifrada'), findsOneWidget);
+    });
+
+    testWidgets('No avisa por la dirección local de desarrollo', (
+      tester,
+    ) async {
+      await montarApp(tester);
+      await tester.ensureVisible(find.text('Ajustes de red'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ajustes de red'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextField).first,
+        'http://127.0.0.1:8080',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('no va cifrada'), findsNothing);
+    });
+  });
+
   group('Diseño adaptativo', () {
     // Un desbordamiento de layout lanza excepción en las pruebas, así que
     // "la pantalla se montó sin errores" ya es la mitad de la aserción.

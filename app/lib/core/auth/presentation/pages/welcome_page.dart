@@ -187,25 +187,29 @@ class _BloqueAcciones extends StatelessWidget {
           style: AppTextStyles.enlace,
         ),
         SizedBox(height: context.espacioVertical(40)),
-        // nodo 1:826 — chip "Ajustes de red".
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.chipFondo,
+        // nodo 1:826 — chip "Ajustes de red". Lleva a elegir el servidor del
+        // colegio; hay que poder llegar sin sesión, porque con la dirección
+        // mal puesta el login no falla: no llega a ninguna parte.
+        Material(
+          color: AppColors.chipFondo,
+          borderRadius: BorderRadius.circular(9999),
+          child: InkWell(
             borderRadius: BorderRadius.circular(9999),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.settings,
-                  size: 15,
-                  color: AppColors.chipTexto,
-                ),
-                const SizedBox(width: 8),
-                Text('Ajustes de red', style: AppTextStyles.chip),
-              ],
+            onTap: () => context.push(Rutas.ajustesRed),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.settings,
+                    size: 15,
+                    color: AppColors.chipTexto,
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Ajustes de red', style: AppTextStyles.chip),
+                ],
+              ),
             ),
           ),
         ),
