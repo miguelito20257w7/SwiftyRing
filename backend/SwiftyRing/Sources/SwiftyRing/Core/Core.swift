@@ -34,6 +34,7 @@ enum Core {
     /// Rutas del núcleo: autenticación, gestión de cuentas y publicación de la
     /// llave pública.
     static func registrarRutas(_ app: Application) throws {
+        try app.register(collection: SaludController())
         try app.register(collection: AuthController())
         try app.register(collection: UsuariosController())
         try app.register(collection: JWKSController())
