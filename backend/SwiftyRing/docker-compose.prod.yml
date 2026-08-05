@@ -14,6 +14,18 @@
 #     están aquí: viven en .env.production, que no se sube a git.
 #   · Las llaves RS256 se montan de solo lectura desde ./keys.
 #
+# Sobre el `group_add`: la imagen corre como el usuario "vapor" (uid 999) y la
+# llave privada la crea el usuario que despliega (uid/gid 1001). Sin esto el
+# contenedor no puede leerla y el backend se cae al arrancar diciendo que no la
+# encuentra. Se le añade el grupo del que despliega y la llave se deja en 640:
+# la lee su dueño y ese grupo, nadie más del servidor.
+#
+# Cambiar el `user:` a 1001 NO es la salida: /app dentro de la imagen es
+# drwxr-x--- de vapor, así que otro uid no puede ni entrar en su directorio.
+#
+# En otra máquina se ajusta sin tocar este archivo, poniendo SWIFTYRING_GID
+# (el `id -g` de quien despliega) en un .env al lado.
+#
 # Comandos:
 #   docker compose -f docker-compose.prod.yml build
 #   docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
@@ -45,6 +57,8 @@ services:
     build:
       context: .
     restart: unless-stopped
+    group_add:
+      - "${SWIFTYRING_GID:-1001}"
     env_file: .env.production
     volumes:
       - ./keys:/app/keys:ro
@@ -58,6 +72,8 @@ services:
   # Se ejecuta a mano cuando hay migraciones nuevas; no arranca sola.
   migrate:
     image: swiftyring:latest
+    group_add:
+      - "${SWIFTYRING_GID:-1001}"
     env_file: .env.production
     volumes:
       - ./keys:/app/keys:ro
@@ -69,6 +85,8 @@ services:
 
   revert:
     image: swiftyring:latest
+    group_add:
+      - "${SWIFTYRING_GID:-1001}"
     env_file: .env.production
     volumes:
       - ./keys:/app/keys:ro
