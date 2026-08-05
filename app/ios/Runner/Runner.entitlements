@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Permiso de APNs para las compilaciones de desarrollo (Debug).
+	     Apple tiene dos entornos de notificaciones separados y un token sacado
+	     en uno no sirve en el otro: por eso Release y Profile usan
+	     RunnerRelease.entitlements, que dice "production". Sin esta separación
+	     pasa el clásico "en mi teléfono conectado al Mac llegan, pero en el
+	     .ipa que reparto no". -->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

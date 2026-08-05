@@ -49,6 +49,13 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Deja que iOS despierte la app cuando llega un aviso del timbre aunque
+	     esté cerrada o en segundo plano, que es justo cuando hace falta: el
+	     docente no va a tener la app abierta esperando su próxima clase. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

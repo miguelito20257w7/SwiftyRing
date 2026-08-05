@@ -285,6 +285,28 @@ Mientras no lo hagas, todo funciona igual: las notificaciones se calculan y se
 registran, y en el historial aparecen con "enviada: false". El timbre nunca
 depende de que Google responda.
 
+### Estado actual (agosto 2026)
+
+**Ya está hecho todo lo de desarrollo.** Los pasos de abajo quedan escritos
+porque hay que repetirlos el día que se cree un proyecto nuevo (otro colegio,
+otra cuenta), no porque falten:
+
+- Proyecto de Firebase `swiftyring`, con la app Android y la iOS registradas,
+  las dos con el identificador `dev.swiftydevs.swiftyring`.
+- `google-services.json`, `GoogleService-Info.plist` y `firebase_options.dart`
+  generados, y el plugin de Google conectado a Gradle.
+- Proyecto de Xcode con los entitlements de APNs y el `UIBackgroundModes`.
+- Llave APNs subida a Firebase (Key ID `KWWAGT57D6`, Team ID `WFLZKCYTXB`).
+- Credencial del backend en `keys/fcm-cuenta-servicio.json`, con
+  `FCM_CREDENTIALS_PATH` puesta en `.env.development`. Verificada contra Google:
+  entrega token de acceso y FCM acepta las peticiones.
+
+**Lo que falta:** repetir el paso 3 en el servidor de producción, y probar en un
+teléfono de verdad (paso 4).
+
+El identificador de la app, que la consola pide tanto para Android como para
+iOS, es el mismo en los dos: **`dev.swiftydevs.swiftyring`**.
+
 ### Paso 1 · Crear el proyecto
 
 En [console.firebase.google.com](https://console.firebase.google.com): crear un
@@ -293,18 +315,39 @@ proyecto (por ejemplo `swiftyring-santasofia`). No hace falta Google Analytics.
 ### Paso 2 · Conectar la app
 
 ```bash
-dart pub global activate flutterfire_cli
-cd app && flutterfire configure
+firebase login
 ```
+
+```bash
+cd app && ~/.pub-cache/bin/flutterfire configure
+```
+
+(La segunda línea es larga porque `~/.pub-cache/bin` no está en el PATH. Para
+poder escribir solo `flutterfire`, agregá `export PATH="$PATH:$HOME/.pub-cache/bin"`
+al final de tu `~/.zshrc`.)
 
 Elegí el proyecto y marcá Android e iOS. El comando genera
 `lib/firebase_options.dart`, `android/app/google-services.json` y
-`ios/Runner/GoogleService-Info.plist`. Con eso la app ya consigue su token y lo
+`ios/Runner/GoogleService-Info.plist`, y de paso agrega solo el plugin de
+Google a los archivos de Gradle. Con eso la app ya consigue su token y lo
 registra sola al entrar al módulo.
 
-Para iOS hace falta además una llave de APNs (Apple Push Notification service)
-cargada en la consola de Firebase: se genera en la cuenta de desarrollador de
-Apple, en Certificates > Keys. Sin eso Android recibe avisos y iOS no.
+Esos tres archivos **sí se suben a git**. No son secretos: van dentro del APK,
+que cualquiera puede abrir. El secreto es el del paso 3.
+
+Para iOS falta además la llave de **APNs** (Apple Push Notification service),
+que es lo que le da a Firebase permiso para tocarle la puerta a los iPhone:
+
+1. En [developer.apple.com](https://developer.apple.com) > Certificates,
+   Identifiers & Profiles > **Keys** > `+`, marcar *Apple Push Notifications
+   service (APNs)* y descargar el `.p8`. **Solo se puede descargar una vez.**
+2. En Firebase: Configuración del proyecto > **Cloud Messaging** > sección iOS >
+   *Subir* la llave APNs. Pide el `.p8`, el **Key ID** (sale en la misma página
+   de Apple) y el **Team ID** (arriba a la derecha en developer.apple.com; el de
+   este proyecto ya está en Xcode: `WFLZKCYTXB`).
+
+Esto necesita la cuenta de Apple Developer de pago. Sin la llave APNs, Android
+recibe avisos y iOS no: la app iOS no falla, simplemente nunca consigue token.
 
 ### Paso 3 · Darle la credencial al backend
 
@@ -315,11 +358,15 @@ Generar nueva clave privada**. Se descarga un `.json`. Guardalo así:
 mv ~/Downloads/swiftyring-*.json backend/SwiftyRing/keys/fcm-cuenta-servicio.json
 ```
 
-Y en `backend/SwiftyRing/.env.development`:
+La variable que lo apunta ya está puesta en `backend/SwiftyRing/.env.development`:
 
 ```
 FCM_CREDENTIALS_PATH=keys/fcm-cuenta-servicio.json
 ```
+
+En el servidor hay que agregar esa misma línea a `.env.production` y dejar el
+`.json` en `backend/SwiftyRing/keys/`; el `docker-compose.prod.yml` ya monta esa
+carpeta dentro del contenedor.
 
 Ese archivo **es un secreto**: quien lo tenga puede mandar notificaciones en
 nombre del colegio. Ya está en `.gitignore`, igual que la llave privada RS256.
@@ -333,6 +380,14 @@ Al reiniciar el servidor el log tiene que decir
 Con un profesor que tenga clase más tarde hoy, entrá a la app con su usuario
 (para que registre el token), y desde el admin tocá **TIMBRAR**. El aviso debe
 llegar al teléfono y, en el historial, esa notificación pasa a "enviada: true".
+
+Ojo con dos cosas al probar:
+
+- **El emulador de Android sirve, el simulador de iPhone no.** El simulador no
+  tiene APNs; para iOS hace falta un iPhone de verdad conectado.
+- Si la app está abierta en pantalla, el aviso no sale como notificación del
+  sistema sino como la barra de colores dentro de la app: eso lo hace
+  `enganche_push.dart` a propósito, y es señal de que funcionó.
 
 ---
 
