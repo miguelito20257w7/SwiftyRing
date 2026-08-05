@@ -8,11 +8,13 @@ import 'package:swiftyring/modules/timbre_escolar/domain/modelos.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/ajustes_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/asignacion_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/control_timbres_page.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/pages/docente_detalle_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/docentes_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/editar_especial_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/editar_timbre_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/especiales_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/historial_page.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/pages/horario_completo_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/mi_horario_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/widgets/enganche_push.dart';
 
@@ -25,8 +27,12 @@ abstract class RutasTimbre {
   static const docentes = '/timbre/docentes';
   static const asignacion = '/timbre/asignacion';
   static const miHorario = '/timbre/mi-horario';
+  static const miHorarioCompleto = '/timbre/mi-horario/completo';
   static const historial = '/timbre/historial';
   static const ajustes = '/timbre/ajustes';
+
+  /// Detalle de un docente con su distribución semanal (frame 1:392).
+  static String docenteDetalle(String id) => '/timbre/docentes/$id';
 }
 
 /// Cómo se presenta este módulo en el lanzador.
@@ -73,12 +79,26 @@ final ModuloApp timbreEscolarModulo = ModuloApp(
       builder: (context, state) => const DocentesPage(),
     ),
     GoRoute(
+      // El id va en la ruta y el docente en `extra`: con el id la página se
+      // puede reconstruir sola (recarga tras editar); el extra le ahorra el
+      // parpadeo de carga al llegar desde la lista.
+      path: '/timbre/docentes/:id',
+      builder: (context, state) => DocenteDetallePage(
+        docenteId: state.pathParameters['id']!,
+        inicial: state.extra as Docente?,
+      ),
+    ),
+    GoRoute(
       path: RutasTimbre.asignacion,
       builder: (context, state) => const AsignacionPage(),
     ),
     GoRoute(
       path: RutasTimbre.miHorario,
       builder: (context, state) => const MiHorarioPage(),
+    ),
+    GoRoute(
+      path: RutasTimbre.miHorarioCompleto,
+      builder: (context, state) => const HorarioCompletoPage(),
     ),
     GoRoute(
       path: RutasTimbre.historial,

@@ -260,15 +260,25 @@ class _PildoraNav extends StatelessWidget {
   }
 }
 
-/// El selector NORMAL / ESPECIAL del prototipo (nodo 1:162).
-class SelectorModo extends StatelessWidget {
-  final bool especialActivo;
+/// La píldora de dos opciones del prototipo (nodo 1:162): la de la derecha
+/// está activa cuando [derechaActiva].
+class SelectorPildora extends StatelessWidget {
+  final String izquierda;
+  final String derecha;
+  final bool derechaActiva;
   final ValueChanged<bool> alCambiar;
 
-  const SelectorModo({
+  /// Aire a los lados de cada opción; se baja cuando las etiquetas son largas
+  /// y el selector no cabría en un teléfono angosto.
+  final double holgura;
+
+  const SelectorPildora({
     super.key,
-    required this.especialActivo,
+    required this.izquierda,
+    required this.derecha,
+    required this.derechaActiva,
     required this.alCambiar,
+    this.holgura = 28,
   });
 
   @override
@@ -290,13 +300,15 @@ class SelectorModo extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _OpcionModo(
-            texto: 'NORMAL',
-            activa: !especialActivo,
+            texto: izquierda,
+            activa: !derechaActiva,
+            holgura: holgura,
             alTocar: () => alCambiar(false),
           ),
           _OpcionModo(
-            texto: 'ESPECIAL',
-            activa: especialActivo,
+            texto: derecha,
+            activa: derechaActiva,
+            holgura: holgura,
             alTocar: () => alCambiar(true),
           ),
         ],
@@ -305,14 +317,38 @@ class SelectorModo extends StatelessWidget {
   }
 }
 
+/// El selector NORMAL / ESPECIAL del prototipo (nodo 1:162).
+class SelectorModo extends StatelessWidget {
+  final bool especialActivo;
+  final ValueChanged<bool> alCambiar;
+
+  const SelectorModo({
+    super.key,
+    required this.especialActivo,
+    required this.alCambiar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SelectorPildora(
+      izquierda: 'NORMAL',
+      derecha: 'ESPECIAL',
+      derechaActiva: especialActivo,
+      alCambiar: alCambiar,
+    );
+  }
+}
+
 class _OpcionModo extends StatelessWidget {
   final String texto;
   final bool activa;
+  final double holgura;
   final VoidCallback alTocar;
 
   const _OpcionModo({
     required this.texto,
     required this.activa,
+    required this.holgura,
     required this.alTocar,
   });
 
@@ -325,7 +361,7 @@ class _OpcionModo extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         onTap: activa ? null : alTocar,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: holgura, vertical: 10),
           child: Text(
             texto,
             style: GoogleFonts.workSans(
@@ -455,6 +491,50 @@ class CuerpoTimbre extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: children,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Avatar de docente con aro dorado e iniciales (frames 1:2 y 1:392). El
+/// prototipo usa fotos; el sistema no las tiene, así que las iniciales cumplen
+/// el mismo papel de reconocer a la persona de un vistazo.
+class AvatarDocente extends StatelessWidget {
+  final String nombre;
+  final double lado;
+
+  const AvatarDocente({super.key, required this.nombre, this.lado = 48});
+
+  String get _iniciales {
+    final partes = nombre.trim().split(RegExp(r'\s+'));
+    final primera = partes.isNotEmpty && partes.first.isNotEmpty
+        ? partes.first[0]
+        : '?';
+    final segunda = partes.length > 1 && partes[1].isNotEmpty ? partes[1][0] : '';
+    return '$primera$segunda'.toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: lado,
+      height: lado,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: TimbreColors.amarillo.withValues(alpha: 0.4),
+        border: Border.all(color: TimbreColors.amarillo, width: 2),
+      ),
+      child: Center(
+        child: Text(
+          _iniciales,
+          style: GoogleFonts.workSans(
+            // Proporcional para que funcione igual en la lista (48) y en el
+            // perfil del detalle (64).
+            fontSize: lado / 3,
+            fontWeight: FontWeight.w700,
+            color: AppColors.dorado,
           ),
         ),
       ),

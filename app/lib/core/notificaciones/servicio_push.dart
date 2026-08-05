@@ -25,6 +25,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// que quedarse sin avisos.
 class ServicioPush {
   FirebaseMessaging? _messaging;
+  String? _token;
+
+  /// El token FCM de **este** dispositivo, o `null` si el push no está
+  /// disponible. Sirve para que la lista de dispositivos vinculados pueda
+  /// señalar cuál de todos es el teléfono en la mano.
+  String? get tokenActual => _token;
 
   /// Mensajes que llegan con la app abierta. El sistema no los muestra solo en
   /// primer plano, así que el módulo decide qué hacer con ellos.
@@ -39,7 +45,8 @@ class ServicioPush {
   /// FCM rota el token cada cierto tiempo y al reinstalar la app. Si no se
   /// vuelve a registrar, el docente deja de recibir avisos sin enterarse.
   Stream<String> get tokenRenovado =>
-      _messaging?.onTokenRefresh ?? const Stream.empty();
+      _messaging?.onTokenRefresh.map((token) => _token = token) ??
+      const Stream.empty();
 
   /// Enciende Firebase, pide permiso y devuelve el token del dispositivo, o
   /// `null` si el push no está disponible aquí.
@@ -71,7 +78,7 @@ class ServicioPush {
         sound: true,
       );
 
-      return await messaging.getToken();
+      return _token = await messaging.getToken();
     } catch (e) {
       // Firebase sin configurar es el caso normal mientras el proyecto no
       // exista; no es un error que deba interrumpir a nadie.

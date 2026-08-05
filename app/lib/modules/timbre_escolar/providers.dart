@@ -55,6 +55,18 @@ final miHorarioProvider = FutureProvider.autoDispose<MiHorario>(
   (ref) => ref.watch(timbreApiProvider).miHorario(),
 );
 
+/// La distribución semanal de un docente concreto, para su detalle en
+/// Gestión de Docentes (solo admin).
+final horarioProfesorProvider = FutureProvider.autoDispose
+    .family<MiHorario, String>(
+      (ref, id) => ref.watch(timbreApiProvider).horarioDeProfesor(id),
+    );
+
+/// F-07: los dispositivos vinculados del usuario autenticado.
+final dispositivosProvider = FutureProvider.autoDispose<List<DispositivoVinculado>>(
+  (ref) => ref.watch(timbreApiProvider).listarDispositivos(),
+);
+
 /// F-08: filtro de fechas del historial (`null` = sin filtro). Vive en un
 /// provider para que las tres listas lo compartan.
 class FiltroHistorialNotifier extends Notifier<({String? desde, String? hasta})> {

@@ -540,3 +540,41 @@ class UsuarioAdmin {
     esPrincipal: json['esPrincipal'] as bool,
   );
 }
+
+/// Un dispositivo vinculado del usuario autenticado ("Tus dispositivos
+/// vinculados", F-07). El backend solo devuelve los propios.
+class DispositivoVinculado {
+  final String id;
+
+  /// `ios`, `android` o `web`, como los nombra el backend.
+  final String plataforma;
+  final String? nombreDispositivo;
+
+  /// Con el token la app reconoce cuál de la lista es *este* dispositivo.
+  final String fcmToken;
+  final DateTime? registradoAt;
+  final DateTime? ultimoUsoAt;
+
+  const DispositivoVinculado({
+    required this.id,
+    required this.plataforma,
+    required this.nombreDispositivo,
+    required this.fcmToken,
+    required this.registradoAt,
+    required this.ultimoUsoAt,
+  });
+
+  factory DispositivoVinculado.fromJson(Map<String, dynamic> json) =>
+      DispositivoVinculado(
+        id: json['id'] as String,
+        plataforma: json['plataforma'] as String,
+        nombreDispositivo: json['nombreDispositivo'] as String?,
+        fcmToken: json['fcmToken'] as String,
+        registradoAt: json['registradoAt'] == null
+            ? null
+            : DateTime.parse(json['registradoAt'] as String).toLocal(),
+        ultimoUsoAt: json['ultimoUsoAt'] == null
+            ? null
+            : DateTime.parse(json['ultimoUsoAt'] as String).toLocal(),
+      );
+}

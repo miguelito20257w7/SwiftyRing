@@ -68,7 +68,7 @@ void main() {
     await montarApp(tester);
 
     expect(find.text('BIENVENIDO'), findsOneWidget);
-    expect(find.text('Timbre Escolar'), findsOneWidget);
+    expect(find.text('Institucion Educativa Santa Sofia'), findsOneWidget);
     expect(find.text('Iniciar Sesión'), findsOneWidget);
     expect(find.text('Ajustes de red'), findsOneWidget);
   });

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:swiftyring/core/auth/auth_provider.dart';
 import 'package:swiftyring/core/theme/app_theme.dart';
@@ -11,9 +14,12 @@ import 'package:swiftyring/modules/timbre_escolar/timbre_escolar_routes.dart';
 /// F-09 — Vista del profesor (RF-40..RF-43).
 /// Frame de Figma `1:527` "Vista Profesor (Yellow)".
 ///
-/// Es la pantalla de entrada del rol profesor: próximo timbre, clase actual,
-/// próxima clase y el horario semanal completo. "En curso" y "Próxima" se
-/// marcan contra la hora del servidor, no la del teléfono (RF-41, RF-42).
+/// Es la pantalla de entrada del rol profesor y, como en el prototipo, es un
+/// **resumen**: próximo timbre con su cuenta regresiva, clase actual, próxima
+/// clase y los chips del día. El semanal completo vive detrás del botón
+/// "Ver horario completo" ([HorarioCompletoPage] en su propia ruta).
+/// "En curso" y "Próxima" se marcan contra la hora del servidor, no la del
+/// teléfono (RF-41, RF-42).
 class MiHorarioPage extends ConsumerWidget {
   const MiHorarioPage({super.key});
 
@@ -50,11 +56,23 @@ class MiHorarioPage extends ConsumerWidget {
               child: Text('Profesor', style: TimbreTextos.rotulo),
             ),
             const SizedBox(height: 24),
-            if (hoy case AsyncData(:final value))
-              _TarjetaProximoTimbre(hoy: value),
-            const SizedBox(height: 16),
+            if (hoy case AsyncData(:final value)) ...[
+              TarjetaProximoTimbre(
+                hoy: value,
+                alAgotarse: () {
+                  // Sonó el timbre: el próximo toque y la clase en curso ya
+                  // son otros.
+                  ref.invalidate(timbresHoyProvider);
+                  ref.invalidate(miHorarioProvider);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
             switch (horario) {
-              AsyncData(:final value) => _ContenidoHorario(horario: value),
+              AsyncData(:final value) => _ResumenDeHoy(
+                horario: value,
+                timbresHoy: hoy.value,
+              ),
               AsyncError(:final error) => AvisoErrorCarga(
                 error: error,
                 alReintentar: () => ref.invalidate(miHorarioProvider),
@@ -71,27 +89,100 @@ class MiHorarioPage extends ConsumerWidget {
   }
 }
 
-/// La tarjeta amarilla "PRÓXIMO TIMBRE" (frame 1:527).
-class _TarjetaProximoTimbre extends StatelessWidget {
+/// La tarjeta amarilla "PRÓXIMO TIMBRE" (frame 1:527), con el "TIEMPO
+/// RESTANTE" corriendo segundo a segundo.
+///
+/// La cuenta parte de la hora del servidor y avanza con el reloj local desde
+/// el momento en que llegó la respuesta: el teléfono solo aporta el paso del
+/// tiempo, no su hora (RF-41).
+class TarjetaProximoTimbre extends StatefulWidget {
   final TimbresHoy hoy;
 
-  const _TarjetaProximoTimbre({required this.hoy});
+  /// Se llama una sola vez cuando la cuenta llega a cero.
+  final VoidCallback? alAgotarse;
 
-  /// Minutos entre la hora del servidor y el próximo toque.
-  int? get _minutosRestantes {
-    final proximo = hoy.proximo;
-    if (proximo == null) return null;
-    int minutos(String hora) {
-      final partes = hora.split(':');
-      return int.parse(partes[0]) * 60 + int.parse(partes[1]);
+  const TarjetaProximoTimbre({super.key, required this.hoy, this.alAgotarse});
+
+  @override
+  State<TarjetaProximoTimbre> createState() => _TarjetaProximoTimbreState();
+}
+
+class _TarjetaProximoTimbreState extends State<TarjetaProximoTimbre> {
+  Timer? _tic;
+  late DateTime _referencia;
+  int _tics = 0;
+  bool _avisado = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _referencia = DateTime.now();
+    _tic = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(() => _tics++),
+    );
+  }
+
+  @override
+  void didUpdateWidget(TarjetaProximoTimbre anterior) {
+    super.didUpdateWidget(anterior);
+    // Llegaron datos frescos del servidor: la cuenta arranca de nuevo.
+    if (!identical(anterior.hoy, widget.hoy)) {
+      _referencia = DateTime.now();
+      _tics = 0;
+      _avisado = false;
     }
-    return minutos(proximo.hora) - minutos(hoy.horaServidor);
+  }
+
+  @override
+  void dispose() {
+    _tic?.cancel();
+    super.dispose();
+  }
+
+  static int _minutos(String hora) {
+    final partes = hora.split(':');
+    return int.parse(partes[0]) * 60 + int.parse(partes[1]);
+  }
+
+  /// Segundos entre la hora del servidor (avanzada con el reloj local) y el
+  /// próximo toque, o `null` si hoy ya no suena nada.
+  ///
+  /// El paso del tiempo se mide dos veces —los tics del temporizador y el
+  /// reloj de pared— y manda el mayor: si el sistema suspende la app, el
+  /// temporizador se congela pero el reloj no, y al volver la cuenta aparece
+  /// donde debe en vez de donde se quedó.
+  int? get _segundosRestantes {
+    final proximo = widget.hoy.proximo;
+    if (proximo == null) return null;
+
+    final alLlegar =
+        (_minutos(proximo.hora) - _minutos(widget.hoy.horaServidor)) * 60;
+    final pared = DateTime.now().difference(_referencia).inSeconds;
+    return alLlegar - (_tics > pared ? _tics : pared);
+  }
+
+  static String _cuenta(int segundos) {
+    final s = segundos < 0 ? 0 : segundos;
+    String dos(int n) => n.toString().padLeft(2, '0');
+    final horas = s ~/ 3600;
+    final resto = '${dos((s % 3600) ~/ 60)}:${dos(s % 60)}';
+    return horas > 0 ? '$horas:$resto' : resto;
   }
 
   @override
   Widget build(BuildContext context) {
-    final proximo = hoy.proximo;
-    final restante = _minutosRestantes;
+    final proximo = widget.hoy.proximo;
+    final restante = _segundosRestantes;
+
+    if (restante != null && restante <= 0 && !_avisado) {
+      _avisado = true;
+      // Fuera del build: invalidar providers mientras se construye lanza.
+      final avisar = widget.alAgotarse;
+      if (avisar != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => avisar());
+      }
+    }
 
     return Container(
       width: double.infinity,
@@ -119,19 +210,34 @@ class _TarjetaProximoTimbre extends StatelessWidget {
                     color: AppColors.dorado,
                   ),
                 ),
-                Text(
-                  proximo == null
-                      ? 'No hay más timbres por hoy'
-                      : restante != null && restante > 0
-                      ? 'Faltan $restante min · ${proximo.etiqueta}'
-                      : proximo.etiqueta,
-                  style: GoogleFonts.workSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.6,
-                    color: AppColors.dorado.withValues(alpha: 0.8),
+                if (proximo == null)
+                  Text(
+                    'No hay más timbres por hoy',
+                    style: GoogleFonts.workSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
+                      color: AppColors.dorado.withValues(alpha: 0.8),
+                    ),
+                  )
+                else ...[
+                  Text(
+                    'TIEMPO RESTANTE',
+                    style: TimbreTextos.rotulo.copyWith(
+                      fontSize: 10,
+                      color: AppColors.dorado.withValues(alpha: 0.8),
+                    ),
                   ),
-                ),
+                  Text(
+                    _cuenta(restante ?? 0),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 3,
+                      color: AppColors.dorado,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -142,10 +248,12 @@ class _TarjetaProximoTimbre extends StatelessWidget {
   }
 }
 
-class _ContenidoHorario extends StatelessWidget {
+/// Clase actual, próxima clase, el botón al semanal y los chips del día.
+class _ResumenDeHoy extends StatelessWidget {
   final MiHorario horario;
+  final TimbresHoy? timbresHoy;
 
-  const _ContenidoHorario({required this.horario});
+  const _ResumenDeHoy({required this.horario, required this.timbresHoy});
 
   @override
   Widget build(BuildContext context) {
@@ -240,182 +348,102 @@ class _ContenidoHorario extends StatelessWidget {
                 if (proxima != null) ...[
                   Text('PRÓXIMA CLASE', style: TimbreTextos.rotulo),
                   const SizedBox(height: 4),
-                  Text(
-                    '${proxima.materia} · ${proxima.salon} · ${proxima.horaInicio}',
-                    style: GoogleFonts.workSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: TimbreColors.tinta,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${proxima.materia} · ${proxima.salon} · ${proxima.horaInicio}',
+                          style: GoogleFonts.workSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: TimbreColors.tinta,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: AppColors.chipTexto,
+                      ),
+                    ],
                   ),
                 ],
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
         ],
-        Text(
-          'Horario semanal',
-          style: TimbreTextos.etiquetaTarjeta.copyWith(fontSize: 22),
-        ),
-        const SizedBox(height: 12),
-        for (final dia in horario.dias) ...[
-          _SeccionDia(
-            dia: dia,
-            esHoy: dia.dia == horario.diaActual,
-            enCurso: dia.dia == horario.diaActual ? enCurso : null,
-            proxima: dia.dia == horario.diaActual ? proxima : null,
+        // "Ver horario completo" (frame 1:527): el semanal vive en su propia
+        // pantalla, como en el prototipo.
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => context.push(RutasTimbre.miHorarioCompleto),
+            icon: const Icon(Icons.calendar_month_outlined, size: 18),
+            label: const Text('Ver horario completo'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.dorado,
+              side: const BorderSide(color: AppColors.dorado),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: GoogleFonts.workSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
-        ],
+        ),
+        const SizedBox(height: 16),
+        // Los chips resumen del prototipo, con datos reales del día.
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _ChipResumen(
+              icono: Icons.event_note_outlined,
+              texto:
+                  '${hoy?.bloques.length ?? 0} Clases hoy',
+            ),
+            if (timbresHoy != null)
+              _ChipResumen(
+                icono: Icons.notifications_none_outlined,
+                texto: '${timbresHoy!.timbres.length} Timbres hoy',
+              ),
+          ],
+        ),
       ],
     );
   }
 }
 
-class _SeccionDia extends StatelessWidget {
-  final MiDia dia;
-  final bool esHoy;
-  final MiBloque? enCurso;
-  final MiBloque? proxima;
+class _ChipResumen extends StatelessWidget {
+  final IconData icono;
+  final String texto;
 
-  const _SeccionDia({
-    required this.dia,
-    required this.esHoy,
-    required this.enCurso,
-    required this.proxima,
-  });
+  const _ChipResumen({required this.icono, required this.texto});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.blanco,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: esHoy ? TimbreColors.amarillo : AppColors.chipFondo,
-          width: esHoy ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                dia.dia.etiqueta,
-                style: TimbreTextos.etiquetaTarjeta.copyWith(fontSize: 16),
-              ),
-              if (esHoy) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: TimbreColors.amarillo.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    'HOY',
-                    style: GoogleFonts.workSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                      color: AppColors.dorado,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          for (final bloque in dia.bloques)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _FilaBloque(
-                bloque: bloque,
-                // RF-41 / RF-42: los indicadores visuales.
-                estado: identical(bloque, enCurso) || bloque == enCurso
-                    ? _EstadoBloque.enCurso
-                    : identical(bloque, proxima) || bloque == proxima
-                    ? _EstadoBloque.proxima
-                    : _EstadoBloque.normal,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-enum _EstadoBloque { normal, enCurso, proxima }
-
-class _FilaBloque extends StatelessWidget {
-  final MiBloque bloque;
-  final _EstadoBloque estado;
-
-  const _FilaBloque({required this.bloque, required this.estado});
-
-  @override
-  Widget build(BuildContext context) {
-    final (fondo, etiqueta, colorEtiqueta) = switch (estado) {
-      _EstadoBloque.enCurso => (
-        TimbreColors.amarillo.withValues(alpha: 0.35),
-        'EN CURSO',
-        const Color(0xFF00796B),
-      ),
-      _EstadoBloque.proxima => (
-        TimbreColors.selectorFondo,
-        'PRÓXIMA',
-        const Color(0xFF2980B9),
-      ),
-      _EstadoBloque.normal => (Colors.transparent, null, Colors.transparent),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: fondo,
-        borderRadius: BorderRadius.circular(10),
+        color: TimbreColors.grisChip,
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 96,
-            child: Text(
-              '${bloque.horaInicio}–${bloque.horaFin}',
-              style: GoogleFonts.workSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.dorado,
-              ),
+          Icon(icono, size: 16, color: TimbreColors.tinta),
+          const SizedBox(width: 8),
+          Text(
+            texto,
+            style: GoogleFonts.workSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: TimbreColors.tinta,
             ),
           ),
-          Expanded(
-            child: Text(
-              '${bloque.materia} · ${bloque.salon}',
-              style: GoogleFonts.workSans(
-                fontSize: 14,
-                color: TimbreColors.tinta,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (etiqueta != null)
-            Text(
-              etiqueta,
-              style: GoogleFonts.workSans(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1,
-                color: colorEtiqueta,
-              ),
-            ),
         ],
       ),
     );

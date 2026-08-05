@@ -196,10 +196,27 @@ class TimbreApi {
     'nombreDispositivo': ?nombreDispositivo,
   });
 
+  /// "Tus dispositivos vinculados" (F-07): el backend responde solo los del
+  /// usuario autenticado.
+  Future<List<DispositivoVinculado>> listarDispositivos() async =>
+      (await _getLista('/dispositivos'))
+          .map(DispositivoVinculado.fromJson)
+          .toList();
+
+  /// El "Cerrar sesión" de un dispositivo: se borra el registro y ese
+  /// teléfono deja de recibir avisos.
+  Future<void> desvincularDispositivo(String id) => _delete('/dispositivos/$id');
+
   // ---- Vista del profesor (RF-40..42, F-09) ----
 
   Future<MiHorario> miHorario() async =>
       MiHorario.fromJson(await _get('/mi-horario'));
+
+  /// La distribución semanal de un docente concreto, para su vista de detalle
+  /// en Gestión de Docentes (solo administrador). Misma forma que
+  /// [miHorario]: las dos pantallas pintan el mismo modelo.
+  Future<MiHorario> horarioDeProfesor(String id) async =>
+      MiHorario.fromJson(await _get('/profesores/$id/horario'));
 
   // ---- Timbre manual e historial (RF-14..17, RF-23, F-08) ----
 
@@ -276,25 +293,63 @@ class TimbreApi {
   // ---- Fontanería HTTP ----
 
   Future<Map<String, dynamic>> _get(String ruta) async =>
-      _mapa(await dio.get<dynamic>(ruta));
+      _mapa(await _pedir(() => dio.get<dynamic>(ruta)));
 
   Future<List<Map<String, dynamic>>> _getLista(
     String ruta, {
     Map<String, String>? query,
   }) async {
-    final response = await dio.get<dynamic>(ruta, queryParameters: query);
+    final response = await _pedir(
+      () => dio.get<dynamic>(ruta, queryParameters: query),
+    );
     _verificar(response);
     return (response.data as List<dynamic>).cast<Map<String, dynamic>>();
   }
 
   Future<Map<String, dynamic>> _post(String ruta, Object? cuerpo) async =>
-      _mapa(await dio.post<dynamic>(ruta, data: cuerpo));
+      _mapa(await _pedir(() => dio.post<dynamic>(ruta, data: cuerpo)));
 
   Future<Map<String, dynamic>> _put(String ruta, Object cuerpo) async =>
-      _mapa(await dio.put<dynamic>(ruta, data: cuerpo));
+      _mapa(await _pedir(() => dio.put<dynamic>(ruta, data: cuerpo)));
 
   Future<void> _delete(String ruta) async =>
-      _verificar(await dio.delete<dynamic>(ruta));
+      _verificar(await _pedir(() => dio.delete<dynamic>(ruta)));
+
+  /// Por aquí pasan **todas** las peticiones del módulo.
+  ///
+  /// Un fallo que no llega a ser respuesta —servidor apagado, sin red, la
+  /// dirección de Ajustes mal escrita, el servidor que no contesta a tiempo—
+  /// sale de Dio como `DioException`, y ése no lo atrapa nadie: las pantallas
+  /// solo saben esperar [TimbreApiException]. Sin esta traducción, guardar un
+  /// docente con el backend caído revienta el botón, y una lista fallida pinta
+  /// el texto en inglés de Dio en la cara del profesor.
+  Future<Response<dynamic>> _pedir(
+    Future<Response<dynamic>> Function() peticion,
+  ) async {
+    try {
+      return await peticion();
+    } on DioException catch (e) {
+      throw TimbreApiException(_mensajeDeRed(e));
+    }
+  }
+
+  /// Traduce el fallo de red a algo que un profesor pueda leer y actuar.
+  String _mensajeDeRed(DioException e) => switch (e.type) {
+    DioExceptionType.connectionError =>
+      'No se pudo conectar con el servidor. Revisa la red o la dirección '
+          'del servidor en Ajustes.',
+    DioExceptionType.connectionTimeout ||
+    DioExceptionType.sendTimeout ||
+    DioExceptionType.receiveTimeout =>
+      'El servidor tardó demasiado en responder. Intenta de nuevo.',
+    DioExceptionType.badCertificate =>
+      'El certificado del servidor no es válido.',
+    DioExceptionType.cancel => 'La petición se canceló.',
+    // Con `validateStatus` dejando pasar hasta el 599, una respuesta del
+    // servidor ya no llega por aquí: la resuelve `_verificar`. Queda por si
+    // algún día cambia esa regla.
+    _ => 'Ocurrió un error inesperado al hablar con el servidor.',
+  };
 
   Map<String, dynamic> _mapa(Response<dynamic> response) {
     _verificar(response);
@@ -308,9 +363,23 @@ class TimbreApi {
     if (codigo >= 200 && codigo < 300) return;
 
     final data = response.data;
-    if (data is Map && data['reason'] is String) {
-      throw TimbreApiException(data['reason'] as String);
+    final razon = data is Map && data['reason'] is String
+        ? data['reason'] as String
+        : null;
+
+    // Un 5xx no es culpa de quien está usando la app: no hay nada que
+    // corregir en el formulario, así que lo primero que se dice es a quién
+    // avisar. El detalle del servidor va detrás, porque a veces es el
+    // "Something went wrong" genérico de Vapor y no le sirve a nadie.
+    if (codigo >= 500) {
+      throw TimbreApiException(
+        'El servidor tuvo un problema (código $codigo). '
+        'Vuelve a intentarlo; si sigue igual, avisa al administrador.'
+        '${razon == null ? '' : '\n$razon'}',
+      );
     }
+
+    if (razon != null) throw TimbreApiException(razon);
     throw TimbreApiException('El servidor respondió con el código $codigo.');
   }
 }

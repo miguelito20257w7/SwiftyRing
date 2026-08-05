@@ -32,7 +32,8 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         // El 401 llega por aquí y no por `onError` porque `validateStatus`
-        // deja pasar los 4xx para poder leer el `reason` de Vapor.
+        // deja pasar las respuestas del servidor para poder leer el `reason`
+        // de Vapor.
         onResponse: (respuesta, handler) {
           if (respuesta.statusCode == 401 &&
               !_esInicioDeSesion(respuesta.requestOptions.path)) {
@@ -57,9 +58,16 @@ class ApiClient {
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
     contentType: Headers.jsonContentType,
-    // Dejamos pasar los 4xx para leer el `reason` que manda Vapor en vez de
-    // recibir un DioException pelado y sin cuerpo.
-    validateStatus: (status) => status != null && status < 500,
+    // Dejamos pasar **todas** las respuestas del servidor —4xx y 5xx— para
+    // leer el `reason` que manda Vapor en vez de recibir un DioException
+    // pelado y sin cuerpo. Quien llama decide si el código es dato o error.
+    //
+    // Los 5xx también entran aquí a propósito: cuando el backend falla suele
+    // explicar por qué, y ese texto sirve más que un "código 500" a secas. Lo
+    // que sigue lanzando DioException es lo que ni llega a ser respuesta
+    // (servidor apagado, sin red, timeout), y de eso se encarga el guard de
+    // cada módulo.
+    validateStatus: (status) => status != null && status < 600,
   );
 
   /// Apunta las peticiones siguientes a otro servidor.
@@ -99,7 +107,7 @@ class ApiClient {
         baseUrl: baseUrlDe(origen),
         connectTimeout: const Duration(seconds: 6),
         receiveTimeout: const Duration(seconds: 6),
-        validateStatus: (status) => status != null && status < 500,
+        validateStatus: (status) => status != null && status < 600,
       ),
     );
 
@@ -110,6 +118,14 @@ class ApiClient {
           datos is Map &&
           datos['servicio'] == 'swiftyring') {
         return const ResultadoPrueba.exito();
+      }
+      // Un 5xx sí es un servidor, pero uno que está mal. Mandar a revisar la
+      // dirección en ese caso pondría a buscar el error donde no está.
+      if ((respuesta.statusCode ?? 0) >= 500) {
+        return ResultadoPrueba.error(
+          'Hay un servidor en esa dirección, pero respondió con un error '
+          '(código ${respuesta.statusCode}). Revisa que esté bien arrancado.',
+        );
       }
       return const ResultadoPrueba.error(
         'Contestó algo, pero no es un servidor de SwiftyRing. Revisa la dirección.',

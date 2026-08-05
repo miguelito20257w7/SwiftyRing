@@ -155,7 +155,7 @@ class _BloqueLogo extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Timbre Escolar',
+          'Institucion Educativa Santa Sofia',
           textAlign: TextAlign.center,
           style: AppTextStyles.subtitulo,
         ),
@@ -218,7 +218,16 @@ class _BloqueAcciones extends ConsumerWidget {
                     color: AppColors.chipTexto,
                   ),
                   const SizedBox(width: 8),
-                  Text('Ajustes de red', style: AppTextStyles.chip),
+                  // Flexible: en una ventana muy angosta el texto se recorta
+                  // con elipsis en vez de desbordar el chip.
+                  Flexible(
+                    child: Text(
+                      'Ajustes de red',
+                      style: AppTextStyles.chip,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -26,13 +26,22 @@ class AuthRemoteDatasource {
 
   /// Vapor devuelve los errores como `{"error": true, "reason": "..."}`.
   String _razonDeError(Response<dynamic> response) {
+    final codigo = response.statusCode ?? 0;
+
+    // Si el servidor está roto, la contraseña no tiene nada que ver: decirlo
+    // evita que el usuario la vuelva a escribir cinco veces.
+    if (codigo >= 500) {
+      return 'El servidor tuvo un problema (código $codigo). '
+          'Intenta más tarde o avisa al administrador.';
+    }
+
     final data = response.data;
     if (data is Map && data['reason'] is String) {
       return data['reason'] as String;
     }
-    if (response.statusCode == 401) {
+    if (codigo == 401) {
       return 'Correo o contraseña incorrectos.';
     }
-    return 'No se pudo iniciar sesión (código ${response.statusCode}).';
+    return 'No se pudo iniciar sesión (código $codigo).';
   }
 }
