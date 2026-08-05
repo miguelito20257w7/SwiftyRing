@@ -19,6 +19,7 @@ idf_component_register(
         esp_netif
         esp_event
         esp_http_client
+        mbedtls         # verificar el certificado del servidor (esp_crt_bundle)
         nvs_flash       # el WiFi guarda ahí su configuración
         spiffs          # horario y cola de reportes en la flash
         esp_timer       # millis()

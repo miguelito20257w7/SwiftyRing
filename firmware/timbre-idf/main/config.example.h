@@ -13,9 +13,17 @@
 #define WIFI_SSID       "NOMBRE_DE_LA_RED"
 #define WIFI_PASSWORD   "CLAVE_DE_LA_RED"
 
-// URL base de la API, SIN barra final. En desarrollo es la IP del computador
-// donde corre Vapor (no "localhost": eso sería el propio ESP32).
-#define API_BASE        "http://192.168.1.100:8080/api"
+// URL base de la API, SIN barra final.
+//
+// Tiene que ser https: el servidor redirige todo el tráfico a HTTPS, y además
+// la DEVICE_API_KEY de abajo viaja en una cabecera de cada petición. En texto
+// plano, cualquiera en la red del colegio podría leerla y hacer sonar el
+// timbre cuando quisiera.
+//
+// Para probar contra el Vapor de tu computador, va la IP de la máquina (no
+// "localhost": eso sería el propio ESP32), así:
+//   #define API_BASE "http://192.168.1.100:8080/api"
+#define API_BASE        "https://swiftyring.swiftydevs.dev/api"
 
 // La misma llave que DEVICE_API_KEY en el .env del backend.
 #define DEVICE_API_KEY  "dev-esp32-timbre-2026"

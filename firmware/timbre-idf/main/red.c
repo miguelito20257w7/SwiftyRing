@@ -13,6 +13,7 @@
 #include "cJSON.h"
 #include "comun.h"
 #include "config.h"
+#include "esp_crt_bundle.h"
 #include "esp_event.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
@@ -35,6 +36,10 @@ static const char *TAG = "red";
 #define INTERVALO_SYNC_MS (5 * 60 * 1000)
 #define INTERVALO_FLUSH_MS 15000
 #define INTERVALO_WIFI_MS 10000
+
+// Por HTTPS cada petición empieza por un saludo TLS, que tarda bastante más
+// que una conexión pelada. Cuatro segundos se quedaban cortos.
+#define TIEMPO_MAXIMO_MS 10000
 
 // El JSON del horario completo: 32 timbres habituales + los del especial.
 #define TAM_RESPUESTA_HORARIO 12288
@@ -118,6 +123,15 @@ static esp_err_t recibir_pedazo(esp_http_client_event_t *evt) {
     return ESP_OK;
 }
 
+// El servidor va por HTTPS, así que hay que verificar su certificado. En vez
+// de llevar el certificado del colegio dentro del firmware (que caduca y
+// habría que reflashear cada tres meses), se usa el paquete de autoridades
+// raíz que trae ESP-IDF: comprueba la firma igual que un navegador y sigue
+// valiendo cuando Let's Encrypt renueve.
+//
+// Sin esto, cualquiera en la red del colegio podría hacerse pasar por el
+// servidor y quedarse con la X-Device-Key, que es la que hace sonar el timbre.
+
 // Devuelve el código HTTP (200, 404...) o -1 si ni siquiera se pudo hablar
 // con el servidor.
 static int http_get(const char *ruta, char *destino, int capacidad) {
@@ -129,9 +143,10 @@ static int http_get(const char *ruta, char *destino, int capacidad) {
 
     esp_http_client_config_t cfg = {
         .url = url,
-        .timeout_ms = 4000,
+        .timeout_ms = TIEMPO_MAXIMO_MS,
         .event_handler = recibir_pedazo,
         .user_data = &respuesta,
+        .crt_bundle_attach = esp_crt_bundle_attach,
     };
     esp_http_client_handle_t cliente = esp_http_client_init(&cfg);
     if (cliente == NULL) return -1;
@@ -149,8 +164,9 @@ static int http_post(const char *ruta, const char *cuerpo) {
 
     esp_http_client_config_t cfg = {
         .url = url,
-        .timeout_ms = 4000,
+        .timeout_ms = TIEMPO_MAXIMO_MS,
         .method = HTTP_METHOD_POST,
+        .crt_bundle_attach = esp_crt_bundle_attach,
     };
     esp_http_client_handle_t cliente = esp_http_client_init(&cfg);
     if (cliente == NULL) return -1;
