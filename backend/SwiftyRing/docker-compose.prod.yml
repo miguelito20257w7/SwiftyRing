@@ -1,0 +1,79 @@
+# Despliegue en el servidor (AlmaLinux + Docker), detrás de nginx.
+#
+# El docker-compose.yml de al lado es el que trae la plantilla de Vapor y sirve
+# para probar en local: expone la base de datos al mundo y la app en el 8080.
+# Este es el de verdad:
+#
+#   · La app escucha SOLO en 127.0.0.1:8020, que es a donde apunta el
+#     proxy_pass de /etc/nginx/conf.d/swiftyring.conf. Nadie llega al puerto
+#     desde fuera: se entra por https://swiftyring.swiftydevs.dev y nginx pone
+#     el certificado.
+#   · La base de datos no publica ningún puerto. Solo la ve la app, por la red
+#     privada que Docker crea para este compose.
+#   · Los secretos (contraseña de la base, llave del ESP32, admin inicial) no
+#     están aquí: viven en .env.production, que no se sube a git.
+#   · Las llaves RS256 se montan de solo lectura desde ./keys.
+#
+# Comandos:
+#   docker compose -f docker-compose.prod.yml build
+#   docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml logs -f app
+
+name: swiftyring
+
+volumes:
+  db_data:
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file: .env.production
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      # La app no arranca hasta que esto responda: si no, la primera conexión
+      # falla y el contenedor se reinicia en bucle.
+      test: ["CMD-SHELL", "pg_isready -U swiftyring -d swiftyring"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  app:
+    image: swiftyring:latest
+    build:
+      context: .
+    restart: unless-stopped
+    env_file: .env.production
+    volumes:
+      - ./keys:/app/keys:ro
+    ports:
+      - "127.0.0.1:8020:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]
+
+  # Se ejecuta a mano cuando hay migraciones nuevas; no arranca sola.
+  migrate:
+    image: swiftyring:latest
+    env_file: .env.production
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["migrate", "--yes"]
+    profiles: ["tools"]
+
+  revert:
+    image: swiftyring:latest
+    env_file: .env.production
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["migrate", "--revert", "--yes"]
+    profiles: ["tools"]

@@ -1,2 +1,11 @@
 .build/
 .swiftpm/
+
+# Los secretos NUNCA entran en la imagen. Las llaves RS256 se montan al
+# arrancar el contenedor (ver docker-compose.prod.yml) y las variables llegan
+# por env_file; si se copiaran aquí quedarían dentro de una capa de la imagen,
+# que es para siempre aunque luego se borre el archivo.
+keys/
+.env
+.env.*
+!.env.example
