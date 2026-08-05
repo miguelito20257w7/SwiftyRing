@@ -53,6 +53,18 @@ struct RegistrarDispositivoRequest: Content {
     let nombreDispositivo: String?
 }
 
+/// Un dispositivo vinculado, como lo pinta "Tus dispositivos vinculados" en
+/// Configuración (frame 1:214). Lleva el token FCM porque solo se responde al
+/// dueño, y es como la app reconoce cuál de la lista es *este* teléfono.
+struct DispositivoDTO: Content {
+    let id: UUID
+    let plataforma: Plataforma
+    let nombreDispositivo: String?
+    let fcmToken: String
+    let registradoAt: Date?
+    let ultimoUsoAt: Date?
+}
+
 struct ActivacionesController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let api = routes.grouped("api").grouped(SwiftyRingAuthMiddleware())
@@ -65,6 +77,8 @@ struct ActivacionesController: RouteCollection {
         api.post("sismos", use: registrarSismo)
         api.get("notificaciones", use: listarNotificaciones)
         api.post("dispositivos", use: registrarDispositivo)
+        api.get("dispositivos", use: listarDispositivos)
+        api.delete("dispositivos", ":dispositivoId", use: desvincularDispositivo)
     }
 
     /// RF-16: ejecuta el timbre de inmediato, sin mirar el horario. Queda en
@@ -269,6 +283,54 @@ struct ActivacionesController: RouteCollection {
             dispositivo.ultimoUsoAt = Date()
             try await dispositivo.create(on: req.db)
         }
+        return .noContent
+    }
+
+    /// "Tus dispositivos vinculados" (F-07): cada usuario ve **solo los
+    /// suyos**, del más reciente al más viejo. No hay variante de
+    /// administrador: los tokens FCM son direcciones de entrega personales y
+    /// nadie necesita las ajenas.
+    func listarDispositivos(req: Request) async throws -> [DispositivoDTO] {
+        let payload = try req.requireSwiftyRingPayload()
+        guard let usuarioID = payload.usuarioID else {
+            throw Abort(.unauthorized, reason: "Sesión no válida")
+        }
+
+        return try await Dispositivo.query(on: req.db)
+            .filter(\.$usuarioID == usuarioID)
+            .filter(\.$activo == true)
+            .sort(\.$ultimoUsoAt, .descending)
+            .all()
+            .map { dispositivo in
+                DispositivoDTO(
+                    id: try dispositivo.requireID(),
+                    plataforma: dispositivo.plataforma,
+                    nombreDispositivo: dispositivo.nombreDispositivo,
+                    fcmToken: dispositivo.fcmToken,
+                    registradoAt: dispositivo.registradoAt,
+                    ultimoUsoAt: dispositivo.ultimoUsoAt
+                )
+            }
+    }
+
+    /// El "Cerrar sesión" de un dispositivo vinculado: se borra el registro y
+    /// ese teléfono deja de recibir avisos. Solo el dueño puede; si el
+    /// dispositivo vuelve a abrir la app con sesión, se re-registra solo.
+    func desvincularDispositivo(req: Request) async throws -> HTTPStatus {
+        let payload = try req.requireSwiftyRingPayload()
+        guard let usuarioID = payload.usuarioID else {
+            throw Abort(.unauthorized, reason: "Sesión no válida")
+        }
+        guard let dispositivoID: UUID = req.parameters.get("dispositivoId"),
+              let dispositivo = try await Dispositivo.find(dispositivoID, on: req.db),
+              dispositivo.usuarioID == usuarioID
+        else {
+            // El mismo 404 exista o sea de otro: no se confirma la existencia
+            // de dispositivos ajenos.
+            throw Abort(.notFound, reason: "El dispositivo no existe")
+        }
+
+        try await dispositivo.delete(on: req.db)
         return .noContent
     }
 

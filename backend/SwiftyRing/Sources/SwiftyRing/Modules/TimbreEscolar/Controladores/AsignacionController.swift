@@ -67,6 +67,7 @@ struct AsignacionController: RouteCollection {
         api.get("salones", ":salonId", "horario", ":dia", use: horarioDeSalon)
         api.put("salones", ":salonId", "horario", ":dia", use: guardarHorarioDeSalon)
         api.get("mi-horario", use: miHorario)
+        api.get("profesores", ":profesorId", "horario", use: horarioDeProfesor)
     }
 
     /// El horario de un salón para un día. Sin bloques todavía no es un error:
@@ -138,15 +139,36 @@ struct AsignacionController: RouteCollection {
         guard let profesorID = payload.usuarioID else {
             throw Abort(.unauthorized, reason: "Sesión no válida")
         }
+        return try await horarioSemanal(de: profesorID, on: req.db)
+    }
 
-        let bloques = try await Bloque.query(on: req.db)
+    /// La distribución semanal de un docente concreto, para la vista de
+    /// detalle en Gestión de Docentes (F-05, frame "Asignación Horaria" del
+    /// prototipo). Misma forma que `/mi-horario`: la app pinta ambas con el
+    /// mismo modelo.
+    func horarioDeProfesor(req: Request) async throws -> MiHorarioResponse {
+        try req.exigirRol(.admin)
+
+        guard let profesorID: UUID = req.parameters.get("profesorId"),
+              let profesor = try await Usuario.find(profesorID, on: req.db),
+              profesor.rol == .profesor
+        else {
+            throw Abort(.notFound, reason: "El docente no existe")
+        }
+
+        return try await horarioSemanal(de: profesorID, on: req.db)
+    }
+
+    /// El armado común de las dos rutas de arriba.
+    private func horarioSemanal(de profesorID: UUID, on db: any Database) async throws -> MiHorarioResponse {
+        let bloques = try await Bloque.query(on: db)
             .filter(\.$profesorID == profesorID)
             .with(\.$horarioSalon)
             .all()
 
-        let materias = try await Materia.query(on: req.db).all()
+        let materias = try await Materia.query(on: db).all()
         let materiaPorID = Dictionary(uniqueKeysWithValues: try materias.map { (try $0.requireID(), $0.nombre) })
-        let salones = try await Salon.query(on: req.db).all()
+        let salones = try await Salon.query(on: db).all()
         let salonPorID = Dictionary(uniqueKeysWithValues: try salones.map { (try $0.requireID(), $0.nombre) })
 
         let dias = DiaSemana.allCases.compactMap { dia -> MiDiaDTO? in

@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:SwiftyRing}",
+            "name": "Debug SwiftyRing",
+            "target": "SwiftyRing",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug SwiftyRing"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:SwiftyRing}",
+            "name": "Release SwiftyRing",
+            "target": "SwiftyRing",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release SwiftyRing"
+        }
+    ]
+}
