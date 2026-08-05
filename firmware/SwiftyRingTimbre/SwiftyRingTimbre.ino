@@ -91,7 +91,7 @@ unsigned long tUltimaMuestraSismo = 0;
 unsigned long tUltimoIntentoWifi = 0;
 unsigned long tUltimoFlushCola = 0;
 
-const unsigned long INTERVALO_COMANDOS_MS = 2000;    // RNF-04: < 2 s
+const unsigned long INTERVALO_COMANDOS_MS = 500;     // Consulta rápida de comandos (< 0.5 s)
 const unsigned long INTERVALO_SYNC_MS = 5UL * 60UL * 1000UL;
 const unsigned long INTERVALO_PANTALLA_MS = 250;
 const unsigned long INTERVALO_SISMO_MS = 20;         // 50 muestras/segundo
@@ -146,6 +146,7 @@ void loop() {
   }
 
   atenderBoton();
+  atenderLedRgb();
 
   if (ahora - tUltimaMuestraSismo >= INTERVALO_SISMO_MS) {
     tUltimaMuestraSismo = ahora;
@@ -300,6 +301,37 @@ void activarTimbre(uint8_t duracionSeg, const char *motivo) {
   dibujarPantalla();  // RF-26: el indicador aparece de inmediato
 }
 
+void atenderLedRgb() {
+#if defined(PIN_RGB_LED)
+  static bool estabaActivo = false;
+  static unsigned long ultimoCambio = 0;
+  static uint8_t fase = 0;
+
+  if (timbreActivo) {
+    estabaActivo = true;
+    unsigned long ahora = millis();
+    if (ahora - ultimoCambio >= 75) {
+      ultimoCambio = ahora;
+      fase = (fase + 1) % 4;
+#if defined(neopixelWrite)
+      switch (fase) {
+        case 0: neopixelWrite(PIN_RGB_LED, 255, 0, 0); break;     // Rojo
+        case 1: neopixelWrite(PIN_RGB_LED, 255, 255, 255); break; // Blanco
+        case 2: neopixelWrite(PIN_RGB_LED, 255, 0, 0); break;     // Rojo
+        case 3: neopixelWrite(PIN_RGB_LED, 255, 200, 0); break;   // Amarillo
+      }
+#endif
+    }
+  } else if (estabaActivo) {
+    estabaActivo = false;
+    fase = 0;
+#if defined(neopixelWrite)
+    neopixelWrite(PIN_RGB_LED, 0, 0, 0);
+#endif
+  }
+#endif
+}
+
 // ============================================================
 // 7. Botón físico (RF-15)
 // ============================================================
@@ -309,8 +341,8 @@ void atenderBoton() {
   static bool estadoAnterior = HIGH;
 
   bool estado = digitalRead(PIN_BOTON);
-  // Flanco de bajada + 400 ms de guarda contra rebotes y dedos ansiosos.
-  if (estadoAnterior == HIGH && estado == LOW && millis() - ultimaPulsacion > 400) {
+  // Flanco de bajada + 150 ms de guarda contra rebotes del contacto.
+  if (estadoAnterior == HIGH && estado == LOW && millis() - ultimaPulsacion > 150) {
     ultimaPulsacion = millis();
     Serial.println("[TIMBRE] botón físico");
     activarTimbre(5, "Manual");

@@ -52,14 +52,14 @@ bool timbre_activo(void) { return s_activo; }
 
 const char *timbre_motivo(void) { return s_motivo; }
 
-// El botón físico (RF-15): flanco de bajada más 400 ms de guarda contra
-// rebotes del contacto y contra dedos ansiosos.
+// El botón físico (RF-15): flanco de bajada más 150 ms de guarda contra
+// rebotes del contacto (respuesta instantánea al presionar).
 static void atender_boton(void) {
     static uint32_t ultima_pulsacion = 0;
     static int estado_anterior = 1;
 
     int estado = gpio_get_level(PIN_BOTON);
-    if (estado_anterior == 1 && estado == 0 && millis() - ultima_pulsacion > 400) {
+    if (estado_anterior == 1 && estado == 0 && (millis() - ultima_pulsacion > 150)) {
         ultima_pulsacion = millis();
         ESP_LOGI(TAG, "botón físico");
         timbre_activar(5, "Manual");

@@ -32,7 +32,7 @@ static const char *TAG = "red";
 #define RUTA_COLA RUTA_ALMACEN "/reportes.jsonl"
 #define RUTA_ENVIANDO RUTA_ALMACEN "/enviando.jsonl"
 
-#define INTERVALO_COMANDOS_MS 2000              // RNF-04: < 2 s
+#define INTERVALO_COMANDOS_MS 500              // Consulta rápida de comandos de la app (< 0.5 s)
 #define INTERVALO_SYNC_MS (5 * 60 * 1000)
 #define INTERVALO_FLUSH_MS 15000
 #define INTERVALO_WIFI_MS 10000
@@ -402,6 +402,6 @@ void red_tarea(void *argumento) {
             }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(200));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

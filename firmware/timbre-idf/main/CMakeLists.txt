@@ -11,6 +11,7 @@ idf_component_register(
         "red.c"
         "pantalla.c"
         "sh1106.c"
+        "led_rgb.c"
     INCLUDE_DIRS "."
     REQUIRES
         esp_driver_gpio # el relé y el botón
@@ -23,6 +24,7 @@ idf_component_register(
         nvs_flash       # el WiFi guarda ahí su configuración
         spiffs          # horario y cola de reportes en la flash
         esp_timer       # millis()
+        led_strip       # LED RGB direccionable WS2812 en ESP32-S3
 )
 
 # cJSON ya no viene dentro de ESP-IDF desde la versión 6.0: se declara como

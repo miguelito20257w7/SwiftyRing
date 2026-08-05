@@ -46,6 +46,7 @@
 #define PIN_BOTON       5   // botón manual (RF-15), contra GND con pull-up
 #define PIN_I2C_SDA     8   // bus de la pantalla SH1106 y el MPU-6050
 #define PIN_I2C_SCL     9
+#define PIN_RGB_LED     48  // LED RGB direccionable (WS2812) de la placa ESP32-S3
 
 #else
 

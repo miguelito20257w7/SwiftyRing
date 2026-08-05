@@ -31,6 +31,9 @@
 #define PIN_I2C_SDA     21
 #define PIN_I2C_SCL     22
 
+// LED RGB direccionable WS2812 en ESP32-S3 (GPIO 48)
+#define PIN_RGB_LED     48
+
 // ---- Zona horaria ----
 // Colombia: UTC-5 fijo, sin horario de verano.
 #define TZ_COLOMBIA     "<-05>5"

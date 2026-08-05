@@ -42,6 +42,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "horario.h"
+#include "led_rgb.h"
 #include "nvs_flash.h"
 #include "pantalla.h"
 #include "red.h"
@@ -112,6 +113,7 @@ void app_main(void) {
     pantalla_mensaje("SwiftyRing", "Iniciando...");
 
     timbre_iniciar();
+    led_rgb_iniciar();
     sismo_iniciar(bus);
 
     // El horario guardado se carga ANTES de tocar la red: si el colegio
@@ -131,6 +133,7 @@ void app_main(void) {
         uint32_t ahora = millis();
 
         timbre_atender();
+        led_rgb_atender(timbre_activo());
         horario_revisar();
 
         if (ahora - t_sismo >= INTERVALO_SISMO_MS) {
@@ -143,6 +146,6 @@ void app_main(void) {
             pantalla_dibujar();
         }
 
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(5));
     }
 }

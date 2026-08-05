@@ -28,6 +28,7 @@ pines distintos**:
 | Botón de timbre manual | GPIO 27 | GPIO 5 | Contra GND, pull-up interno |
 | OLED SH1106 1.3" (I2C) | SDA 21 · SCL 22 | SDA 8 · SCL 9 | Dirección estándar 0x3C |
 | MPU-6050 (I2C) | SDA 21 · SCL 22 | SDA 8 · SCL 9 | Mismo bus, dirección 0x68 |
+| LED RGB (WS2812) en placa | N/A | GPIO 48 | Alerta visual estroboscópica al sonar el timbre |
 
 No se pueden usar los mismos: en el ESP32-S3 los GPIO 26 y 27 están cableados
 a la memoria flash interna del módulo, y el GPIO 22 ni siquiera existe (la
