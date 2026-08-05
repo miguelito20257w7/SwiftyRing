@@ -219,7 +219,7 @@ class _AjustesRedPageState extends ConsumerState<AjustesRedPage> {
                       Center(
                         child: TextButton(
                           onPressed: () {
-                            _direccion.text = Servidor.porDefecto;
+                            _direccion.text = Servidor.desarrollo;
                             setState(() {
                               _error = null;
                               _resultado = null;

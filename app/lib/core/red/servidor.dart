@@ -10,11 +10,21 @@ import 'package:swiftyring/core/auth/auth_provider.dart';
 /// instala el sistema —cada colegio tiene la suya— y se guarda en el
 /// dispositivo.
 abstract class Servidor {
-  /// La dirección de desarrollo, la que trae la app recién instalada.
+  /// La dirección que trae la app recién instalada.
+  ///
+  /// Es el servidor del colegio, no el del desarrollador: quien instala la app
+  /// en el teléfono de un profesor no tiene por qué saber qué es una dirección
+  /// de servidor ni entrar a Ajustes antes de poder entrar. Otro colegio que
+  /// monte su propio servidor la cambia una vez y queda guardada.
+  static const porDefecto = 'https://swiftyring.swiftydevs.dev';
+
+  /// La dirección del computador de desarrollo, la que ofrece el botón de
+  /// Ajustes. No es lo que trae la app instalada: es un atajo para no teclear
+  /// `http://10.0.2.2:8080` cada vez que se prueba contra el backend local.
   ///
   /// Desde un emulador de Android, `127.0.0.1` es el propio emulador y no el
   /// computador: ahí la dirección especial es `10.0.2.2`.
-  static String get porDefecto {
+  static String get desarrollo {
     if (kIsWeb) return 'http://127.0.0.1:8080';
     return defaultTargetPlatform == TargetPlatform.android
         ? 'http://10.0.2.2:8080'
