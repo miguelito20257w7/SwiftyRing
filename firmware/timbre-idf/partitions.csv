@@ -1,0 +1,11 @@
+# Cómo se reparte la memoria flash de 4 MB del ESP32.
+#
+# La única línea propia de este proyecto es "almacen": ahí viven el horario
+# sincronizado y la cola de reportes pendientes, que tienen que sobrevivir a
+# los cortes de luz (RF-28, RF-30).
+#
+# Nombre,   Tipo, Subtipo,  Desplazamiento, Tamaño
+nvs,        data, nvs,      0x9000,         0x6000
+phy_init,   data, phy,      0xf000,         0x1000
+factory,    app,  factory,  0x10000,        1900K
+almacen,    data, spiffs,   ,               512K

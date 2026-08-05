@@ -1,0 +1,26 @@
+# Ajustes de ESP-IDF propios de este firmware.
+#
+# `idf.py build` los copia a sdkconfig la primera vez. Ese sdkconfig NO se
+# sube a git: se regenera solo a partir de este archivo.
+
+# Esto vale para las dos placas. Lo que cambia de una a otra (el tamaño de la
+# flash) está en sdkconfig.defaults.esp32 y sdkconfig.defaults.esp32s3: ESP-IDF
+# lee solo el del chip para el que se compila.
+
+# Tabla de particiones propia (ver partitions.csv): hace falta para la
+# partición "almacen" donde se guarda el horario.
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# El bucle de control vive en la tarea principal y llama a la pantalla, que
+# arma sus tramas en la pila.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# Un "tick" del sistema por milisegundo, para que vTaskDelay(10 ms) sea de
+# verdad 10 ms y el botón responda al instante.
+CONFIG_FREERTOS_HZ=1000
+
+# El reloj se vuelve a poner en hora por NTP cada 10 minutos en vez de cada
+# hora: si el módulo arranca antes de que haya WiFi, no se queda una hora
+# entera con la hora equivocada.
+CONFIG_LWIP_SNTP_UPDATE_DELAY=600000

@@ -1,0 +1,4 @@
+# Ajustes propios del ESP32-WROOM-32.
+
+# Flash de 4 MB, la del DevKit de siempre.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y

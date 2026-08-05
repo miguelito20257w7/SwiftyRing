@@ -1,0 +1,6 @@
+# Ajustes propios del ESP32-S3 (DevKitC-1 con 16 MB de flash y 8 MB de PSRAM).
+
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+
+# La PSRAM se queda apagada a propósito: el firmware entero cabe de sobra en la
+# memoria normal del chip, y encenderla solo añadiría cosas que pueden fallar.

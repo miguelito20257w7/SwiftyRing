@@ -27,3 +27,14 @@ app/.dart_tool/
 # Configuracion real del firmware ESP32 (WiFi + llave del dispositivo).
 # La plantilla config.example.h SI se versiona.
 firmware/SwiftyRingTimbre/config.h
+firmware/timbre-idf/main/config.h
+
+# Lo que genera ESP-IDF al compilar. El sdkconfig se regenera solo a partir
+# de sdkconfig.defaults, que ese si se versiona.
+firmware/timbre-idf/build/
+firmware/timbre-idf/sdkconfig
+firmware/timbre-idf/sdkconfig.old
+firmware/timbre-idf/managed_components/
+firmware/timbre-idf/dependencies.lock
+# Lo escribe la extension de VS Code y lleva la ruta del puerto USB de cada PC.
+firmware/timbre-idf/.vscode/

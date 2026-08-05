@@ -1,0 +1,7 @@
+# Componentes externos que idf.py descarga solo la primera vez que se compila.
+#
+# cJSON venía incluido en ESP-IDF hasta la versión 5.x. En la 6.0 lo sacaron
+# del núcleo y ahora se pide desde el registro de componentes de Espressif.
+
+dependencies:
+  espressif/cjson: "^1.7.19"
