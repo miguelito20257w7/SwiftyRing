@@ -29,4 +29,18 @@ struct SwiftyRingTests {
             })
         }
     }
+
+    @Test("Test Route Registration and TrieRouter")
+    func testRouteRegistration() async throws {
+        let app = try await Application.make(.testing)
+        do {
+            try routes(app)
+            _ = app.responder
+            #expect(app.routes.all.count > 0)
+            try await app.asyncShutdown()
+        } catch {
+            try await app.asyncShutdown()
+            throw error
+        }
+    }
 }

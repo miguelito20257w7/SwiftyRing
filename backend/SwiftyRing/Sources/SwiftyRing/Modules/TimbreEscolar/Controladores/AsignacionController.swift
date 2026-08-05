@@ -97,15 +97,15 @@ struct AsignacionController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let api = routes.grouped("api").grouped(SwiftyRingAuthMiddleware())
 
-        api.get("salones", ":salonId", "horario", ":dia", use: horarioDeSalon)
-        api.put("salones", ":salonId", "horario", ":dia", use: guardarHorarioDeSalon)
+        api.get("salones", ":id", "horario", ":dia", use: horarioDeSalon)
+        api.put("salones", ":id", "horario", ":dia", use: guardarHorarioDeSalon)
         api.get("mi-horario", use: miHorario)
-        api.get("profesores", ":profesorId", "horario", use: horarioDeProfesor)
+        api.get("profesores", ":id", "horario", use: horarioDeProfesor)
 
         // La otra cara de RF-34: el mismo horario armado desde el docente en
         // vez de desde el salón.
-        api.get("profesores", ":profesorId", "horario", ":dia", use: horarioDeProfesorEnDia)
-        api.put("profesores", ":profesorId", "horario", ":dia", use: guardarHorarioDeProfesor)
+        api.get("profesores", ":id", "horario", ":dia", use: horarioDeProfesorEnDia)
+        api.put("profesores", ":id", "horario", ":dia", use: guardarHorarioDeProfesor)
     }
 
     /// El horario de un salón para un día. Sin bloques todavía no es un error:
@@ -187,7 +187,7 @@ struct AsignacionController: RouteCollection {
     func horarioDeProfesor(req: Request) async throws -> MiHorarioResponse {
         try req.exigirRol(.admin)
 
-        guard let profesorID: UUID = req.parameters.get("profesorId"),
+        guard let profesorID: UUID = req.parameters.get("id"),
               let profesor = try await Usuario.find(profesorID, on: req.db),
               profesor.rol == .profesor
         else {
@@ -361,7 +361,7 @@ struct AsignacionController: RouteCollection {
         else {
             throw Abort(.badRequest, reason: "Día inválido; usar lunes…sabado")
         }
-        guard let salonID: UUID = req.parameters.get("salonId"),
+        guard let salonID: UUID = req.parameters.get("id"),
               let salon = try await Salon.find(salonID, on: req.db)
         else {
             throw Abort(.notFound, reason: "El salón no existe")
@@ -375,7 +375,7 @@ struct AsignacionController: RouteCollection {
         else {
             throw Abort(.badRequest, reason: "Día inválido; usar lunes…sabado")
         }
-        guard let profesorID: UUID = req.parameters.get("profesorId"),
+        guard let profesorID: UUID = req.parameters.get("id"),
               let profesor = try await Usuario.find(profesorID, on: req.db),
               profesor.rol == .profesor
         else {
