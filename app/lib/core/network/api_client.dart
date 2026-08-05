@@ -56,6 +56,17 @@ class ApiClient {
   static BaseOptions _opciones(String baseUrl) => BaseOptions(
     baseUrl: baseUrl,
     connectTimeout: const Duration(seconds: 10),
+    // Los tres plazos son fases distintas y hacen falta los tres. `connect`
+    // cubre abrir la conexión y `receive` cubre esperar la respuesta, pero
+    // entre medio está el envío del cuerpo, y ése es el que faltaba: si la
+    // conexión se muere justo ahí —una red escolar que se cae, una conexión
+    // reutilizada que el proxy ya había cerrado— Dio se queda esperando **para
+    // siempre**, porque `receive` no aplica a una respuesta que nunca empezó.
+    //
+    // Se vio guardando el horario de un salón: la app girando sin fin y el
+    // servidor anotando «stream ended at an unexpected time». Sin este plazo el
+    // usuario no recibe ni un error que le diga que reintente.
+    sendTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
     contentType: Headers.jsonContentType,
     // Dejamos pasar **todas** las respuestas del servidor —4xx y 5xx— para
