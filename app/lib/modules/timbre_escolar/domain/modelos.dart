@@ -511,6 +511,31 @@ class Configuracion {
   );
 }
 
+/// Lo que del sistema ve un usuario sin permisos de administración (F-09).
+///
+/// Es [Configuracion] sin la calibración sísmica: el profesor mira el estado
+/// del módulo y de qué colegio es la instalación, no los parámetros con los
+/// que se ajusta el detector.
+class ResumenSistema {
+  final String? nombreColegio;
+  final bool moduloEnLinea;
+  final DateTime? ultimaSync;
+
+  const ResumenSistema({
+    required this.nombreColegio,
+    required this.moduloEnLinea,
+    required this.ultimaSync,
+  });
+
+  factory ResumenSistema.fromJson(Map<String, dynamic> json) => ResumenSistema(
+    nombreColegio: json['nombreColegio'] as String?,
+    moduloEnLinea: json['moduloEnLinea'] as bool? ?? false,
+    ultimaSync: json['ultimaSync'] == null
+        ? null
+        : DateTime.parse(json['ultimaSync'] as String).toLocal(),
+  );
+}
+
 /// Cuenta del sistema, vista de administración (RF-03).
 class UsuarioAdmin {
   final String id;

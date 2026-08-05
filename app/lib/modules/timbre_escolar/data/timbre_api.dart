@@ -250,6 +250,12 @@ class TimbreApi {
   Future<Configuracion> configuracion() async =>
       Configuracion.fromJson(await _get('/configuracion'));
 
+  /// F-09: la parte de la configuración que no es de administración. El
+  /// endpoint completo responde 403 a quien no sea admin, así que la pantalla
+  /// de ajustes del profesor pregunta por aquí.
+  Future<ResumenSistema> resumenSistema() async =>
+      ResumenSistema.fromJson(await _get('/configuracion/resumen'));
+
   Future<void> guardarConfiguracion({
     String? nombreColegio,
     required double umbralSismicoG,

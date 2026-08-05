@@ -106,6 +106,13 @@ final configuracionProvider = FutureProvider.autoDispose<Configuracion>(
   (ref) => ref.watch(timbreApiProvider).configuracion(),
 );
 
+/// F-09: la versión de [configuracionProvider] que cualquier rol puede leer.
+/// Los ajustes del profesor usan esta; [configuracionProvider] le respondería
+/// 403.
+final resumenSistemaProvider = FutureProvider.autoDispose<ResumenSistema>(
+  (ref) => ref.watch(timbreApiProvider).resumenSistema(),
+);
+
 final usuariosProvider = FutureProvider.autoDispose<List<UsuarioAdmin>>(
   (ref) => ref.watch(timbreApiProvider).listarUsuarios(),
 );

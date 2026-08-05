@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:swiftyring/core/auth/auth_provider.dart';
+import 'package:swiftyring/core/auth/data/session_storage.dart';
+import 'package:swiftyring/core/auth/domain/auth_session.dart';
 import 'package:swiftyring/core/auth/domain/rol_usuario.dart';
 import 'package:swiftyring/core/theme/app_theme.dart';
 import 'package:swiftyring/modules/timbre_escolar/domain/modelos.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/ajustes_page.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/pages/ajustes_profesor_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/docente_detalle_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/docentes_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/horario_completo_page.dart';
@@ -414,4 +418,123 @@ void main() {
       );
     });
   });
+
+  group('Ajustes del profesor (F-09)', () {
+    const profesor = AuthSession(
+      token: 'jwt-de-prueba',
+      nombre: 'Luis Monsalve',
+      email: 'luis@santasofia.edu.co',
+      rol: RolUsuario.profesor,
+    );
+
+    const resumen = ResumenSistema(
+      nombreColegio: 'I.E. Santa Sofía',
+      moduloEnLinea: true,
+      ultimaSync: null,
+    );
+
+    List<Object> overrides({
+      ResumenSistema conResumen = resumen,
+      List<DispositivoVinculado> dispositivos = const [],
+    }) => [
+      // La tarjeta de perfil sale de la sesión, así que hay que restaurarla:
+      // el almacenamiento real es Keychain y en un test no hay plataforma.
+      sessionStorageProvider.overrideWithValue(_AlmacenFalso(profesor)),
+      resumenSistemaProvider.overrideWith((ref) async => conResumen),
+      dispositivosProvider.overrideWith((ref) async => dispositivos),
+    ];
+
+    testWidgets('Muestra quién eres, el colegio y el estado del módulo', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _pantalla(const AjustesProfesorPage(), overrides()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Luis Monsalve'), findsOneWidget);
+      expect(find.text('luis@santasofia.edu.co'), findsOneWidget);
+      expect(find.text('Profesor'), findsOneWidget);
+      expect(find.text('I.E. Santa Sofía'), findsOneWidget);
+      expect(find.text('Módulo ESP32-WROOM'), findsOneWidget);
+      expect(find.text('● ONLINE'), findsOneWidget);
+    });
+
+    testWidgets('No expone nada de administración', (tester) async {
+      await tester.pumpWidget(
+        _pantalla(const AjustesProfesorPage(), overrides()),
+      );
+      await tester.pumpAndSettle();
+
+      // Las cuentas del sistema y la calibración sísmica son del admin: aquí
+      // ni se piden al backend (respondería 403) ni se pintan.
+      expect(find.text('Usuarios y Dispositivos'), findsNothing);
+      expect(find.textContaining('UMBRAL SÍSMICO'), findsNothing);
+      expect(find.text('Guardar configuración'), findsNothing);
+      // El nombre del colegio se lee, no se edita.
+      expect(find.byType(TextField), findsNothing);
+    });
+
+    testWidgets('Lista sus dispositivos vinculados', (tester) async {
+      await tester.pumpWidget(
+        _pantalla(
+          const AjustesProfesorPage(),
+          overrides(
+            dispositivos: [
+              DispositivoVinculado(
+                id: 'd1',
+                plataforma: 'ios',
+                nombreDispositivo: 'iPhone de Luis',
+                fcmToken: 'tok-1',
+                registradoAt: DateTime.now(),
+                ultimoUsoAt: DateTime.now(),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('TUS DISPOSITIVOS VINCULADOS'));
+      expect(find.text('iPhone de Luis'), findsOneWidget);
+      // Desvincular el propio teléfono sí es del dueño, no del administrador.
+      expect(find.text('Cerrar sesión'), findsOneWidget);
+    });
+
+    testWidgets('Sin nombre de colegio configurado lo dice', (tester) async {
+      await tester.pumpWidget(
+        _pantalla(
+          const AjustesProfesorPage(),
+          overrides(
+            conResumen: const ResumenSistema(
+              nombreColegio: null,
+              moduloEnLinea: false,
+              ultimaSync: null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sin nombre configurado'), findsOneWidget);
+      expect(find.text('● OFFLINE'), findsOneWidget);
+    });
+  });
+}
+
+/// Almacenamiento de sesión en memoria: el real usa Keychain y en un test no
+/// hay plataforma que responda.
+class _AlmacenFalso implements SessionStorage {
+  AuthSession? _sesion;
+
+  _AlmacenFalso([this._sesion]);
+
+  @override
+  Future<AuthSession?> leer() async => _sesion;
+
+  @override
+  Future<void> guardar(AuthSession sesion) async => _sesion = sesion;
+
+  @override
+  Future<void> borrar() async => _sesion = null;
 }

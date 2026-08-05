@@ -100,8 +100,8 @@ class _DestinoNav {
 /// lanzador y la barra de navegación flotante del prototipo.
 ///
 /// La barra muestra solo lo que el rol puede usar (RF-05): el operador no ve
-/// Docentes ni Ajustes; el profesor no ve barra porque su única pantalla es su
-/// horario.
+/// Docentes, y los Ajustes de cada rol son pantallas distintas — el profesor
+/// va a los suyos, de solo lectura (F-09).
 class TimbreScaffold extends ConsumerWidget {
   final String titulo;
 
@@ -134,6 +134,14 @@ class TimbreScaffold extends ConsumerWidget {
       RolUsuario.operador => const [
         _DestinoNav('Horarios', Icons.calendar_today_outlined, RutasTimbre.inicio),
         _DestinoNav('Historial', Icons.history, RutasTimbre.historial),
+      ],
+      RolUsuario.profesor => const [
+        _DestinoNav(
+          'Mi horario',
+          Icons.calendar_today_outlined,
+          RutasTimbre.miHorario,
+        ),
+        _DestinoNav('Ajustes', Icons.settings_outlined, RutasTimbre.misAjustes),
       ],
       _ => const <_DestinoNav>[],
     };

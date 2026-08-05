@@ -36,6 +36,19 @@ struct GuardarConfiguracionRequest: Content {
     let sismoDuracionMinMs: Int
 }
 
+/// Lo que del sistema puede ver **cualquier usuario con sesión** (F-09): de
+/// qué colegio es la instalación y si el módulo físico está respondiendo.
+///
+/// Existe separado de [ConfiguracionDTO] porque la calibración sísmica es
+/// materia de administración: el profesor no la ajusta y no tiene por qué
+/// verla. Abrir el endpoint de admin habría sido una línea menos y un dato
+/// de más.
+struct ResumenSistemaDTO: Content {
+    let nombreColegio: String?
+    let moduloEnLinea: Bool
+    let ultimaSync: Date?
+}
+
 struct ConfiguracionController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let config = routes.grouped("api")
@@ -44,6 +57,20 @@ struct ConfiguracionController: RouteCollection {
 
         config.get(use: leer)
         config.put(use: guardar)
+        config.get("resumen", use: resumen)
+    }
+
+    /// F-09: el resumen que ve el profesor en sus ajustes. Basta con tener
+    /// sesión; no se exige rol porque no hay nada aquí que un usuario
+    /// autenticado no pueda saber de su propio colegio.
+    func resumen(req: Request) async throws -> ResumenSistemaDTO {
+        _ = try req.requireSwiftyRingPayload()
+        let config = try await ConfiguracionSistema.actual(on: req.db)
+        return ResumenSistemaDTO(
+            nombreColegio: config.nombreColegio,
+            moduloEnLinea: await EstadoModulo.compartido.enLinea(),
+            ultimaSync: config.ultimaSync
+        )
     }
 
     func leer(req: Request) async throws -> ConfiguracionDTO {

@@ -6,6 +6,7 @@ import 'package:swiftyring/core/auth/domain/rol_usuario.dart';
 import 'package:swiftyring/core/modulos/modulo_app.dart';
 import 'package:swiftyring/modules/timbre_escolar/domain/modelos.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/ajustes_page.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/pages/ajustes_profesor_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/asignacion_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/control_timbres_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/docente_detalle_page.dart';
@@ -30,6 +31,12 @@ abstract class RutasTimbre {
   static const miHorarioCompleto = '/timbre/mi-horario/completo';
   static const historial = '/timbre/historial';
   static const ajustes = '/timbre/ajustes';
+
+  /// Los ajustes de solo lectura del profesor (F-09). Ruta aparte de
+  /// [ajustes] porque son otra pantalla, no la misma con secciones ocultas:
+  /// la de administración pide `/configuracion`, que a este rol le responde
+  /// 403.
+  static const misAjustes = '/timbre/mis-ajustes';
 
   /// Detalle de un docente con su distribución semanal (frame 1:392).
   static String docenteDetalle(String id) => '/timbre/docentes/$id';
@@ -107,6 +114,10 @@ final ModuloApp timbreEscolarModulo = ModuloApp(
     GoRoute(
       path: RutasTimbre.ajustes,
       builder: (context, state) => const AjustesPage(),
+    ),
+    GoRoute(
+      path: RutasTimbre.misAjustes,
+      builder: (context, state) => const AjustesProfesorPage(),
     ),
   ],
 );
