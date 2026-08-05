@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,13 +10,16 @@ import 'package:swiftyring/core/auth/data/session_storage.dart';
 import 'package:swiftyring/core/auth/domain/auth_session.dart';
 import 'package:swiftyring/core/auth/domain/rol_usuario.dart';
 import 'package:swiftyring/core/theme/app_theme.dart';
+import 'package:swiftyring/modules/timbre_escolar/data/timbre_api.dart';
 import 'package:swiftyring/modules/timbre_escolar/domain/modelos.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/ajustes_page.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/pages/asignacion_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/ajustes_profesor_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/docente_detalle_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/docentes_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/horario_completo_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/mi_horario_page.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/widgets/timbre_ui.dart';
 import 'package:swiftyring/modules/timbre_escolar/providers.dart';
 
 /// Las pantallas que traducen los frames del prototipo (1:392, 1:527, 1:214)
@@ -299,10 +303,10 @@ void main() {
       expect(find.byType(HorarioCompletoPage), findsOneWidget);
       expect(find.text('Lunes'), findsOneWidget);
       expect(find.text('Martes'), findsOneWidget);
-      expect(find.text('HOY'), findsOneWidget);
+      expect(find.text('HOY LUNES'), findsOneWidget);
     });
 
-    testWidgets('El profesor alterna entre la lista y la cuadrícula', (
+    testWidgets('El profesor alterna entre la cuadrícula y la lista', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -313,14 +317,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Abre en la lista por día, con los indicadores de la jornada.
-      expect(find.text('EN CURSO'), findsOneWidget);
-      expect(find.text('Distribución Semanal'), findsNothing);
-
-      await tester.tap(find.text('CUADRÍCULA'));
-      await tester.pumpAndSettle();
-
-      // La misma tabla del administrador: siglas de materia por bloque.
+      // Abre en la cuadrícula: la semana entera de un vistazo, con las siglas
+      // de materia por bloque.
       expect(find.text('Distribución Semanal'), findsOneWidget);
       expect(find.text('LC'), findsWidgets);
       expect(find.text('EN CURSO'), findsNothing);
@@ -328,7 +326,40 @@ void main() {
       await tester.tap(find.text('LISTA'));
       await tester.pumpAndSettle();
 
+      // La lista por día trae los indicadores de la jornada.
       expect(find.text('EN CURSO'), findsOneWidget);
+      expect(find.text('Distribución Semanal'), findsNothing);
+
+      await tester.tap(find.text('CUADRÍCULA'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Distribución Semanal'), findsOneWidget);
+    });
+
+    testWidgets('En la cuadrícula solo la clase en curso va en amarillo fuerte', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [miHorarioProvider.overrideWith((ref) async => _horario)],
+          child: const MaterialApp(home: HorarioCompletoPage()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // El fixture tiene tres bloques —dos el lunes (hoy) y uno el martes— y
+      // la hora del servidor, 08:10, cae dentro del segundo del lunes.
+      // Antes se encendía el día entero; ahora es una sola celda.
+      final fuertes = tester
+          .widgetList<Container>(find.byType(Container))
+          .where((contenedor) {
+            final decoracion = contenedor.decoration;
+            return decoracion is BoxDecoration &&
+                decoracion.color ==
+                    TimbreColors.amarillo.withValues(alpha: 0.9);
+          });
+
+      expect(fuertes.length, 1);
     });
   });
 
@@ -416,6 +447,103 @@ void main() {
         find.textContaining('Ningún dispositivo recibe tus notificaciones'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('Asignación horaria por docente (F-06)', () {
+    const salones = [
+      Salon(id: 's1', nombre: '11B'),
+      Salon(id: 's2', nombre: '9D'),
+    ];
+
+    Future<_ApiFalsa> montar(WidgetTester tester) async {
+      final api = _ApiFalsa(
+        bloques: const [
+          BloqueDocente(
+            id: 'b1',
+            horaInicio: '07:00',
+            horaFin: '07:50',
+            materiaId: 'm1',
+            materiaNombre: 'Lengua Castellana',
+            salonId: 's1',
+            salonNombre: '11B',
+          ),
+          BloqueDocente(
+            id: 'b2',
+            horaInicio: '07:50',
+            horaFin: '08:40',
+            materiaId: 'm1',
+            materiaNombre: 'Lengua Castellana',
+            salonId: 's2',
+            salonNombre: '9D',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _pantalla(const AsignacionPage(), [
+          timbreApiProvider.overrideWithValue(api),
+          docentesProvider.overrideWith((ref) async => [_docente]),
+          materiasProvider.overrideWith((ref) async => [_materiaLc]),
+          salonesProvider.overrideWith((ref) async => salones),
+        ]),
+      );
+      await tester.pumpAndSettle();
+      return api;
+    }
+
+    testWidgets('Ofrece los dos modos y abre en el de salón', (tester) async {
+      await montar(tester);
+
+      expect(find.text('POR SALÓN'), findsOneWidget);
+      expect(find.text('POR DOCENTE'), findsOneWidget);
+      // El modo por salón es el de F-06 y sigue siendo el de entrada.
+      expect(find.text('Selecciona un salón'), findsOneWidget);
+    });
+
+    testWidgets('Por docente, cada bloque muestra su salón', (tester) async {
+      await montar(tester);
+
+      await tester.tap(find.text('POR DOCENTE'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Selecciona un docente'), findsOneWidget);
+
+      // Se toca el desplegable por su tipo: el texto de pista vive dentro de
+      // la decoración del campo y tocarlo no siempre acierta al control.
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Luis Monsalve').last);
+      await tester.pumpAndSettle();
+
+      // La jornada del docente puede estar repartida entre varios salones, y
+      // es justamente lo que este modo deja ver de una vez.
+      expect(find.text('Luis Monsalve · Lunes'), findsOneWidget);
+      expect(find.text('2 BLOQUES'), findsOneWidget);
+      expect(find.text('11B'), findsOneWidget);
+      expect(find.text('9D'), findsOneWidget);
+    });
+
+    testWidgets('Guardar manda los bloques con su salón', (tester) async {
+      final api = await montar(tester);
+
+      await tester.tap(find.text('POR DOCENTE'));
+      await tester.pumpAndSettle();
+      // Se toca el desplegable por su tipo: el texto de pista vive dentro de
+      // la decoración del campo y tocarlo no siempre acierta al control.
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Luis Monsalve').last);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Guardar horario'));
+      await tester.tap(find.text('Guardar horario'));
+      await tester.pumpAndSettle();
+
+      expect(api.guardado, isNotNull);
+      expect(api.guardado!.length, 2);
+      // El salón viaja por bloque; el docente va en la ruta, no en el cuerpo.
+      expect(api.guardado!.map((b) => b.salonId), ['s1', 's2']);
     });
   });
 
@@ -520,6 +648,37 @@ void main() {
       expect(find.text('● OFFLINE'), findsOneWidget);
     });
   });
+}
+
+/// Solo se sobrescribe lo que la pantalla de asignación llama; el resto de
+/// [TimbreApi] queda como está y nunca se ejecuta porque no hay red detrás.
+class _ApiFalsa extends TimbreApi {
+  _ApiFalsa({required this.bloques}) : super(dio: Dio());
+
+  final List<BloqueDocente> bloques;
+
+  /// Lo último que se mandó a guardar, para comprobar qué se envió.
+  List<({String horaInicio, String horaFin, String materiaId, String salonId})>?
+  guardado;
+
+  @override
+  Future<HorarioDocenteDia> horarioDeProfesorEnDia(
+    String profesorId,
+    DiaSemana dia,
+  ) async =>
+      HorarioDocenteDia(profesorId: profesorId, dia: dia, bloques: bloques);
+
+  @override
+  Future<void> guardarHorarioDeProfesor(
+    String profesorId,
+    DiaSemana dia,
+    List<
+      ({String horaInicio, String horaFin, String materiaId, String salonId})
+    >
+    bloques,
+  ) async {
+    guardado = bloques;
+  }
 }
 
 /// Almacenamiento de sesión en memoria: el real usa Keychain y en un test no

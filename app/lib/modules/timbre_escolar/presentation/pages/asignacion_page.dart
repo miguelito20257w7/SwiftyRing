@@ -8,28 +8,44 @@ import 'package:swiftyring/modules/timbre_escolar/domain/modelos.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/widgets/timbre_ui.dart';
 import 'package:swiftyring/modules/timbre_escolar/providers.dart';
 
+/// Una opción de los desplegables: el id que viaja al servidor y el nombre que
+/// se lee en pantalla.
+typedef _Opcion = ({String id, String nombre});
+
 /// Un bloque en edición, antes de guardarlo en el servidor.
 class _BloqueBorrador {
   String horaInicio;
   String horaFin;
   String materiaId;
-  String profesorId;
+
+  /// El **docente** cuando se arma el horario de un salón, y el **salón**
+  /// cuando se arma el de un docente.
+  ///
+  /// Un bloque de clase siempre tiene los dos; lo que cambia entre los dos
+  /// modos es cuál queda fijo por el encabezado y cuál se elige bloque a
+  /// bloque. Por eso el borrador es uno solo y no dos casi iguales.
+  String terceroId;
 
   _BloqueBorrador({
     required this.horaInicio,
     required this.horaFin,
     required this.materiaId,
-    required this.profesorId,
+    required this.terceroId,
   });
 }
 
 /// F-06 — Asignación horaria (RF-34, RF-35). Solo administrador.
 /// Frame de Figma `1:392` "Asignación Horaria (Yellow)".
 ///
-/// El formulario es por **salón y día**, como lo define F-06 y el modelo de
-/// datos (`horario_salon` + `bloques`); el frame del prototipo muestra la
-/// distribución resultante de un docente, que aquí corresponde a la Vista
-/// Profesor. Se conserva su lenguaje visual: celdas amarillas por bloque.
+/// El horario es una sola tabla —bloques colgando de un salón y un día— que se
+/// puede armar desde dos lados, y la pantalla ofrece los dos:
+///
+///   * **Por salón**: se fija el salón y cada bloque elige su docente. Es cómo
+///     lo define F-06 y cómo se llena un horario desde cero, salón por salón.
+///   * **Por docente**: se fija el docente y cada bloque elige su salón. Es lo
+///     que sirve cuando llega un profesor nuevo o hay que recomponerle la
+///     semana a uno: su jornada está repartida entre varios salones y por el
+///     otro modo habría que entrar a cada uno a buscarlo.
 class AsignacionPage extends ConsumerStatefulWidget {
   const AsignacionPage({super.key});
 
@@ -38,6 +54,74 @@ class AsignacionPage extends ConsumerStatefulWidget {
 }
 
 class _AsignacionPageState extends ConsumerState<AsignacionPage> {
+  bool _porDocente = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.fondo,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppColors.dorado,
+        title: Text(
+          'Asignación horaria',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: TimbreColors.tinta,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: context.margenLateral,
+          vertical: 16,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 672),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: SelectorPildora(
+                    izquierda: 'POR SALÓN',
+                    derecha: 'POR DOCENTE',
+                    derechaActiva: _porDocente,
+                    holgura: 18,
+                    alCambiar: (valor) => setState(() => _porDocente = valor),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Cambiar de modo descarta el borrador a propósito: son dos
+                // recortes distintos del horario y arrastrar bloques de uno al
+                // otro no querría decir nada.
+                if (_porDocente)
+                  const _AsignarPorDocente()
+                else
+                  const _AsignarPorSalon(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Modo por salón (F-06)
+// ---------------------------------------------------------------------------
+
+class _AsignarPorSalon extends ConsumerStatefulWidget {
+  const _AsignarPorSalon();
+
+  @override
+  ConsumerState<_AsignarPorSalon> createState() => _AsignarPorSalonState();
+}
+
+class _AsignarPorSalonState extends ConsumerState<_AsignarPorSalon> {
   Salon? _salon;
   DiaSemana _dia = DiaSemana.lunes;
 
@@ -62,12 +146,12 @@ class _AsignacionPageState extends ConsumerState<AsignacionPage> {
               horaInicio: b.horaInicio,
               horaFin: b.horaFin,
               materiaId: b.materiaId,
-              profesorId: b.profesorId,
+              terceroId: b.profesorId,
             ),
         ];
       });
     } on TimbreApiException catch (e) {
-      if (mounted) _avisar(e.mensaje);
+      if (mounted) _avisar(context, e.mensaje);
     }
   }
 
@@ -101,7 +185,7 @@ class _AsignacionPageState extends ConsumerState<AsignacionPage> {
       setState(() => _salon = salon);
       await _cargarHorario();
     } on TimbreApiException catch (e) {
-      _avisar(e.mensaje);
+      if (mounted) _avisar(context, e.mensaje);
     }
   }
 
@@ -122,10 +206,13 @@ class _AsignacionPageState extends ConsumerState<AsignacionPage> {
               horaInicio: b.horaInicio,
               horaFin: b.horaFin,
               materiaId: b.materiaId,
-              profesorId: b.profesorId,
+              profesorId: b.terceroId,
             ),
         ],
       );
+      // Cambió el horario de varios docentes: las pantallas que lo muestran no
+      // deben quedarse con la versión vieja.
+      _invalidarHorarios(ref);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -135,173 +222,382 @@ class _AsignacionPageState extends ConsumerState<AsignacionPage> {
         ),
       );
     } on TimbreApiException catch (e) {
-      _avisar(e.mensaje);
+      if (mounted) _avisar(context, e.mensaje);
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
   }
 
-  void _avisar(String mensaje) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje), backgroundColor: AppColors.error),
+  @override
+  Widget build(BuildContext context) {
+    final salones = ref.watch(salonesProvider);
+    final docentes = ref.watch(docentesProvider).value ?? const <Docente>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const RotuloSeccion(
+          icono: Icons.meeting_room_outlined,
+          texto: 'Salón',
+        ),
+        const SizedBox(height: 8),
+        switch (salones) {
+          AsyncData(:final value) => Row(
+            children: [
+              Expanded(
+                child: _Desplegable(
+                  valor: _salon?.id,
+                  pista: 'Selecciona un salón',
+                  opciones: [
+                    for (final salon in value) (id: salon.id, nombre: salon.nombre),
+                  ],
+                  alCambiar: (id) {
+                    setState(
+                      () => _salon = value.where((s) => s.id == id).firstOrNull,
+                    );
+                    _cargarHorario();
+                  },
+                ),
+              ),
+              IconButton(
+                onPressed: _crearSalon,
+                icon: const Icon(Icons.add_circle_outline),
+                color: AppColors.dorado,
+                tooltip: 'Nuevo salón',
+              ),
+            ],
+          ),
+          AsyncError(:final error) => AvisoErrorCarga(
+            error: error,
+            alReintentar: () => ref.invalidate(salonesProvider),
+          ),
+          _ => const LinearProgressIndicator(),
+        },
+        const SizedBox(height: 20),
+        _SelectorDia(
+          dia: _dia,
+          alCambiar: (dia) {
+            setState(() => _dia = dia);
+            _cargarHorario();
+          },
+        ),
+        const SizedBox(height: 24),
+        if (_salon == null)
+          const _Vacio(
+            icono: Icons.table_chart_outlined,
+            mensaje:
+                'Elige un salón y un día para armar su horario de clases. Ese '
+                'horario alimenta las notificaciones de próxima clase a los '
+                'docentes.',
+          )
+        else
+          _EditorBloques(
+            titulo: '${_salon!.nombre} · ${_dia.etiqueta}',
+            etiquetaTercero: 'Docente',
+            opciones: [
+              for (final docente in docentes)
+                (id: docente.id, nombre: docente.nombre),
+            ],
+            faltanOpciones:
+                'Antes de armar horarios crea materias y docentes en Gestión '
+                'de Docentes.',
+            bloques: _bloques,
+            enviando: _enviando,
+            alCambiar: () => setState(() {}),
+            alQuitar: (indice) => setState(() => _bloques?.removeAt(indice)),
+            alGuardar: _guardar,
+          ),
+      ],
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Modo por docente
+// ---------------------------------------------------------------------------
+
+class _AsignarPorDocente extends ConsumerStatefulWidget {
+  const _AsignarPorDocente();
+
+  @override
+  ConsumerState<_AsignarPorDocente> createState() => _AsignarPorDocenteState();
+}
+
+class _AsignarPorDocenteState extends ConsumerState<_AsignarPorDocente> {
+  Docente? _docente;
+  DiaSemana _dia = DiaSemana.lunes;
+  List<_BloqueBorrador>? _bloques;
+  bool _enviando = false;
+
+  Future<void> _cargarHorario() async {
+    final docente = _docente;
+    if (docente == null) return;
+    setState(() => _bloques = null);
+    try {
+      final horario = await ref
+          .read(timbreApiProvider)
+          .horarioDeProfesorEnDia(docente.id, _dia);
+      if (!mounted) return;
+      setState(() {
+        _bloques = [
+          for (final b in horario.bloques)
+            _BloqueBorrador(
+              horaInicio: b.horaInicio,
+              horaFin: b.horaFin,
+              materiaId: b.materiaId,
+              terceroId: b.salonId,
+            ),
+        ];
+      });
+    } on TimbreApiException catch (e) {
+      if (mounted) _avisar(context, e.mensaje);
+    }
+  }
+
+  Future<void> _guardar() async {
+    final docente = _docente;
+    final bloques = _bloques;
+    if (docente == null || bloques == null) return;
+
+    setState(() => _enviando = true);
+    try {
+      await ref.read(timbreApiProvider).guardarHorarioDeProfesor(
+        docente.id,
+        _dia,
+        [
+          for (final b in bloques)
+            (
+              horaInicio: b.horaInicio,
+              horaFin: b.horaFin,
+              materiaId: b.materiaId,
+              salonId: b.terceroId,
+            ),
+        ],
+      );
+      _invalidarHorarios(ref);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Horario de ${docente.nombre} · ${_dia.etiqueta} guardado.',
+          ),
+        ),
+      );
+      // El servidor renumera los bloques de cada salón afectado; se relee para
+      // no dejar en pantalla un borrador que ya no es lo que hay guardado.
+      await _cargarHorario();
+    } on TimbreApiException catch (e) {
+      if (mounted) _avisar(context, e.mensaje);
+    } finally {
+      if (mounted) setState(() => _enviando = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final salones = ref.watch(salonesProvider);
+    final docentes = ref.watch(docentesProvider);
+    final salones = ref.watch(salonesProvider).value ?? const <Salon>[];
 
-    return Scaffold(
-      backgroundColor: AppColors.fondo,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: AppColors.dorado,
-        title: Text(
-          'Asignación horaria',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: TimbreColors.tinta,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const RotuloSeccion(icono: Icons.person_outline, texto: 'Docente'),
+        const SizedBox(height: 8),
+        switch (docentes) {
+          AsyncData(:final value) when value.isEmpty => Text(
+            'Todavía no hay docentes. Se crean en Gestión de Docentes, con su '
+            'correo y sus materias.',
+            style: AppTextStyles.cuerpo,
           ),
+          AsyncData(:final value) => _Desplegable(
+            valor: _docente?.id,
+            pista: 'Selecciona un docente',
+            opciones: [
+              for (final docente in value)
+                (id: docente.id, nombre: docente.nombre),
+            ],
+            alCambiar: (id) {
+              setState(
+                () => _docente = value.where((d) => d.id == id).firstOrNull,
+              );
+              _cargarHorario();
+            },
+          ),
+          AsyncError(:final error) => AvisoErrorCarga(
+            error: error,
+            alReintentar: () => ref.invalidate(docentesProvider),
+          ),
+          _ => const LinearProgressIndicator(),
+        },
+        const SizedBox(height: 20),
+        _SelectorDia(
+          dia: _dia,
+          alCambiar: (dia) {
+            setState(() => _dia = dia);
+            _cargarHorario();
+          },
         ),
+        const SizedBox(height: 24),
+        if (_docente == null)
+          const _Vacio(
+            icono: Icons.person_search_outlined,
+            mensaje:
+                'Elige un docente y un día para armar su jornada. Cada bloque '
+                'lleva su salón, así que su horario puede repartirse entre '
+                'varios sin salir de aquí.',
+          )
+        else
+          _EditorBloques(
+            titulo: '${_docente!.nombre} · ${_dia.etiqueta}',
+            etiquetaTercero: 'Salón',
+            opciones: [
+              for (final salon in salones) (id: salon.id, nombre: salon.nombre),
+            ],
+            faltanOpciones:
+                'Antes de armar la jornada de un docente crea materias y '
+                'salones.',
+            bloques: _bloques,
+            enviando: _enviando,
+            alCambiar: () => setState(() {}),
+            alQuitar: (indice) => setState(() => _bloques?.removeAt(indice)),
+            alGuardar: _guardar,
+          ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Piezas compartidas por los dos modos
+// ---------------------------------------------------------------------------
+
+void _avisar(BuildContext context, String mensaje) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(mensaje), backgroundColor: AppColors.error),
+  );
+}
+
+/// Guardar por cualquiera de los dos modos cambia el horario que ven la vista
+/// del profesor y el detalle de docente. Se sueltan las copias en memoria para
+/// que la próxima pantalla que las pida las traiga del servidor.
+void _invalidarHorarios(WidgetRef ref) {
+  ref.invalidate(horarioSalonProvider);
+  ref.invalidate(horarioProfesorProvider);
+  ref.invalidate(miHorarioProvider);
+}
+
+class _Desplegable extends StatelessWidget {
+  final String? valor;
+  final String pista;
+  final List<_Opcion> opciones;
+  final ValueChanged<String?> alCambiar;
+
+  const _Desplegable({
+    required this.valor,
+    required this.pista,
+    required this.opciones,
+    required this.alCambiar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      initialValue: valor,
+      hint: Text(pista),
+      items: [
+        for (final opcion in opciones)
+          DropdownMenuItem(value: opcion.id, child: Text(opcion.nombre)),
+      ],
+      onChanged: alCambiar,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: AppColors.blanco,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(
-          horizontal: context.margenLateral,
-          vertical: 16,
+    );
+  }
+}
+
+class _SelectorDia extends StatelessWidget {
+  final DiaSemana dia;
+  final ValueChanged<DiaSemana> alCambiar;
+
+  const _SelectorDia({required this.dia, required this.alCambiar});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const RotuloSeccion(
+          icono: Icons.calendar_today_outlined,
+          texto: 'Día de la semana',
         ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 672),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const RotuloSeccion(icono: Icons.meeting_room_outlined, texto: 'Salón'),
-                const SizedBox(height: 8),
-                switch (salones) {
-                  AsyncData(:final value) => Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _salon?.id,
-                          hint: const Text('Selecciona un salón'),
-                          items: [
-                            for (final salon in value)
-                              DropdownMenuItem(
-                                value: salon.id,
-                                child: Text(salon.nombre),
-                              ),
-                          ],
-                          onChanged: (id) {
-                            final salon =
-                                value.where((s) => s.id == id).firstOrNull;
-                            setState(() => _salon = salon);
-                            _cargarHorario();
-                          },
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: AppColors.blanco,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _crearSalon,
-                        icon: const Icon(Icons.add_circle_outline),
-                        color: AppColors.dorado,
-                        tooltip: 'Nuevo salón',
-                      ),
-                    ],
-                  ),
-                  AsyncError(:final error) => AvisoErrorCarga(
-                    error: error,
-                    alReintentar: () => ref.invalidate(salonesProvider),
-                  ),
-                  _ => const LinearProgressIndicator(),
-                },
-                const SizedBox(height: 20),
-                const RotuloSeccion(
-                  icono: Icons.calendar_today_outlined,
-                  texto: 'Día de la semana',
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final opcion in DiaSemana.values)
+              ChoiceChip(
+                label: Text(opcion.inicial),
+                tooltip: opcion.etiqueta,
+                selected: dia == opcion,
+                selectedColor: AppColors.dorado,
+                labelStyle: TextStyle(
+                  color: dia == opcion
+                      ? AppColors.blanco
+                      : AppColors.textoApoyo,
                 ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final dia in DiaSemana.values)
-                      ChoiceChip(
-                        label: Text(dia.inicial),
-                        tooltip: dia.etiqueta,
-                        selected: _dia == dia,
-                        selectedColor: AppColors.dorado,
-                        labelStyle: TextStyle(
-                          color: _dia == dia
-                              ? AppColors.blanco
-                              : AppColors.textoApoyo,
-                        ),
-                        onSelected: (_) {
-                          setState(() => _dia = dia);
-                          _cargarHorario();
-                        },
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                if (_salon == null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: AppColors.blanco,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.chipFondo),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.table_chart_outlined,
-                          size: 40,
-                          color: AppColors.chipTexto,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Elige un salón y un día para armar su horario de '
-                          'clases. Ese horario alimenta las notificaciones de '
-                          'próxima clase a los docentes.',
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.cuerpo,
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  _EditorBloques(
-                    salon: _salon!,
-                    dia: _dia,
-                    bloques: _bloques,
-                    enviando: _enviando,
-                    alCambiar: () => setState(() {}),
-                    alQuitar: (indice) =>
-                        setState(() => _bloques?.removeAt(indice)),
-                    alGuardar: _guardar,
-                  ),
-              ],
-            ),
-          ),
+                onSelected: (_) => alCambiar(opcion),
+              ),
+          ],
         ),
+      ],
+    );
+  }
+}
+
+class _Vacio extends StatelessWidget {
+  final IconData icono;
+  final String mensaje;
+
+  const _Vacio({required this.icono, required this.mensaje});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: AppColors.blanco,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.chipFondo),
+      ),
+      child: Column(
+        children: [
+          Icon(icono, size: 40, color: AppColors.chipTexto),
+          const SizedBox(height: 12),
+          Text(mensaje, textAlign: TextAlign.center, style: AppTextStyles.cuerpo),
+        ],
       ),
     );
   }
 }
 
 /// "Distribución Semanal" del prototipo, reducida a un día: la lista ordenada
-/// de bloques con sus celdas amarillas, el AGREGAR JORNADA punteado y guardar.
+/// de bloques con sus celdas amarillas, el AGREGAR punteado y guardar.
+///
+/// Sirve a los dos modos. Lo único que cambia es el tercer dato de cada
+/// bloque: el docente cuando se arma un salón, el salón cuando se arma un
+/// docente.
 class _EditorBloques extends ConsumerWidget {
-  final Salon salon;
-  final DiaSemana dia;
+  final String titulo;
+  final String etiquetaTercero;
+  final List<_Opcion> opciones;
+
+  /// Qué decir si aún no hay materias o no hay opciones para el tercer dato.
+  final String faltanOpciones;
+
   final List<_BloqueBorrador>? bloques;
   final bool enviando;
   final VoidCallback alCambiar;
@@ -309,8 +605,10 @@ class _EditorBloques extends ConsumerWidget {
   final VoidCallback alGuardar;
 
   const _EditorBloques({
-    required this.salon,
-    required this.dia,
+    required this.titulo,
+    required this.etiquetaTercero,
+    required this.opciones,
+    required this.faltanOpciones,
     required this.bloques,
     required this.enviando,
     required this.alCambiar,
@@ -324,18 +622,10 @@ class _EditorBloques extends ConsumerWidget {
     int? indice,
   ]) async {
     final materias = await ref.read(materiasProvider.future);
-    final docentes = await ref.read(docentesProvider.future);
     if (!context.mounted) return;
 
-    if (materias.isEmpty || docentes.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Antes de armar horarios crea materias y docentes en Gestión de Docentes.',
-          ),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    if (materias.isEmpty || opciones.isEmpty) {
+      _avisar(context, faltanOpciones);
       return;
     }
 
@@ -347,7 +637,8 @@ class _EditorBloques extends ConsumerWidget {
       builder: (context) => _HojaBloque(
         original: actual,
         materias: materias,
-        docentes: docentes,
+        etiquetaTercero: etiquetaTercero,
+        opciones: opciones,
         // El nuevo bloque arranca donde terminó el anterior.
         horaSugerida: bloques!.isEmpty ? '07:00' : bloques!.last.horaFin,
       ),
@@ -373,11 +664,10 @@ class _EditorBloques extends ConsumerWidget {
     }
 
     final materias = ref.watch(materiasProvider).value ?? const <Materia>[];
-    final docentes = ref.watch(docentesProvider).value ?? const <Docente>[];
     String nombreMateria(String id) =>
         materias.where((m) => m.id == id).firstOrNull?.nombre ?? '—';
-    String nombreDocente(String id) =>
-        docentes.where((d) => d.id == id).firstOrNull?.nombre ?? '—';
+    String nombreTercero(String id) =>
+        opciones.where((o) => o.id == id).firstOrNull?.nombre ?? '—';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -393,10 +683,13 @@ class _EditorBloques extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${salon.nombre} · ${dia.etiqueta}',
+                  titulo,
                   style: TimbreTextos.etiquetaTarjeta,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
@@ -473,7 +766,7 @@ class _EditorBloques extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                nombreDocente(bloque.profesorId),
+                                nombreTercero(bloque.terceroId),
                                 style: GoogleFonts.workSans(
                                   fontSize: 13,
                                   color: AppColors.textoApoyo,
@@ -533,17 +826,19 @@ class _EditorBloques extends ConsumerWidget {
   }
 }
 
-/// Captura de un bloque: horas, materia y docente.
+/// Captura de un bloque: horas, materia y el dato que cambia según el modo.
 class _HojaBloque extends StatefulWidget {
   final _BloqueBorrador? original;
   final List<Materia> materias;
-  final List<Docente> docentes;
+  final String etiquetaTercero;
+  final List<_Opcion> opciones;
   final String horaSugerida;
 
   const _HojaBloque({
     required this.original,
     required this.materias,
-    required this.docentes,
+    required this.etiquetaTercero,
+    required this.opciones,
     required this.horaSugerida,
   });
 
@@ -555,7 +850,7 @@ class _HojaBloqueState extends State<_HojaBloque> {
   late TimeOfDay _inicio;
   late TimeOfDay _fin;
   String? _materiaId;
-  String? _profesorId;
+  String? _terceroId;
 
   TimeOfDay _desdeTexto(String hora) {
     final partes = hora.split(':');
@@ -573,7 +868,13 @@ class _HojaBloqueState extends State<_HojaBloque> {
     final finPorDefecto = _inicio.replacing(hour: (_inicio.hour + 1) % 24);
     _fin = original == null ? finPorDefecto : _desdeTexto(original.horaFin);
     _materiaId = original?.materiaId ?? widget.materias.first.id;
-    _profesorId = original?.profesorId ?? widget.docentes.first.id;
+    // Un bloque puede venir con un salón o un docente que ya no está en la
+    // lista (se suspendió, se borró); en ese caso el desplegable arranca vacío
+    // en vez de reventar al no encontrar el valor.
+    final tercero = original?.terceroId;
+    _terceroId = widget.opciones.any((o) => o.id == tercero)
+        ? tercero
+        : widget.opciones.first.id;
   }
 
   @override
@@ -641,13 +942,13 @@ class _HojaBloqueState extends State<_HojaBloque> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            initialValue: _profesorId,
+            initialValue: _terceroId,
             items: [
-              for (final docente in widget.docentes)
-                DropdownMenuItem(value: docente.id, child: Text(docente.nombre)),
+              for (final opcion in widget.opciones)
+                DropdownMenuItem(value: opcion.id, child: Text(opcion.nombre)),
             ],
-            onChanged: (id) => setState(() => _profesorId = id),
-            decoration: const InputDecoration(labelText: 'Docente'),
+            onChanged: (id) => setState(() => _terceroId = id),
+            decoration: InputDecoration(labelText: widget.etiquetaTercero),
           ),
           const SizedBox(height: 24),
           BotonGuardar(
@@ -657,11 +958,9 @@ class _HojaBloqueState extends State<_HojaBloque> {
               final inicio = _aTexto(_inicio);
               final fin = _aTexto(_fin);
               if (inicio.compareTo(fin) >= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('El bloque debe terminar después de empezar.'),
-                    backgroundColor: AppColors.error,
-                  ),
+                _avisar(
+                  context,
+                  'El bloque debe terminar después de empezar.',
                 );
                 return;
               }
@@ -670,7 +969,7 @@ class _HojaBloqueState extends State<_HojaBloque> {
                   horaInicio: inicio,
                   horaFin: fin,
                   materiaId: _materiaId!,
-                  profesorId: _profesorId!,
+                  terceroId: _terceroId!,
                 ),
               );
             },

@@ -342,6 +342,61 @@ class HorarioSalon {
   );
 }
 
+/// Un bloque visto desde el docente: el profesor está implícito y el salón es
+/// lo que se elige. La contraparte de [BloqueAsignado], que lo mira desde el
+/// salón.
+class BloqueDocente {
+  final String id;
+  final String horaInicio;
+  final String horaFin;
+  final String materiaId;
+  final String materiaNombre;
+  final String salonId;
+  final String salonNombre;
+
+  const BloqueDocente({
+    required this.id,
+    required this.horaInicio,
+    required this.horaFin,
+    required this.materiaId,
+    required this.materiaNombre,
+    required this.salonId,
+    required this.salonNombre,
+  });
+
+  factory BloqueDocente.fromJson(Map<String, dynamic> json) => BloqueDocente(
+    id: json['id'] as String,
+    horaInicio: json['horaInicio'] as String,
+    horaFin: json['horaFin'] as String,
+    materiaId: json['materiaId'] as String,
+    materiaNombre: json['materiaNombre'] as String,
+    salonId: json['salonId'] as String,
+    salonNombre: json['salonNombre'] as String,
+  );
+}
+
+/// Las clases de un docente en un día, con los ids necesarios para editarlas.
+class HorarioDocenteDia {
+  final String profesorId;
+  final DiaSemana dia;
+  final List<BloqueDocente> bloques;
+
+  const HorarioDocenteDia({
+    required this.profesorId,
+    required this.dia,
+    required this.bloques,
+  });
+
+  factory HorarioDocenteDia.fromJson(Map<String, dynamic> json) =>
+      HorarioDocenteDia(
+        profesorId: json['profesorId'] as String,
+        dia: DiaSemana.desdeApi(json['dia'] as String?) ?? DiaSemana.lunes,
+        bloques: (json['bloques'] as List<dynamic>)
+            .map((b) => BloqueDocente.fromJson(b as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
 /// Un bloque en la vista del profesor (RF-40).
 class MiBloque {
   final int numero;

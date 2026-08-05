@@ -32,6 +32,16 @@ class CuadriculaSemanal extends StatelessWidget {
       .map((p) => p[0].toUpperCase())
       .join();
 
+  /// ¿Es la clase que está ocurriendo ahora mismo? (RF-41).
+  ///
+  /// Se compara contra la hora del servidor, no la del teléfono: un reloj
+  /// desajustado señalaría la celda equivocada. Las horas son `"HH:mm"`, así
+  /// que comparar los textos alfabéticamente ordena igual que comparar horas.
+  bool _enCurso(MiDia dia, MiBloque bloque) =>
+      dia.dia == horario.diaActual &&
+      bloque.horaInicio.compareTo(horario.horaServidor) <= 0 &&
+      horario.horaServidor.compareTo(bloque.horaFin) < 0;
+
   @override
   Widget build(BuildContext context) {
     if (horario.dias.isEmpty) {
@@ -128,7 +138,7 @@ class CuadriculaSemanal extends StatelessWidget {
                       child: i < dia.bloques.length
                           ? _CeldaBloque(
                               bloque: dia.bloques[i],
-                              esHoy: dia.dia == horario.diaActual,
+                              enCurso: _enCurso(dia, dia.bloques[i]),
                             )
                           : const SizedBox.shrink(),
                     ),
@@ -144,9 +154,12 @@ class CuadriculaSemanal extends StatelessWidget {
 
 class _CeldaBloque extends StatelessWidget {
   final MiBloque bloque;
-  final bool esHoy;
 
-  const _CeldaBloque({required this.bloque, required this.esHoy});
+  /// La clase que está ocurriendo ahora. Solo una celda de toda la tabla lo
+  /// está, y es la única que lleva el amarillo fuerte.
+  final bool enCurso;
+
+  const _CeldaBloque({required this.bloque, required this.enCurso});
 
   @override
   Widget build(BuildContext context) {
@@ -154,11 +167,16 @@ class _CeldaBloque extends StatelessWidget {
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        // El día en curso se pinta con el amarillo fuerte del prototipo.
-        color: TimbreColors.amarillo.withValues(alpha: esHoy ? 0.9 : 0.35),
+        // El amarillo fuerte del prototipo se reserva para la clase en curso.
+        // Marcaba el día entero, y con seis celdas encendidas a la vez no
+        // señalaba nada: el día de hoy ya lo dice el rótulo de la tarjeta.
+        color: TimbreColors.amarillo.withValues(alpha: enCurso ? 0.9 : 0.35),
         borderRadius: BorderRadius.circular(10),
-        border: const Border(
-          left: BorderSide(color: AppColors.dorado, width: 3),
+        border: Border(
+          left: BorderSide(
+            color: AppColors.dorado,
+            width: enCurso ? 5 : 3,
+          ),
         ),
       ),
       child: Tooltip(

@@ -14,11 +14,10 @@ import 'package:swiftyring/modules/timbre_escolar/providers.dart';
 /// listado vive detrás del botón "Ver horario completo"; por eso es una
 /// pantalla aparte y no una sección más de `MiHorarioPage`.
 ///
-/// Tiene dos vistas del mismo horario: la **lista** por día, que es la que
-/// sirve en el celular durante la jornada porque marca la clase en curso y la
-/// próxima, y la **cuadrícula** "Distribución Semanal" —la misma tabla que el
-/// administrador ve en el detalle del docente—, que sirve para ver la semana
-/// entera de un vistazo.
+/// Tiene dos vistas del mismo horario: la **cuadrícula** "Distribución
+/// Semanal" —la misma tabla que el administrador ve en el detalle del
+/// docente—, que muestra la semana entera de un vistazo, y la **lista** por
+/// día, que detalla cada bloque con su materia y salón completos.
 class HorarioCompletoPage extends ConsumerStatefulWidget {
   const HorarioCompletoPage({super.key});
 
@@ -28,8 +27,10 @@ class HorarioCompletoPage extends ConsumerStatefulWidget {
 }
 
 class _HorarioCompletoPageState extends ConsumerState<HorarioCompletoPage> {
-  /// Arranca en lista: es la vista del prototipo y la útil en el día a día.
-  bool _cuadricula = false;
+  /// Arranca en cuadrícula: quien abre "horario completo" viene a ver la
+  /// semana entera, y la tabla la muestra sin desplazarse. La lista queda a un
+  /// toque para cuando hace falta el detalle de un día.
+  bool _cuadricula = true;
 
   @override
   Widget build(BuildContext context) {

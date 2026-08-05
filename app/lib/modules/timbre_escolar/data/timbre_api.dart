@@ -180,6 +180,37 @@ class TimbreApi {
     ],
   });
 
+  /// El mismo horario armado desde el docente: sus clases de un día, en los
+  /// salones que sean.
+  Future<HorarioDocenteDia> horarioDeProfesorEnDia(
+    String profesorId,
+    DiaSemana dia,
+  ) async => HorarioDocenteDia.fromJson(
+    await _get('/profesores/$profesorId/horario/${dia.name}'),
+  );
+
+  /// Reemplaza las clases de ese docente en ese día. El servidor solo toca los
+  /// bloques de este profesor: los de sus compañeros en los mismos salones
+  /// quedan como estaban.
+  Future<void> guardarHorarioDeProfesor(
+    String profesorId,
+    DiaSemana dia,
+    List<
+      ({String horaInicio, String horaFin, String materiaId, String salonId})
+    >
+    bloques,
+  ) => _put('/profesores/$profesorId/horario/${dia.name}', {
+    'bloques': [
+      for (final b in bloques)
+        {
+          'horaInicio': b.horaInicio,
+          'horaFin': b.horaFin,
+          'materiaId': b.materiaId,
+          'salonId': b.salonId,
+        },
+    ],
+  });
+
   // ---- Dispositivos y push (RF-32, RF-37) ----
 
   /// Registra (o refresca) el token FCM de este teléfono para que el backend
