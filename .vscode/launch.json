@@ -8,6 +8,12 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Flutter Android",
+      "request": "launch",
+      "type": "dart",
+      "args": ["-d", "android"]
+    },
+    {
       "name": "SwiftyRing",
       "request": "launch",
       "type": "dart",
@@ -15,6 +21,15 @@
       "cwd": "app"
     },
     {
+      "version": "0.2.0",
+      "name": "SwiftyRing · Android (emulador)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "app"
+    },
+    {
+      "version": "0.2.0",
       "name": "SwiftyRing · iPhone (simulador)",
       "request": "launch",
       "type": "dart",
@@ -23,6 +38,7 @@
       "deviceId": "ios"
     },
     {
+      "version": "0.2.0",
       "name": "SwiftyRing · macOS",
       "request": "launch",
       "type": "dart",
@@ -31,6 +47,7 @@
       "deviceId": "macos"
     },
     {
+      "version": "0.2.0",
       "name": "SwiftyRing · Chrome",
       "request": "launch",
       "type": "dart",
@@ -39,6 +56,7 @@
       "deviceId": "chrome"
     },
     {
+      "version": "0.2.0",
       "type": "swift",
       "request": "launch",
       "args": [],
@@ -49,6 +67,7 @@
       "preLaunchTask": "swift: Build Debug SwiftyRing (backend/SwiftyRing)"
     },
     {
+      "version": "0.2.0",
       "type": "swift",
       "request": "launch",
       "args": [],

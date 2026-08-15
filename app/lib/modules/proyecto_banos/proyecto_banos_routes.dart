@@ -3,10 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:swiftyring/core/auth/domain/rol_usuario.dart';
 import 'package:swiftyring/core/modulos/modulo_app.dart';
 import 'package:swiftyring/modules/proyecto_banos/presentation/pages/banos_inicio_page.dart';
+import 'package:swiftyring/modules/proyecto_banos/presentation/pages/autorizar_salida_page.dart';
+import 'package:swiftyring/modules/proyecto_banos/presentation/pages/confirmacion_salida_page.dart';
+import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 
 /// Rutas del módulo Control Baños SS.
 abstract class RutasBanos {
   static const inicio = '/banos';
+  static const autorizar = '/banos/autorizar';
+  static const confirmacion = '/banos/confirmacion';
 }
 
 /// Cómo se presenta este módulo en el lanzador.
@@ -39,6 +44,17 @@ final ModuloApp proyectoBanosModulo = ModuloApp(
     GoRoute(
       path: RutasBanos.inicio,
       builder: (context, state) => const BanosInicioPage(),
+    ),
+    GoRoute(
+      path: RutasBanos.autorizar,
+      builder: (context, state) => const AutorizarSalidaPage(),
+    ),
+    GoRoute(
+      path: RutasBanos.confirmacion,
+      // La salida recién creada viaja como `extra` desde AutorizarSalidaPage:
+      // así esta pantalla no tiene que volver a buscarla en ningún lado.
+      builder: (context, state) =>
+          ConfirmacionSalidaPage(salida: state.extra as SalidaBano),
     ),
   ],
 );
