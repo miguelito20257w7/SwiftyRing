@@ -103,7 +103,7 @@ class _HistorialPageState extends ConsumerState<HistorialPage> {
                 SizedBox(width: 8),
                 SizedBox(width: 64, child: Text('DURACIÓN', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6B7189)))),
                 SizedBox(width: 8),
-                SizedBox(width: 68, child: Text('ESTADO', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6B7189)))),
+                SizedBox(width: 76, child: Text('ESTADO', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6B7189)))),
               ],
             ),
           ),
@@ -145,13 +145,16 @@ class _FilaHistorial extends StatelessWidget {
           SizedBox(
             width: 64,
             child: Text(
-              salida.enCurso ? 'en curso' : '${salida.duracionMinutos} min',
+              salida.enCurso ? '—' : '${salida.duracionMinutos} min',
               textAlign: TextAlign.right,
               style: const TextStyle(fontSize: 12),
             ),
           ),
           const SizedBox(width: 8),
-          _EtiquetaEstado(enCurso: salida.enCurso),
+          SizedBox(
+            width: 76,
+            child: Center(child: _EtiquetaEstado(enCurso: salida.enCurso)),
+          ),
         ],
       ),
     );
