@@ -6,6 +6,7 @@ import 'package:swiftyring/core/auth/domain/rol_usuario.dart';
 import 'package:swiftyring/modules/proyecto_banos/data/banos_fake_data.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 import 'package:swiftyring/modules/proyecto_banos/proyecto_banos_routes.dart';
+import 'package:swiftyring/modules/proyecto_banos/presentation/widgets/banos_bottom_nav.dart';
 
 /// Panel principal del módulo Control Baños SS (nodo "Buen día, 11-B" del
 /// prototipado).
@@ -59,6 +60,7 @@ class BanosInicioPage extends ConsumerWidget {
         foregroundColor: Colors.white,
         title: const Text('Control Baños SS'),
       ),
+      bottomNavigationBar: const BanosBottomNav(indiceActual: 0),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -81,7 +83,7 @@ class BanosInicioPage extends ConsumerWidget {
           const SizedBox(height: 16),
           _TarjetaEnCurso(salidas: enCurso, verde: _verde, navy: _navy),
           const SizedBox(height: 20),
-          _BotonAutorizar(navy: _navy, onTap: () => context.go(RutasBanos.autorizar)),
+          _BotonAutorizar(navy: _navy, onTap: () => context.push(RutasBanos.autorizar)),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -89,10 +91,7 @@ class BanosInicioPage extends ConsumerWidget {
                 child: _BotonSecundario(
                   texto: 'Ver historial del día',
                   navy: _navy,
-                  onTap: () {
-                    // Se conecta en el siguiente paso, cuando construyamos
-                    // la pantalla de historial.
-                  },
+                  onTap: () => context.push(RutasBanos.historial),
                 ),
               ),
               const SizedBox(width: 12),
@@ -100,9 +99,7 @@ class BanosInicioPage extends ConsumerWidget {
                 child: _BotonSecundario(
                   texto: 'Ir a reportes',
                   navy: _navy,
-                  onTap: () {
-                    // Se conecta cuando construyamos reportes.
-                  },
+                  onTap: () => context.push(RutasBanos.reportes),
                 ),
               ),
             ],
@@ -252,8 +249,8 @@ class _FilaActividad extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: const Border(left: BorderSide(color: Color(0xFF2D8C3E), width: 3)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text.rich(
             TextSpan(
@@ -263,6 +260,7 @@ class _FilaActividad extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 2),
           Text('Duración: ${salida.duracionMinutos} minutos', style: const TextStyle(color: Color(0xFF6B7189), fontSize: 12)),
         ],
       ),

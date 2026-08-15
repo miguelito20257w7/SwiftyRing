@@ -5,6 +5,8 @@ import 'package:swiftyring/core/modulos/modulo_app.dart';
 import 'package:swiftyring/modules/proyecto_banos/presentation/pages/banos_inicio_page.dart';
 import 'package:swiftyring/modules/proyecto_banos/presentation/pages/autorizar_salida_page.dart';
 import 'package:swiftyring/modules/proyecto_banos/presentation/pages/confirmacion_salida_page.dart';
+import 'package:swiftyring/modules/proyecto_banos/presentation/pages/historial_page.dart';
+import 'package:swiftyring/modules/proyecto_banos/presentation/pages/reportes_page.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 
 /// Rutas del módulo Control Baños SS.
@@ -12,6 +14,8 @@ abstract class RutasBanos {
   static const inicio = '/banos';
   static const autorizar = '/banos/autorizar';
   static const confirmacion = '/banos/confirmacion';
+  static const historial = '/banos/historial';
+  static const reportes = '/banos/reportes';
 }
 
 /// Cómo se presenta este módulo en el lanzador.
@@ -55,6 +59,14 @@ final ModuloApp proyectoBanosModulo = ModuloApp(
       // así esta pantalla no tiene que volver a buscarla en ningún lado.
       builder: (context, state) =>
           ConfirmacionSalidaPage(salida: state.extra as SalidaBano),
+    ),
+    GoRoute(
+      path: RutasBanos.historial,
+      builder: (context, state) => const HistorialPage(),
+    ),
+    GoRoute(
+      path: RutasBanos.reportes,
+      builder: (context, state) => const ReportesPage(),
     ),
   ],
 );
