@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 import 'package:swiftyring/modules/proyecto_banos/presentation/pages/autorizar_salida_page.dart';
 import 'package:swiftyring/modules/proyecto_banos/proyecto_banos_routes.dart';
+import 'package:swiftyring/core/router/rutas.dart';
 
 /// Pantalla "Confirmación de salida" del prototipado: el check verde, los
 /// datos del registro, y los dos botones de siguiente acción.
@@ -20,6 +21,10 @@ class ConfirmacionSalidaPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: _navy,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Rutas.lanzador),
+        ),
         title: const Text('Control Baños SS'),
       ),
       body: ListView(

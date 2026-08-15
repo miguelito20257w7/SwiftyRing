@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:swiftyring/modules/proyecto_banos/data/banos_fake_data.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 import 'package:swiftyring/modules/proyecto_banos/presentation/pages/autorizar_salida_page.dart'
     show formatearHora;
 import 'package:swiftyring/modules/proyecto_banos/presentation/widgets/banos_bottom_nav.dart';
+import 'package:swiftyring/core/router/rutas.dart';
 
 /// Pantalla "Historial de salidas" del prototipado: buscador + tabla con
 /// fecha, estudiante, duración y estado.
@@ -38,6 +40,10 @@ class _HistorialPageState extends ConsumerState<HistorialPage> {
       appBar: AppBar(
         backgroundColor: _navy,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Rutas.lanzador),
+        ),
         title: const Text('Control Baños SS'),
       ),
       bottomNavigationBar: const BanosBottomNav(indiceActual: 1),

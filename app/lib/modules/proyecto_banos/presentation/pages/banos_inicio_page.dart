@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:swiftyring/core/auth/auth_provider.dart';
 import 'package:swiftyring/core/auth/domain/rol_usuario.dart';
+import 'package:swiftyring/core/router/rutas.dart';
 import 'package:swiftyring/modules/proyecto_banos/data/banos_fake_data.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 import 'package:swiftyring/modules/proyecto_banos/proyecto_banos_routes.dart';
@@ -32,6 +33,10 @@ class BanosInicioPage extends ConsumerWidget {
         appBar: AppBar(
           backgroundColor: _navy,
           foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.go(Rutas.lanzador),
+          ),
           title: const Text('Control Baños'),
         ),
         body: const Center(
@@ -58,6 +63,10 @@ class BanosInicioPage extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: _navy,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(Rutas.lanzador),
+        ),
         title: const Text('Control Baños SS'),
       ),
       bottomNavigationBar: const BanosBottomNav(indiceActual: 0),
