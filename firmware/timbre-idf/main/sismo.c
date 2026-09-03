@@ -196,6 +196,13 @@ static void procesar_muestra(float ax_raw, float ay_raw, float az_raw) {
     s_ay = ay_raw;
     s_az = az_raw;
 
+    // WARMUP (5 segundos): Evita falso positivo al encender mientras los filtros se estabilizan
+    static int s_warmup_samples = 0;
+    if (s_warmup_samples < 500) {
+        s_warmup_samples++;
+        return; // Retorna antes de evaluar la máquina de estados
+    }
+
     // Umbral de aceleración pico (PGA) mínima de control:
     // Exige superar el piso de ruido instrumental (15 mg) o el umbral configurado en la app
     float min_pga = fmaxf(MIN_PGA_PISO_G, horario_umbral_sismico());
