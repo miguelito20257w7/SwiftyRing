@@ -264,6 +264,14 @@ static void procesar_muestra(float ax_raw, float ay_raw, float az_raw) {
             }
             break;
     }
+
+    // Telemetría periódica para calibración con la impresora 3D (10 Hz)
+    static int s_calib_counter = 0;
+    if (++s_calib_counter >= 10) {
+        s_calib_counter = 0;
+        ESP_LOGI(TAG, "CALIB | Mag Dinámica: %.4f g | STA/LTA Ratio: %.1f | Estado: %d | Umbral: %.3f g", 
+                 dynamic_magnitude, s_current_ratio, (int)s_system_state, min_pga);
+    }
 }
 
 // Lee el buffer UART y ejecuta el parser de la trama de 18 bytes
