@@ -215,14 +215,13 @@ class _SeccionSistemaState extends ConsumerState<_SeccionSistema> {
                 // RF-19: los dos parámetros con los que el algoritmo del
                 // ESP32 distingue un sismo de un camión pasando.
                 Text(
-                  'UMBRAL SÍSMICO · ${umbral.toStringAsFixed(1)} g',
+                  'UMBRAL SÍSMICO · ${umbral.toStringAsFixed(3)} g',
                   style: TimbreTextos.rotulo,
                 ),
                 Slider(
-                  value: umbral.clamp(0.1, 4.0),
-                  min: 0.1,
-                  max: 4.0,
-                  divisions: 39,
+                  value: umbral.clamp(0.015, 2.0),
+                  min: 0.015,
+                  max: 2.0,
                   activeColor: AppColors.dorado,
                   onChanged: (valor) => setState(() => _umbral = valor),
                 ),
@@ -231,10 +230,10 @@ class _SeccionSistemaState extends ConsumerState<_SeccionSistema> {
                   style: TimbreTextos.rotulo,
                 ),
                 Slider(
-                  value: duracion.toDouble().clamp(100, 5000),
-                  min: 100,
+                  value: duracion.toDouble().clamp(300, 5000),
+                  min: 300,
                   max: 5000,
-                  divisions: 49,
+                  divisions: 47,
                   activeColor: AppColors.dorado,
                   onChanged: (valor) =>
                       setState(() => _duracionMs = valor.round()),

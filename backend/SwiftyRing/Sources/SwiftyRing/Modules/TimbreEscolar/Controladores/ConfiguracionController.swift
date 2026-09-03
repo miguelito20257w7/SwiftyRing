@@ -88,8 +88,8 @@ struct ConfiguracionController: RouteCollection {
         // Los límites vienen del rango físico del MPU-6050 y de lo que tiene
         // sentido como sismo: fuera de esto es un error de tipeo, no una
         // calibración.
-        guard (0.1...16.0).contains(datos.umbralSismicoG) else {
-            throw Abort(.badRequest, reason: "El umbral sísmico debe estar entre 0.1 y 16 g")
+        guard (0.015...2.0).contains(datos.umbralSismicoG) else {
+            throw Abort(.badRequest, reason: "El umbral sísmico debe estar entre 0.015 y 2.0 g")
         }
         guard (100...60_000).contains(datos.sismoDuracionMinMs) else {
             throw Abort(.badRequest, reason: "La duración mínima debe estar entre 100 y 60000 ms")
