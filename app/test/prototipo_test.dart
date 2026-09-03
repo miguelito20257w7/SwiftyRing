@@ -685,6 +685,7 @@ class _ApiFalsa extends TimbreApi {
 /// hay plataforma que responda.
 class _AlmacenFalso implements SessionStorage {
   AuthSession? _sesion;
+  ({String email, String password})? _credenciales;
 
   _AlmacenFalso([this._sesion]);
 
@@ -695,5 +696,18 @@ class _AlmacenFalso implements SessionStorage {
   Future<void> guardar(AuthSession sesion) async => _sesion = sesion;
 
   @override
-  Future<void> borrar() async => _sesion = null;
+  Future<void> guardarCredenciales({
+    required String email,
+    required String password,
+  }) async => _credenciales = (email: email, password: password);
+
+  @override
+  Future<({String email, String password})?> leerCredenciales() async =>
+      _credenciales;
+
+  @override
+  Future<void> borrar() async {
+    _sesion = null;
+    _credenciales = null;
+  }
 }

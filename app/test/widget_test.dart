@@ -14,8 +14,9 @@ import 'package:swiftyring/main.dart';
 /// y en un test no hay plataforma que responda.
 class _SessionStorageFalso implements SessionStorage {
   AuthSession? _sesion;
+  ({String email, String password})? _credenciales;
 
-  _SessionStorageFalso([this._sesion]);
+  _SessionStorageFalso([this._sesion, this._credenciales]);
 
   @override
   Future<AuthSession?> leer() async => _sesion;
@@ -24,19 +25,33 @@ class _SessionStorageFalso implements SessionStorage {
   Future<void> guardar(AuthSession sesion) async => _sesion = sesion;
 
   @override
-  Future<void> borrar() async => _sesion = null;
+  Future<void> guardarCredenciales({
+    required String email,
+    required String password,
+  }) async => _credenciales = (email: email, password: password);
+
+  @override
+  Future<({String email, String password})?> leerCredenciales() async =>
+      _credenciales;
+
+  @override
+  Future<void> borrar() async {
+    _sesion = null;
+    _credenciales = null;
+  }
 }
 
 /// Monta la app igual que `main.dart`, pero con almacenamiento falso.
 Future<void> montarApp(
   WidgetTester tester, {
   AuthSession? sesionGuardada,
+  ({String email, String password})? credencialesGuardadas,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         sessionStorageProvider.overrideWithValue(
-          _SessionStorageFalso(sesionGuardada),
+          _SessionStorageFalso(sesionGuardada, credencialesGuardadas),
         ),
         // Se reutiliza la lista real de `main.dart`: si un módulo se agrega o
         // se elimina, las pruebas siguen montando lo mismo que la app.
@@ -445,6 +460,26 @@ void main() {
     test('Un rol desconocido del backend no se interpreta', () {
       expect(RolUsuario.desdeApi('coordinador'), isNull);
       expect(RolUsuario.desdeApi('ADMIN'), RolUsuario.admin);
+    });
+  });
+
+  group('Almacenamiento y auto-login', () {
+    test('SessionStorage guarda, lee y borra credenciales', () async {
+      final storage = _SessionStorageFalso();
+      expect(await storage.leerCredenciales(), isNull);
+
+      await storage.guardarCredenciales(
+        email: 'docente@santasofia.edu.co',
+        password: 'password123',
+      );
+
+      final creds = await storage.leerCredenciales();
+      expect(creds?.email, 'docente@santasofia.edu.co');
+      expect(creds?.password, 'password123');
+
+      await storage.borrar();
+      expect(await storage.leerCredenciales(), isNull);
+      expect(await storage.leer(), isNull);
     });
   });
 }

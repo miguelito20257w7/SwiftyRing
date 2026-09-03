@@ -169,6 +169,17 @@ static void procesar_muestra(float ax_raw, float ay_raw, float az_raw) {
         s_filtros_iniciados = true;
     }
 
+    // WARMUP (5 segundos): Drenar el transitorio del filtro provocado por la gravedad (1g) 
+    // sin contaminar los integradores de energía STA y LTA.
+    static int s_warmup_samples = 0;
+    if (s_warmup_samples < 500) {
+        s_warmup_samples++;
+        butterworth_update(&s_filter_x, ax_raw);
+        butterworth_update(&s_filter_y, ay_raw);
+        butterworth_update(&s_filter_z, az_raw);
+        return;
+    }
+
     // 1. Filtrado Paso Banda Butterworth (0.5 Hz - 10.0 Hz)
     float ax_flt = butterworth_update(&s_filter_x, ax_raw);
     float ay_flt = butterworth_update(&s_filter_y, ay_raw);
@@ -195,13 +206,6 @@ static void procesar_muestra(float ax_raw, float ay_raw, float az_raw) {
     s_ax = ax_raw;
     s_ay = ay_raw;
     s_az = az_raw;
-
-    // WARMUP (5 segundos): Evita falso positivo al encender mientras los filtros se estabilizan
-    static int s_warmup_samples = 0;
-    if (s_warmup_samples < 500) {
-        s_warmup_samples++;
-        return; // Retorna antes de evaluar la máquina de estados
-    }
 
     // Umbral de aceleración pico (PGA) mínima de control:
     // Exige superar el piso de ruido instrumental (15 mg) o el umbral configurado en la app

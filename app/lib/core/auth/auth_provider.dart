@@ -113,7 +113,14 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _restaurarSesion() async {
     try {
-      _aplicar(await _repositorio.sesionGuardada());
+      final sesion = await _repositorio.sesionGuardada();
+      if (sesion != null) {
+        _aplicar(sesion);
+        return;
+      }
+      // Si no había sesión guardada pero sí credenciales, se intenta auto-login.
+      final reautenticada = await _repositorio.reautenticar();
+      _aplicar(reautenticada);
     } catch (_) {
       // El almacenamiento seguro puede fallar por causas ajenas a la sesión:
       // llavero bloqueado, entitlement de Keychain ausente en macOS, o un
@@ -145,18 +152,25 @@ class AuthNotifier extends Notifier<AuthState> {
     _aplicar(null);
   }
 
-  /// El servidor rechazó el token: venció (dura 24 h por RNF-08) o la cuenta
-  /// fue suspendida mientras la app estaba abierta.
+  /// El servidor rechazó el token: venció o fue revocado.
   ///
-  /// Antes esto no se atendía y el resultado era desconcertante: el usuario
-  /// seguía "dentro", pero cada pantalla mostraba un error distinto y no había
-  /// forma de saber que solo había que volver a entrar.
+  /// En lugar de expulsar inmediatamente al usuario, se intenta una
+  /// re-autenticación silenciosa usando las credenciales seguras. Solo si
+  /// la re-autenticación falla (contraseña cambiada o cuenta suspendida),
+  /// se cierra la sesión y se muestra el aviso.
   Future<void> sesionVencida() async {
     if (!state.autenticado) return;
 
-    // El estado se cierra **antes** de tocar el disco, y no después: cuando
-    // vence el token suelen fallar varias peticiones a la vez, y si la guarda
-    // de arriba esperara a que termine el borrado, todas pasarían de largo.
+    try {
+      final nuevaSesion = await _repositorio.reautenticar();
+      if (nuevaSesion != null) {
+        _aplicar(nuevaSesion);
+        return;
+      }
+    } catch (_) {
+      // Falla la re-autenticación, procedemos al cierre de sesión.
+    }
+
     _aplicar(null, error: 'Tu sesión expiró. Vuelve a iniciar sesión.');
     await _repositorio.cerrarSesion();
   }

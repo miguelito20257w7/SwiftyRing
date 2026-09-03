@@ -20,7 +20,11 @@
 
 static const char *TAG = "horario";
 
+// El maestro guarda el JSON tal cual llegó del servidor. El esclavo no ve ese
+// JSON nunca: guarda la versión compacta que le manda el maestro por la radio.
 #define RUTA_HORARIO RUTA_ALMACEN "/horario.json"
+#define RUTA_HORARIO_BIN RUTA_ALMACEN "/horario.bin"
+#define MAGIA_BIN 0x53575231u  // "SWR1", para no leer un archivo de otra cosa
 
 typedef struct {
     timbre_programado_t items[MAX_TIMBRES];
@@ -41,8 +45,12 @@ static lista_timbres_t s_especial;
 
 // Estos dos los lee el detector de sismos. Son valores de 32 bits, se leen y
 // escriben de una sola vez, así que no necesitan candado.
-static float s_umbral_sismico_g = 1.2f;
+static float s_umbral_sismico_g = 0.4f;
 static int s_sismo_duracion_min_ms = 800;
+
+// Huella del horario cargado. El maestro la manda en cada latido y el esclavo
+// la compara con la suya para saber si tiene que pedir el horario nuevo.
+static uint32_t s_version = 0;
 
 // El minuto ya atendido, para no timbrar dos veces a las 07:00:00 y 07:00:30.
 // Solo lo toca el bucle de control.
@@ -50,6 +58,19 @@ static char s_minuto_procesado[6] = "";
 
 static void tomar(void) { xSemaphoreTake(s_candado, portMAX_DELAY); }
 static void soltar(void) { xSemaphoreGive(s_candado); }
+
+// Un número de 32 bits que resume un texto (algoritmo FNV-1a). Dos horarios
+// iguales dan el mismo número y dos distintos, casi con seguridad, no. Sirve
+// para que el esclavo sepa de un vistazo si su horario es el de ahora sin
+// tener que compararlo entero.
+static uint32_t huella(const char *texto) {
+    uint32_t h = 2166136261u;
+    for (const uint8_t *p = (const uint8_t *)texto; *p != '\0'; p++) {
+        h ^= *p;
+        h *= 16777619u;
+    }
+    return h == 0 ? 1 : h;  // 0 queda reservado para "todavía no hay horario"
+}
 
 // ============================================================
 // Leer el JSON del servidor
@@ -104,8 +125,9 @@ bool horario_aplicar_json(const char *json, bool recien_del_servidor) {
         return false;
     }
 
-    s_umbral_sismico_g = (float)numero_de(doc, "umbralSismicoG", 1.2);
+    s_umbral_sismico_g = (float)numero_de(doc, "umbralSismicoG", 0.4);
     s_sismo_duracion_min_ms = (int)numero_de(doc, "sismoDuracionMinMs", 800);
+    s_version = huella(json);
 
     tomar();
     copiar_timbres(cJSON_GetObjectItemCaseSensitive(doc, "habitual"), &s_habitual);
@@ -149,15 +171,185 @@ bool horario_aplicar_json(const char *json, bool recien_del_servidor) {
 }
 
 // ============================================================
+// El horario apretado que viaja al esclavo por la radio
+// ============================================================
+//
+// El esclavo no habla con el servidor, así que su horario se lo manda el
+// maestro por ESP-NOW. Como por ahí solo caben 250 bytes por trama, no se
+// manda el JSON sino un arreglo de `timbre_compacto_t` (24 bytes cada uno) más
+// un resumen con los metadatos. El esclavo lo guarda en su flash y desde ahí
+// timbra solo, aunque el maestro se apague.
+
+uint32_t horario_version(void) { return s_version; }
+
+void horario_resumen(horario_resumen_t *salida) {
+    if (salida == NULL) return;
+    memset(salida, 0, sizeof(*salida));
+
+    tomar();
+    salida->version = s_version;
+    salida->cant_habitual = s_habitual.cantidad;
+    salida->cant_especial = s_hay_especial ? s_especial.cantidad : 0;
+    salida->hay_especial = s_hay_especial;
+    strlcpy(salida->especial_nombre, s_especial_nombre, sizeof(salida->especial_nombre));
+    strlcpy(salida->especial_inicio, s_especial_inicio, sizeof(salida->especial_inicio));
+    strlcpy(salida->especial_fin, s_especial_fin, sizeof(salida->especial_fin));
+    soltar();
+
+    salida->umbral_sismico_g = s_umbral_sismico_g;
+    salida->sismo_duracion_min_ms = (uint16_t)s_sismo_duracion_min_ms;
+}
+
+// Ojo: se llama con el candado ya tomado.
+static void apretar(const timbre_programado_t *origen, timbre_compacto_t *destino) {
+    int hh = 0, mm = 0;
+    sscanf(origen->hora, "%d:%d", &hh, &mm);
+    destino->hora = (uint8_t)hh;
+    destino->minuto = (uint8_t)mm;
+    destino->duracion_seg = origen->duracion_seg;
+    destino->dias = origen->dias;
+    strlcpy(destino->etiqueta, origen->etiqueta, sizeof(destino->etiqueta));
+}
+
+uint8_t horario_exportar(uint16_t desde, timbre_compacto_t *destino, uint8_t max) {
+    uint8_t copiados = 0;
+
+    tomar();
+    // Los dos horarios se numeran seguidos: 0..cant_habitual-1 son los de
+    // siempre y a partir de ahí van los del especial.
+    uint16_t total_habitual = s_habitual.cantidad;
+    uint16_t total = total_habitual + (s_hay_especial ? s_especial.cantidad : 0);
+
+    for (uint16_t i = desde; i < total && copiados < max; i++) {
+        const timbre_programado_t *tp = (i < total_habitual)
+                                            ? &s_habitual.items[i]
+                                            : &s_especial.items[i - total_habitual];
+        apretar(tp, &destino[copiados++]);
+    }
+    soltar();
+
+    return copiados;
+}
+
+// Lo contrario: de la trama de radio a la lista con la que se timbra.
+static void desapretar(const timbre_compacto_t *origen, timbre_programado_t *destino) {
+    destino->id[0] = '\0';  // el esclavo no reporta a la API: no necesita el UUID
+
+    // La etiqueta llega de fuera y podría venir sin fin de cadena: se copia
+    // acotada a lo que mide el campo y se termina a mano.
+    char etiqueta[sizeof(origen->etiqueta) + 1];
+    memcpy(etiqueta, origen->etiqueta, sizeof(origen->etiqueta));
+    etiqueta[sizeof(origen->etiqueta)] = '\0';
+    strlcpy(destino->etiqueta, etiqueta, sizeof(destino->etiqueta));
+
+    snprintf(destino->hora, sizeof(destino->hora), "%02u:%02u", origen->hora % 24u,
+             origen->minuto % 60u);
+    destino->duracion_seg = origen->duracion_seg;
+    destino->dias = origen->dias;
+}
+
+static void guardar_binario(const horario_resumen_t *resumen, const timbre_compacto_t *timbres,
+                            uint16_t cantidad) {
+    FILE *f = fopen(RUTA_HORARIO_BIN, "wb");
+    if (f == NULL) {
+        ESP_LOGW(TAG, "no se pudo guardar el horario en la flash");
+        return;
+    }
+    uint32_t magia = MAGIA_BIN;
+    fwrite(&magia, sizeof(magia), 1, f);
+    fwrite(resumen, sizeof(*resumen), 1, f);
+    fwrite(&cantidad, sizeof(cantidad), 1, f);
+    if (cantidad > 0) fwrite(timbres, sizeof(timbres[0]), cantidad, f);
+    fclose(f);
+}
+
+// `guardar` es false cuando el horario acaba de salir de la flash: no tiene
+// sentido volver a escribir lo mismo en cada arranque.
+static void aplicar_binario(const horario_resumen_t *resumen, const timbre_compacto_t *timbres,
+                            uint16_t cantidad, bool guardar) {
+    if (resumen == NULL || (timbres == NULL && cantidad > 0)) return;
+
+    // Se cree lo que dice el resumen, pero sin pasarse de lo que llegó ni de lo
+    // que cabe en las listas: una trama corrupta no puede escribir fuera.
+    uint8_t habituales = resumen->cant_habitual;
+    if (habituales > MAX_TIMBRES) habituales = MAX_TIMBRES;
+    if (habituales > cantidad) habituales = (uint8_t)cantidad;
+
+    uint8_t especiales = resumen->hay_especial ? resumen->cant_especial : 0;
+    if (especiales > MAX_TIMBRES) especiales = MAX_TIMBRES;
+    if (habituales + especiales > cantidad) especiales = (uint8_t)(cantidad - habituales);
+
+    s_umbral_sismico_g = resumen->umbral_sismico_g;
+    s_sismo_duracion_min_ms = resumen->sismo_duracion_min_ms;
+    s_version = resumen->version;
+
+    tomar();
+    s_habitual.cantidad = habituales;
+    for (uint8_t i = 0; i < habituales; i++) desapretar(&timbres[i], &s_habitual.items[i]);
+
+    s_hay_especial = resumen->hay_especial;
+    s_especial.cantidad = especiales;
+    for (uint8_t i = 0; i < especiales; i++) {
+        desapretar(&timbres[habituales + i], &s_especial.items[i]);
+    }
+    strlcpy(s_especial_nombre, resumen->especial_nombre, sizeof(s_especial_nombre));
+    strlcpy(s_especial_inicio, resumen->especial_inicio, sizeof(s_especial_inicio));
+    strlcpy(s_especial_fin, resumen->especial_fin, sizeof(s_especial_fin));
+    soltar();
+
+    if (guardar) guardar_binario(resumen, timbres, (uint16_t)(habituales + especiales));
+    ESP_LOGI(TAG, "horario del maestro: %u timbres%s (versión %08lx)", habituales,
+             s_hay_especial ? " + especial" : "", (unsigned long)s_version);
+}
+
+void horario_aplicar_binario(const horario_resumen_t *resumen, const timbre_compacto_t *timbres,
+                             uint16_t cantidad) {
+    aplicar_binario(resumen, timbres, cantidad, true);
+}
+
+// ============================================================
 // Arranque: el horario sale de la flash (RF-28)
 // ============================================================
+
+// El horario que el esclavo guardó la última vez que habló con el maestro.
+// Devuelve false si no hay nada guardado o el archivo no sirve.
+static bool cargar_binario_de_flash(void) {
+    FILE *f = fopen(RUTA_HORARIO_BIN, "rb");
+    if (f == NULL) return false;
+
+    uint32_t magia = 0;
+    horario_resumen_t resumen;
+    uint16_t cantidad = 0;
+    bool ok = fread(&magia, sizeof(magia), 1, f) == 1 && magia == MAGIA_BIN &&
+              fread(&resumen, sizeof(resumen), 1, f) == 1 &&
+              fread(&cantidad, sizeof(cantidad), 1, f) == 1 && cantidad <= MAX_TIMBRES_TOTAL;
+
+    timbre_compacto_t *timbres = NULL;
+    if (ok && cantidad > 0) {
+        timbres = calloc(cantidad, sizeof(timbre_compacto_t));
+        ok = timbres != NULL && fread(timbres, sizeof(timbre_compacto_t), cantidad, f) == cantidad;
+    }
+    fclose(f);
+
+    if (!ok) {
+        ESP_LOGW(TAG, "el horario guardado no sirve; se pedirá otro al maestro");
+        free(timbres);
+        remove(RUTA_HORARIO_BIN);
+        return false;
+    }
+
+    // Se aplica sin volver a escribirlo: acaba de salir de la flash.
+    aplicar_binario(&resumen, timbres, cantidad, false);
+    free(timbres);
+    return true;
+}
 
 void horario_iniciar(void) {
     s_candado = xSemaphoreCreateMutex();
 
     FILE *f = fopen(RUTA_HORARIO, "r");
     if (f == NULL) {
-        ESP_LOGI(TAG, "sin horario guardado todavía");
+        if (!cargar_binario_de_flash()) ESP_LOGI(TAG, "sin horario guardado todavía");
         return;
     }
 

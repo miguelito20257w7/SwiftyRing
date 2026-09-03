@@ -91,6 +91,12 @@ void red_iniciar(void) {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
+
+    // Sin ahorro de energía: por defecto la radio se duerme a ratos entre
+    // balizas del router, y dormida no oye las tramas de ESP-NOW que le manda
+    // el esclavo (enlace.c). Gasta un poco más, pero el módulo está enchufado.
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
+
     ESP_LOGI(TAG, "conectando a %s...", WIFI_SSID);
 }
 
@@ -229,6 +235,28 @@ static void consultar_comandos(void) {
 // cola simplemente espera. Así el reporte sobrevive a cortes de luz e
 // internet, y `ocurridoHaceSeg` viaja calculado con el reloj del módulo.
 
+#if ROL_ESCLAVO
+
+// El esclavo no tiene cola ni servidor a quien mandarla. Suena por horario a la
+// misma hora que el maestro, y es el maestro quien lo reporta: si reportaran los
+// dos, cada timbre saldría duplicado en la bitácora.
+
+void red_encolar_activacion(const char *tipo, const char *timbre_id, int duracion_seg) {
+    (void)tipo;
+    (void)timbre_id;
+    (void)duracion_seg;
+}
+
+void red_encolar_sismo(float intensidad_g, uint32_t duracion_ms, bool confirmado_por_nodo2,
+                       float intensidad_nodo2_g) {
+    (void)intensidad_g;
+    (void)duracion_ms;
+    (void)confirmado_por_nodo2;
+    (void)intensidad_nodo2_g;
+}
+
+#else
+
 static void encolar_linea(const char *linea) {
     xSemaphoreTake(s_candado_cola, portMAX_DELAY);
     FILE *f = fopen(RUTA_COLA, "a");
@@ -266,15 +294,23 @@ void red_encolar_activacion(const char *tipo, const char *timbre_id, int duracio
     encolar_documento(doc);
 }
 
-void red_encolar_sismo(float intensidad_g, uint32_t duracion_ms) {
+void red_encolar_sismo(float intensidad_g, uint32_t duracion_ms, bool confirmado_por_nodo2,
+                       float intensidad_nodo2_g) {
     cJSON *doc = cJSON_CreateObject();
     if (doc == NULL) return;
     cJSON_AddStringToObject(doc, "clase", "sismo");
     cJSON_AddNumberToObject(doc, "t", millis());
     cJSON_AddNumberToObject(doc, "intensidadG", intensidad_g);
     cJSON_AddNumberToObject(doc, "duracionMs", duracion_ms);
+    // Campos nuevos: el backend los ignora si todavía no los conoce.
+    cJSON_AddBoolToObject(doc, "confirmadoPorNodo2", confirmado_por_nodo2);
+    if (confirmado_por_nodo2) {
+        cJSON_AddNumberToObject(doc, "intensidadNodo2G", intensidad_nodo2_g);
+    }
     encolar_documento(doc);
 }
+
+#endif  // ROL_ESCLAVO
 
 // Convierte una línea de la cola en el cuerpo que espera el backend y la
 // envía. Devuelve true si el servidor la aceptó.

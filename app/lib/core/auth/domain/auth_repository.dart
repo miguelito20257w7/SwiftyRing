@@ -7,6 +7,10 @@ abstract class AuthRepository {
   /// Devuelve la sesión guardada en el dispositivo, o `null` si no hay.
   Future<AuthSession?> sesionGuardada();
 
-  /// Borra la sesión del dispositivo.
+  /// Intenta renovar la sesión silenciosamente usando las credenciales
+  /// guardadas en el almacenamiento seguro.
+  Future<AuthSession?> reautenticar();
+
+  /// Borra la sesión y las credenciales guardadas del dispositivo.
   Future<void> cerrarSesion();
 }

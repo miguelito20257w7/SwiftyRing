@@ -9,9 +9,11 @@
 //   · Acciona el relé del timbre cuando llega la hora programada, cuando se
 //     pulsa el botón físico (RF-15, RF-16) o cuando la app lo ordena — la
 //     orden se consulta al servidor cada 2 segundos (RNF-04).
-//   · Vigila el acelerómetro MPU-6050 y, ante un patrón de sismo (no un
-//     camión), activa la alarma por su cuenta y reporta el evento
+//   · Recibe datos inerciales del coprocesador ESP-01S por UART y, ante un
+//     patrón de sismo sostenido, activa la alarma y reporta el evento
 //     (RF-18, RF-19, RF-22).
+//   · Obtiene la hora inmediatamente de su RTC físico DS3231 al encender y
+//     la mantiene calibrada por NTP / Vapor.
 //   · Muestra en la pantalla OLED la hora, el próximo timbre y el tiempo
 //     restante; indica cuando el timbre está sonando y cuando está en modo
 //     offline (RF-24 a RF-27).
@@ -21,15 +23,19 @@
 //
 //  El firmware corre en DOS tareas de FreeRTOS:
 //
-//   · el bucle de control (esta función): relé, botón, sismo, horario y
-//     pantalla. Da una vuelta cada 10 ms y nunca se bloquea.
+//   · el bucle de control (esta función): relé, botón, sismo UART, horario y
+//     pantalla. Da una vuelta cada 5-10 ms y nunca se bloquea.
 //   · la tarea de red (red.c): WiFi y consultas HTTP, que pueden tardar
 //     segundos. Va aparte justo por eso: que el servidor no conteste no puede
 //     retrasar un timbre.
 //
-//  Las dos tareas se pasan el trabajo con avisos, no con memoria compartida a
-//  la brava: la red deja una orden y el bucle de control es el único que toca
-//  el relé.
+//  ---- Los dos módulos ----
+//
+//  El mismo código sirve para los dos módulos del sistema; lo que cambia es el
+//  interruptor ROL_ESCLAVO, que se pone al compilar:
+//
+//    idf.py -B build build flash                    → el MAESTRO
+//    idf.py -B build-esclavo -DESCLAVO=1 build flash → el ESCLAVO
 //
 
 #include <stdio.h>
@@ -37,6 +43,7 @@
 #include "comun.h"
 #include "config.h"
 #include "driver/i2c_master.h"
+#include "enlace.h"
 #include "esp_log.h"
 #include "esp_spiffs.h"
 #include "freertos/FreeRTOS.h"
@@ -53,7 +60,6 @@
 static const char *TAG = "swiftyring";
 
 #define INTERVALO_PANTALLA_MS 250
-#define INTERVALO_SISMO_MS 20  // 50 muestras por segundo
 
 // El WiFi guarda su configuración en la partición NVS: hay que prepararla
 // antes de arrancarlo.
@@ -88,11 +94,11 @@ static void iniciar_flash(void) {
     }
 }
 
-static i2c_master_bus_handle_t iniciar_i2c(void) {
+static i2c_master_bus_handle_t iniciar_bus_i2c(i2c_port_num_t puerto, int sda, int scl) {
     i2c_master_bus_config_t cfg = {
-        .i2c_port = I2C_NUM_0,
-        .sda_io_num = PIN_I2C_SDA,
-        .scl_io_num = PIN_I2C_SCL,
+        .i2c_port = puerto,
+        .sda_io_num = sda,
+        .scl_io_num = scl,
         .clk_source = I2C_CLK_SRC_DEFAULT,
         .glitch_ignore_cnt = 7,
         .flags.enable_internal_pullup = true,
@@ -103,31 +109,41 @@ static i2c_master_bus_handle_t iniciar_i2c(void) {
 }
 
 void app_main(void) {
-    ESP_LOGI(TAG, "SwiftyRing · módulo de timbre");
+    ESP_LOGI(TAG, "SwiftyRing · módulo de timbre (%s)", ROL_ESCLAVO ? "esclavo" : "maestro");
 
     iniciar_nvs();
     iniciar_flash();
 
-    i2c_master_bus_handle_t bus = iniciar_i2c();  // lo comparten pantalla y MPU-6050
-    pantalla_iniciar(bus);
-    pantalla_mensaje("SwiftyRing", "Iniciando...");
+    // Bus I2C 0 (I2C_NUM_0): dedicado a la pantalla OLED SH1106
+    i2c_master_bus_handle_t bus_pantalla = iniciar_bus_i2c(I2C_OLED_PORT, PIN_I2C_OLED_SDA, PIN_I2C_OLED_SCL);
+    pantalla_iniciar(bus_pantalla);
+    pantalla_mensaje("SwiftyRing", ROL_ESCLAVO ? "Modulo 2..." : "Iniciando...");
+
+    // Bus I2C 1 (I2C_NUM_1): dedicado al RTC físico DS3231 (aislado de la pantalla)
+    i2c_master_bus_handle_t bus_rtc = iniciar_bus_i2c(I2C_RTC_PORT, PIN_I2C_RTC_SDA, PIN_I2C_RTC_SCL);
+    reloj_iniciar(bus_rtc);
 
     timbre_iniciar();
     led_rgb_iniciar();
-    sismo_iniciar(bus);
+    sismo_iniciar();  // Receptor UART para el coprocesador ESP-01S
 
-    // El horario guardado se carga ANTES de tocar la red: si el colegio
-    // amaneció sin internet, el timbre del primer bloque suena igual (RF-31).
+    // El horario guardado se carga de flash: si el módulo amaneció sin internet,
+    // el timbre del primer bloque suena igual (RF-31).
     horario_iniciar();
 
+#if ROL_ESCLAVO
+    // Sin WiFi ni servidor: la radio la enciende enlace.c solo para ESP-NOW, y
+    // la hora llega en el latido del maestro (o desde el RTC local si lo tiene).
+    enlace_iniciar();
+#else
     red_iniciar();
-    reloj_iniciar();  // después de la red: el NTP necesita la pila de red lista
+    enlace_iniciar();  // ESP-NOW va montado sobre el WiFi que ya dejó red_iniciar
 
     xTaskCreate(red_tarea, "red", 6144, NULL, 5, NULL);
+#endif
 
     // ---- Bucle de control ----
     uint32_t t_pantalla = 0;
-    uint32_t t_sismo = 0;
 
     while (true) {
         uint32_t ahora = millis();
@@ -135,11 +151,9 @@ void app_main(void) {
         timbre_atender();
         led_rgb_atender(timbre_activo());
         horario_revisar();
-
-        if (ahora - t_sismo >= INTERVALO_SISMO_MS) {
-            t_sismo = ahora;
-            sismo_muestrear();
-        }
+        enlace_atender();      // lo que llegó del otro módulo, y los latidos
+        sismo_atender_uart();  // drena y procesa las tramas del ESP-01S sin latencia
+        sismo_atender();       // evaluación de sacudida propia y confirmación remota
 
         if (ahora - t_pantalla >= INTERVALO_PANTALLA_MS) {
             t_pantalla = ahora;

@@ -3,14 +3,15 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:swiftyring/core/auth/domain/auth_session.dart';
 
-/// Guarda la sesión entre arranques de la app.
+/// Guarda la sesión y las credenciales entre arranques de la app.
 ///
 /// Se usa almacenamiento **seguro** (Keychain en iOS, EncryptedSharedPreferences
-/// en Android) y no `SharedPreferences`, porque lo que se guarda es un JWT: con
-/// él, cualquiera que lea el disco del dispositivo actúa como el docente dueño
-/// de la sesión.
+/// en Android) y no `SharedPreferences`, porque lo que se guarda es un JWT y
+/// las credenciales para auto-login: con ellos, cualquiera que lea el disco
+/// del dispositivo actúa como el docente dueño de la sesión.
 class SessionStorage {
   static const _clave = 'sesion_swiftyring';
+  static const _claveCredenciales = 'credenciales_swiftyring';
 
   final FlutterSecureStorage _storage;
 
@@ -36,5 +37,39 @@ class SessionStorage {
     }
   }
 
-  Future<void> borrar() => _storage.delete(key: _clave);
+  /// Guarda las credenciales de forma segura para permitir auto-login
+  /// transparente y evitar que la sesión expire para el usuario.
+  Future<void> guardarCredenciales({
+    required String email,
+    required String password,
+  }) {
+    return _storage.write(
+      key: _claveCredenciales,
+      value: jsonEncode({'email': email, 'password': password}),
+    );
+  }
+
+  /// Lee las credenciales guardadas en el almacenamiento seguro.
+  Future<({String email, String password})?> leerCredenciales() async {
+    final crudo = await _storage.read(key: _claveCredenciales);
+    if (crudo == null) return null;
+
+    try {
+      final json = jsonDecode(crudo);
+      if (json is! Map<String, dynamic>) return null;
+      final email = json['email'];
+      final password = json['password'];
+      if (email is String && password is String) {
+        return (email: email, password: password);
+      }
+      return null;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  Future<void> borrar() async {
+    await _storage.delete(key: _clave);
+    await _storage.delete(key: _claveCredenciales);
+  }
 }

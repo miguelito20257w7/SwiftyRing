@@ -57,8 +57,8 @@ struct AuthController: RouteCollection {
             throw credencialesInvalidas
         }
 
-        // RNF-08: la duracion del token se configura por variable de entorno.
-        let horas = Environment.get("JWT_EXPIRATION_HOURS").flatMap(Double.init) ?? 24
+        // RNF-08: la duracion del token se configura por variable de entorno (por defecto 720 horas / 30 dias).
+        let horas = Environment.get("JWT_EXPIRATION_HOURS").flatMap(Double.init) ?? 720
 
         // RF-45: el token lleva emisor, audiencias, nombre y correo, para que
         // un consumidor externo (Control Baños SS) sepa quien actua sin tocar

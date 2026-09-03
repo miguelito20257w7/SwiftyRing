@@ -10,6 +10,7 @@
 #include "comun.h"
 #include "config.h"
 #include "driver/gpio.h"
+#include "enlace.h"
 #include "esp_log.h"
 #include "red.h"
 
@@ -31,12 +32,16 @@ void timbre_iniciar(void) {
     gpio_config(&rele);
     gpio_set_level(PIN_RELE, 0);
 
+#if !ROL_ESCLAVO
+    // El esclavo no lleva botón: su placa no tiene nada cableado a ese pin y
+    // configurarlo con pull-up solo serviría para leer ruido.
     gpio_config_t boton = {
         .pin_bit_mask = 1ULL << PIN_BOTON,
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
     };
     gpio_config(&boton);
+#endif
 }
 
 void timbre_activar(uint8_t duracion_seg, const char *motivo) {
@@ -53,7 +58,10 @@ bool timbre_activo(void) { return s_activo; }
 const char *timbre_motivo(void) { return s_motivo; }
 
 // El botón físico (RF-15): flanco de bajada más 150 ms de guarda contra
-// rebotes del contacto (respuesta instantánea al presionar).
+// rebotes del contacto (respuesta instantánea al presionar). Solo lo tiene el
+// maestro; el esclavo timbra por horario, por sismo o cuando el maestro se lo
+// ordena.
+#if !ROL_ESCLAVO
 static void atender_boton(void) {
     static uint32_t ultima_pulsacion = 0;
     static int estado_anterior = 1;
@@ -64,9 +72,12 @@ static void atender_boton(void) {
         ESP_LOGI(TAG, "botón físico");
         timbre_activar(5, "Manual");
         red_encolar_activacion("manual_fisico", NULL, 5);  // RF-17
+        // Que suene también en el otro edificio.
+        enlace_ordenar_alarma(5, "Manual");
     }
     estado_anterior = estado;
 }
+#endif
 
 void timbre_atender(void) {
     if (s_activo && millis() >= s_hasta) {
@@ -81,7 +92,10 @@ void timbre_atender(void) {
         // No se reporta: el backend ya registró la activación manual_app al
         // emitir la orden. Reportarla aquí la duplicaría.
         timbre_activar(orden, "Desde la app");
+        enlace_ordenar_alarma(orden, "Desde la app");
     }
 
+#if !ROL_ESCLAVO
     atender_boton();
+#endif
 }

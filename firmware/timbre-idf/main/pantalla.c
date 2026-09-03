@@ -2,16 +2,22 @@
 //  pantalla.c
 //  SwiftyRing · firmware del módulo de timbre (ESP-IDF)
 //
+//  Dashboard Científico STA/LTA y Procesamiento Sísmico MPU-6050
+//
 
 #include "pantalla.h"
 
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
+#include "enlace.h"
 #include "horario.h"
 #include "red.h"
 #include "reloj.h"
+#include "rtc.h"
 #include "sh1106.h"
+#include "sismo.h"
 #include "timbre.h"
 
 void pantalla_iniciar(i2c_master_bus_handle_t bus) { sh1106_iniciar(bus); }
@@ -23,82 +29,94 @@ void pantalla_mensaje(const char *linea1, const char *linea2) {
     sh1106_mostrar();
 }
 
-// Icono de "sin conexión" (RF-27), arriba a la derecha: las tres barritas de
-// señal con un tajo diagonal. El tajo se dibuja APAGANDO píxeles, que es como
-// se marca algo tachado en una pantalla de un solo color.
-static void dibujar_icono_sin_red(void) {
-    const int x = 106;
-
-    sh1106_rect(x, 8, 3, 5);        // barra corta
-    sh1106_rect(x + 5, 5, 3, 8);    // barra media
-    sh1106_rect(x + 10, 2, 3, 11);  // barra alta
-
-    // El tajo baja 8 píxeles a lo largo de 15, para cruzar las tres barras por
-    // el medio y no por la punta. De ahí el (i * 8) / 15.
-    for (int i = 0; i <= 15; i++) {
-        int y = 12 - (i * 8) / 15;
-        sh1106_pixel(x - 1 + i, y, false);
-        sh1106_pixel(x - 1 + i, y - 1, false);
-    }
-}
-
 void pantalla_dibujar(void) {
     if (!sh1106_presente()) return;
 
-    // RF-26: mientras suena, la pantalla entera es el indicador.
-    if (timbre_activo()) {
-        sh1106_limpiar();
-        sh1106_texto_grande(16, 16, "¡TIMBRE!");
-        sh1106_texto(16, 44, timbre_motivo());
-        sh1106_mostrar();
-        return;
-    }
-
     sh1106_limpiar();
 
-    struct tm t;
-    if (!reloj_hora_local(&t)) {
-        sh1106_texto_grande(2, 12, "Sin hora");
-        sh1106_texto(2, 40, "Esperando red...");
-        if (!red_en_linea()) dibujar_icono_sin_red();
-        sh1106_mostrar();
-        return;
-    }
+    char linea[32];
+    int estado = sismo_estado();
+    bool alarma = timbre_activo() || (estado == 2);
 
-    // Hora actual, grande (RF-25). El buffer da de sobra para la línea más
-    // larga ("Prox: " + hora + una etiqueta de 32 letras): en la pantalla solo
-    // caben 21 caracteres, pero se arma el texto entero y lo recorta el
-    // dibujado, no el snprintf.
-    char linea[64];
-    snprintf(linea, sizeof(linea), "%02d:%02d:%02d", t.tm_hour, t.tm_min, t.tm_sec);
-    sh1106_texto_grande(2, 1, linea);
-
-    if (!red_en_linea()) dibujar_icono_sin_red();  // RF-27
-
-    // Próximo timbre y cuenta atrás (RF-25).
-    timbre_programado_t proximo;
-    if (horario_proximo(&t, &proximo)) {
-        snprintf(linea, sizeof(linea), "Prox: %s %s", proximo.hora, proximo.etiqueta);
-        sh1106_texto(0, 26, linea);
-
-        int hh = 0, mm = 0;
-        sscanf(proximo.hora, "%d:%d", &hh, &mm);
-        int faltan = (hh * 3600 + mm * 60) - (t.tm_hour * 3600 + t.tm_min * 60 + t.tm_sec);
-        if (faltan < 0) faltan = 0;
-        snprintf(linea, sizeof(linea), "Faltan %02d:%02d:%02d", faltan / 3600,
-                 (faltan % 3600) / 60, faltan % 60);
-        sh1106_texto(0, 38, linea);
+    // ============================================================
+    // 1. ENCABEZADO DE ESTADO (Y = 0)
+    // ============================================================
+    if (alarma) {
+        sh1106_texto(10, 0, "¡¡ ALARMA SISMO ACTIVA !!");
+    } else if (estado == 1) {
+        sh1106_texto(6, 0, ">> PRE-TRIGGER STA/LTA <<");
     } else {
-        sh1106_texto(0, 26, "Sin mas timbres hoy");
+        sh1106_texto(12, 0, "= SISMOMETRO STA/LTA =");
     }
 
-    // Si rige un horario especial, se dice abajo (RF-10).
-    if (horario_especial_vigente(&t)) {
-        char nombre[33];
-        horario_especial_nombre(nombre, sizeof(nombre));
-        snprintf(linea, sizeof(linea), "Especial: %s", nombre);
-        sh1106_texto(0, 52, linea);
+    sh1106_linea(0, 9, 127, 9);
+
+    // ============================================================
+    // 2. COCIENTE STA/LTA (Y = 11)
+    // ============================================================
+    float ratio = sismo_ratio_actual();
+    snprintf(linea, sizeof(linea), "STA/LTA: %4.1f (Trig:4.5)", ratio);
+    sh1106_texto(0, 11, linea);
+
+    // ============================================================
+    // 3. PGA DINÁMICO (0.5 - 10.0 Hz) (Y = 20)
+    // ============================================================
+    float pga = sismo_dynamic_magnitude();
+    float min_pga = horario_umbral_sismico();
+    snprintf(linea, sizeof(linea), "PGA: %.3fg  (Min:%.2fg)", pga, min_pga);
+    sh1106_texto(0, 20, linea);
+
+    // ============================================================
+    // 4. VÚMETRO DEL RATIO STA/LTA (Y = 29 a 35)
+    // ============================================================
+    // Marco exterior (120 px de ancho, escala de 0.0 a 10.0 de Ratio)
+    sh1106_linea(4, 29, 124, 29);
+    sh1106_linea(4, 35, 124, 35);
+    sh1106_linea(4, 29, 4, 35);
+    sh1106_linea(124, 29, 124, 35);
+
+    // Relleno proporcional al ratio STA/LTA
+    int relleno_w = (int)((ratio / 10.0f) * 118);
+    if (relleno_w > 118) relleno_w = 118;
+    if (relleno_w > 0) {
+        sh1106_rect(5, 30, relleno_w, 5);
     }
+
+    // Muesca vertical en el umbral de disparo Alfa = 4.5
+    int muesca_x = 5 + (int)((4.5f / 10.0f) * 118);
+    sh1106_linea(muesca_x, 28, muesca_x, 36);
+
+    // ============================================================
+    // 5. TIEMPO SOSTENIDO Y PROGRESO (Y = 38)
+    // ============================================================
+    int muestras = sismo_contador_muestras();
+    int requeridas = sismo_muestras_requeridas();
+    int pct = requeridas > 0 ? (muestras * 100) / requeridas : 0;
+    if (pct > 100) pct = 100;
+    snprintf(linea, sizeof(linea), "T: %dms / %dms (%d%%)",
+             muestras * 10, requeridas * 10, pct);
+    sh1106_texto(0, 38, linea);
+
+    // ============================================================
+    // 6. TASA CAV (Velocidad Absoluta Acumulada) (Y = 47)
+    // ============================================================
+    float cav_rate = sismo_cav_rate();
+    snprintf(linea, sizeof(linea), "CAV: %.3f g*s/s (>=.02)", cav_rate);
+    sh1106_texto(0, 47, linea);
+
+    // ============================================================
+    // 7. MODO Y ENLACE UART (Y = 56)
+    // ============================================================
+    bool uart_ok = sismo_coprocesador_conectado();
+    bool pareja = enlace_pareja_viva();
+    if (alarma) {
+        snprintf(linea, sizeof(linea), "RELE ACTIVADO (30s)");
+    } else {
+        snprintf(linea, sizeof(linea), "UART:%s | %s",
+                 uart_ok ? "100Hz" : "NO",
+                 pareja ? "Pareja" : "Solo");
+    }
+    sh1106_texto(0, 56, linea);
 
     sh1106_mostrar();
 }

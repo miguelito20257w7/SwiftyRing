@@ -2,18 +2,47 @@
 //  sismo.h
 //  SwiftyRing · firmware del módulo de timbre (ESP-IDF)
 //
-//  Detección de sismos con el acelerómetro MPU-6050 (RF-18, RF-19, RF-22).
+//  Detección de sismos mediante procesamiento espectral y STA/LTA recursivo:
+//  - Filtro paso banda Butterworth de 4to orden (0.5 Hz - 10.0 Hz) en cascada Biquad.
+//  - Cociente STA/LTA (Earle & Shearer) con congelamiento de fondo (LTA freeze).
+//  - Validación cuadrática por tasa de Velocidad Absoluta Acumulada (CAV).
+//  - Confirmación cruzada entre módulos vía radio ESP-NOW (RF-19).
 //
 
 #pragma once
 
-#include "driver/i2c_master.h"
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "esp_err.h"
 
-// Despierta el sensor en el bus I2C que comparte con la pantalla.
-esp_err_t sismo_iniciar(i2c_master_bus_handle_t bus);
+// Inicializa el puerto UART para el coprocesador ESP-01S.
+esp_err_t sismo_iniciar(void);
 
-// Una muestra del acelerómetro. Se llama 50 veces por segundo desde el bucle
-// de control; si el episodio de vibración resulta ser un sismo, hace sonar la
-// alarma por su cuenta.
-void sismo_muestrear(void);
+// Atiende las tramas UART recibidas a 100 Hz.
+void sismo_atender_uart(void);
+
+// Máquina de confirmación entre módulos (o decisión autónoma) y disparo del timbre.
+void sismo_atender(void);
+
+// Aviso de sacudida recibido desde el otro módulo por ESP-NOW.
+void sismo_sacudida_remota(float pico_g, uint32_t duracion_ms);
+
+// Estado de enlace con el coprocesador serie
+bool sismo_coprocesador_conectado(void);
+
+// Telemetría para debug y visualización
+float sismo_ax(void);
+float sismo_ay(void);
+float sismo_az(void);
+float sismo_dynamic_magnitude(void);
+float sismo_ratio_actual(void);
+float sismo_sta_energy(void);
+float sismo_lta_energy(void);
+float sismo_cav_rate(void);
+float sismo_pico_actual(void);
+float sismo_temperatura(void);
+int sismo_estado(void);
+int sismo_contador_muestras(void);
+int sismo_muestras_requeridas(void);
+bool sismo_agitacion_activa(void);

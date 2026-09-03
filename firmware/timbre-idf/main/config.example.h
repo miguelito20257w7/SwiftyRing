@@ -9,6 +9,31 @@
 
 #pragma once
 
+// ---- Rol del módulo ----
+//
+// El sistema tiene DOS módulos con el mismo firmware:
+//
+//   · el MAESTRO (ROL_ESCLAVO = 0) habla con el servidor, tiene el botón
+//     físico y le manda al otro la hora y el horario;
+//   · el ESCLAVO (ROL_ESCLAVO = 1) va en el otro edificio, no toca WiFi ni API
+//     y no lleva botón: todo le llega por radio (ESP-NOW, ver enlace.c).
+//
+// No hay que editar esto: el rol se elige al compilar, y cada uno en su propia
+// carpeta de compilación para que no se pisen.
+//
+//   idf.py -B build build flash monitor                     → maestro
+//   idf.py -B build-esclavo -DESCLAVO=1 build flash monitor  → esclavo
+//
+#ifndef ROL_ESCLAVO
+#define ROL_ESCLAVO 0
+#endif
+
+// Clave compartida por los dos módulos. Va dentro de la firma de cada trama de
+// radio, así que sin ella nadie puede mandarle al timbre un "suena ya" ni
+// fingir un sismo. Tiene que ser LA MISMA en los dos módulos y distinta de
+// esta: cámbiala por algo largo e inventado.
+#define ENLACE_CLAVE    "cambia-esta-clave-por-una-larga"
+
 // ---- Red ----
 #define WIFI_SSID       "NOMBRE_DE_LA_RED"
 #define WIFI_PASSWORD   "CLAVE_DE_LA_RED"
@@ -39,22 +64,50 @@
 // siquiera existe (la numeración salta del 21 al 26).
 #include "sdkconfig.h"
 
+#define UART_SISMO_BAUD     115200
+
+// PIN_BOTON solo lo usa el maestro: el esclavo no lleva botón y ese pin se
+// queda sin configurar.
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
 
 // ESP32-S3 (DevKitC-1)
-#define PIN_RELE        4   // relé de estado sólido; se activa en ALTO
-#define PIN_BOTON       5   // botón manual (RF-15), contra GND con pull-up
-#define PIN_I2C_SDA     8   // bus de la pantalla SH1106 y el MPU-6050
-#define PIN_I2C_SCL     9
-#define PIN_RGB_LED     48  // LED RGB direccionable (WS2812) de la placa ESP32-S3
+#define PIN_RELE            4   // relé de estado sólido; se activa en ALTO
+#define PIN_BOTON           5   // botón manual (RF-15), contra GND con pull-up
+#define PIN_RGB_LED         48  // LED RGB direccionable (WS2812) de la placa ESP32-S3
+
+// Bus I2C 0 (I2C_NUM_0): Pantalla OLED SH1106
+#define PIN_I2C_OLED_SDA    8
+#define PIN_I2C_OLED_SCL    9
+#define I2C_OLED_PORT       I2C_NUM_0
+
+// Bus I2C 1 (I2C_NUM_1): Reloj RTC DS3231 (controlador hardware independiente)
+#define PIN_I2C_RTC_SDA     10
+#define PIN_I2C_RTC_SCL     11
+#define I2C_RTC_PORT        I2C_NUM_1
+
+#define PIN_UART_SISMO_RX   18  // Conectado al TX del coprocesador ESP-01S
+#define PIN_UART_SISMO_TX   17
+#define UART_SISMO_PORT     UART_NUM_1
 
 #else
 
 // ESP32-WROOM-32 (DevKit)
-#define PIN_RELE        26
-#define PIN_BOTON       27
-#define PIN_I2C_SDA     21
-#define PIN_I2C_SCL     22
+#define PIN_RELE            26
+#define PIN_BOTON           27
+
+// Bus I2C 0 (I2C_NUM_0): Pantalla OLED SH1106
+#define PIN_I2C_OLED_SDA    21
+#define PIN_I2C_OLED_SCL    22
+#define I2C_OLED_PORT       I2C_NUM_0
+
+// Bus I2C 1 (I2C_NUM_1): Reloj RTC DS3231 (controlador hardware independiente)
+#define PIN_I2C_RTC_SDA     32
+#define PIN_I2C_RTC_SCL     33
+#define I2C_RTC_PORT        I2C_NUM_1
+
+#define PIN_UART_SISMO_RX   16  // Conectado al TX del coprocesador ESP-01S
+#define PIN_UART_SISMO_TX   17
+#define UART_SISMO_PORT     UART_NUM_2
 
 #endif
 

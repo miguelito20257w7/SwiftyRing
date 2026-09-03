@@ -42,6 +42,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       await storage.guardar(sesion);
+      await storage.guardarCredenciales(email: email, password: password);
       return sesion;
     } on DioException catch (e) {
       throw AuthException(_mensajeDeRed(e));
@@ -50,6 +51,24 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<AuthSession?> sesionGuardada() => storage.leer();
+
+  @override
+  Future<AuthSession?> reautenticar() async {
+    final creds = await storage.leerCredenciales();
+    if (creds == null) return null;
+
+    try {
+      return await login(email: creds.email, password: creds.password);
+    } on AuthException {
+      // Si el servidor rechazó las credenciales (clave cambiada o cuenta suspendida),
+      // se borra el almacenamiento seguro para no reintentar en bucle.
+      await storage.borrar();
+      return null;
+    } catch (_) {
+      // Si es un fallo de red o conectividad temporal, conservamos las credenciales.
+      return null;
+    }
+  }
 
   @override
   Future<void> cerrarSesion() => storage.borrar();
