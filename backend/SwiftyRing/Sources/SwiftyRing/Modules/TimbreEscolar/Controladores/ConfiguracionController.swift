@@ -103,7 +103,7 @@ struct ConfiguracionController: RouteCollection {
 
         let config = try await ConfiguracionSistema.actual(on: req.db)
 
-        let cambioUmbral = (datos.umbralSismicoG != config.umbralSismicoG)
+        let cambioUmbral = abs(datos.umbralSismicoG - config.umbralSismicoG) > 0.001
         let cambioSismoDur = (datos.sismoDuracionMinMs != config.sismoDuracionMinMs)
 
         var cambioDuracion = false
@@ -130,6 +130,8 @@ struct ConfiguracionController: RouteCollection {
         config.sismoDuracionMinMs = datos.sismoDuracionMinMs
 
         try await config.save(on: req.db)
+
+        req.logger.info("Configuración actualizada: umbral=\(cambioUmbral) (\(config.umbralSismicoG) g), sismoDur=\(cambioSismoDur) (\(config.sismoDuracionMinMs) ms), ups=\(cambioUps), durManual=\(cambioDuracion)")
 
         await EstadoModulo.compartido.notificarConfiguracion(
             modoUps: cambioUps ? config.modoUps : nil,

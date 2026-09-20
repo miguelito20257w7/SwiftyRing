@@ -11,6 +11,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 
 #include "cJSON.h"
 #include "comun.h"
@@ -248,16 +250,38 @@ void canal_atender(void) {
                     ESP_LOGI(TAG, "duracion manual actualizada a: %d seg", d);
                 }
             }
-            if (cJSON_IsNumber(umb) || cJSON_IsNumber(smin)) {
-                float nuevo_umb = cJSON_IsNumber(umb) ? (float)umb->valuedouble : horario_umbral_sismico();
-                int nuevo_smin = cJSON_IsNumber(smin) ? (int)smin->valuedouble : horario_sismo_duracion_min_ms();
-                if (nuevo_umb != horario_umbral_sismico() || nuevo_smin != horario_sismo_duracion_min_ms()) {
-                    horario_fijar_sismo(nuevo_umb, nuevo_smin);
-                    cambios++;
-                    snprintf(titulo, sizeof(titulo), "SENSOR SISMICO");
-                    snprintf(detalle, sizeof(detalle), "%.2f G / %d ms", nuevo_umb, nuevo_smin);
-                    ESP_LOGI(TAG, "calibracion sismica actualizada a: %.2f G, %d ms", nuevo_umb, nuevo_smin);
+            bool cambio_umb = false;
+            bool cambio_smin = false;
+            float nuevo_umb = horario_umbral_sismico();
+            int nuevo_smin = horario_sismo_duracion_min_ms();
+
+            if (cJSON_IsNumber(umb)) {
+                nuevo_umb = (float)umb->valuedouble;
+                if (fabsf(nuevo_umb - horario_umbral_sismico()) > 0.005f) {
+                    cambio_umb = true;
                 }
+            }
+            if (cJSON_IsNumber(smin)) {
+                nuevo_smin = (int)smin->valuedouble;
+                if (abs(nuevo_smin - horario_sismo_duracion_min_ms()) >= 10) {
+                    cambio_smin = true;
+                }
+            }
+
+            if (cambio_umb || cambio_smin) {
+                horario_fijar_sismo(nuevo_umb, nuevo_smin);
+                cambios++;
+                if (cambio_umb && !cambio_smin) {
+                    snprintf(titulo, sizeof(titulo), "UMBRAL SISMICO");
+                    snprintf(detalle, sizeof(detalle), "%.3f G", nuevo_umb);
+                } else if (!cambio_umb && cambio_smin) {
+                    snprintf(titulo, sizeof(titulo), "DURACION SISMO");
+                    snprintf(detalle, sizeof(detalle), "%d ms", nuevo_smin);
+                } else {
+                    snprintf(titulo, sizeof(titulo), "SENSOR SISMICO");
+                    snprintf(detalle, sizeof(detalle), "%.3f G / %d ms", nuevo_umb, nuevo_smin);
+                }
+                ESP_LOGI(TAG, "sismo actualizado: %s - %s", titulo, detalle);
             }
 
             if (cambios > 1) {

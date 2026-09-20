@@ -85,17 +85,36 @@ void pantalla_dibujar(void) {
         if (x_hdr < 2) x_hdr = 2;
         sh1106_texto(x_hdr, 4, hdr);
 
-        // Título en texto grande centrado
-        int ancho_tit = sh1106_ancho_texto(s_aviso_titulo) * 2;
-        int x_tit = (128 - ancho_tit) / 2;
-        if (x_tit < 4) x_tit = 4;
-        sh1106_texto_grande(x_tit, 22, s_aviso_titulo);
-
-        // Detalle en texto normal centrado
+        // Título y Detalle con tamaño adaptativo para evitar recortes en 128 px
+        int ancho_tit = sh1106_ancho_texto(s_aviso_titulo);
         int ancho_det = sh1106_ancho_texto(s_aviso_detalle);
-        int x_det = (128 - ancho_det) / 2;
-        if (x_det < 4) x_det = 4;
-        sh1106_texto(x_det, 46, s_aviso_detalle);
+
+        if (ancho_tit * 2 <= 120) {
+            // Título corto (ej. "MODO UPS", "HORARIOS"): título grande
+            int x_tit = (128 - ancho_tit * 2) / 2;
+            if (x_tit < 4) x_tit = 4;
+            sh1106_texto_grande(x_tit, 22, s_aviso_titulo);
+
+            int x_det = (128 - ancho_det) / 2;
+            if (x_det < 4) x_det = 4;
+            sh1106_texto(x_det, 46, s_aviso_detalle);
+        } else {
+            // Título largo (ej. "UMBRAL SISMICO", "DURACION SISMO", "CONFIGURACION")
+            int x_tit = (128 - ancho_tit) / 2;
+            if (x_tit < 4) x_tit = 4;
+            sh1106_texto(x_tit, 23, s_aviso_titulo);
+
+            if (ancho_det * 2 <= 120) {
+                // Detalle corto (ej. "0.450 G", "800 ms", "5 seg"): destacarlo en grande
+                int x_det = (128 - ancho_det * 2) / 2;
+                if (x_det < 4) x_det = 4;
+                sh1106_texto_grande(x_det, 39, s_aviso_detalle);
+            } else {
+                int x_det = (128 - ancho_det) / 2;
+                if (x_det < 4) x_det = 4;
+                sh1106_texto(x_det, 43, s_aviso_detalle);
+            }
+        }
 
         sh1106_mostrar();
         return;

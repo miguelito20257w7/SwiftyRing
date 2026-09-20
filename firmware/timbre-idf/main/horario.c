@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "cJSON.h"
 #include "comun.h"
@@ -477,6 +478,16 @@ float horario_umbral_sismico(void) { return s_umbral_sismico_g; }
 int horario_sismo_duracion_min_ms(void) { return s_sismo_duracion_min_ms; }
 
 void horario_fijar_sismo(float umbral_g, int duracion_min_ms) {
-    if (umbral_g > 0.05f) s_umbral_sismico_g = umbral_g;
-    if (duracion_min_ms > 0) s_sismo_duracion_min_ms = duracion_min_ms;
+    bool cambio = false;
+    if (umbral_g >= 0.01f && fabsf(umbral_g - s_umbral_sismico_g) > 0.001f) {
+        s_umbral_sismico_g = umbral_g;
+        cambio = true;
+    }
+    if (duracion_min_ms > 0 && duracion_min_ms != s_sismo_duracion_min_ms) {
+        s_sismo_duracion_min_ms = duracion_min_ms;
+        cambio = true;
+    }
+    if (cambio) {
+        s_version = (s_version + 1 == 0) ? 1 : (s_version + 1);
+    }
 }
