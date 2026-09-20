@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "comun.h"
 #include "config.h"
 #include "enlace.h"
 #include "horario.h"
