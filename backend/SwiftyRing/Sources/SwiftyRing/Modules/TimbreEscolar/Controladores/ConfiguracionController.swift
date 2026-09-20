@@ -14,6 +14,8 @@ struct ConfiguracionDTO: Content {
     let umbralSismicoG: Double
     let sismoDuracionMinMs: Int
     let modoOffline: Bool
+    let modoUps: Bool
+    let duracionTimbreManualSeg: Int
     /// ¿El módulo ESP32 se ha reportado en los últimos segundos? Sale del
     /// latido en memoria (`EstadoModulo`), no de la base de datos.
     let moduloEnLinea: Bool
@@ -25,6 +27,8 @@ struct ConfiguracionDTO: Content {
         self.umbralSismicoG = config.umbralSismicoG
         self.sismoDuracionMinMs = config.sismoDuracionMinMs
         self.modoOffline = config.modoOffline
+        self.modoUps = config.modoUps
+        self.duracionTimbreManualSeg = config.duracionTimbreManualSeg
         self.moduloEnLinea = moduloEnLinea
         self.ultimaSync = config.ultimaSync
     }
@@ -34,6 +38,8 @@ struct GuardarConfiguracionRequest: Content {
     let nombreColegio: String?
     let umbralSismicoG: Double
     let sismoDuracionMinMs: Int
+    let modoUps: Bool?
+    let duracionTimbreManualSeg: Int?
 }
 
 /// Lo que del sistema puede ver **cualquier usuario con sesión** (F-09): de
@@ -99,8 +105,18 @@ struct ConfiguracionController: RouteCollection {
         config.nombreColegio = datos.nombreColegio?.vacioComoNil()
         config.umbralSismicoG = datos.umbralSismicoG
         config.sismoDuracionMinMs = datos.sismoDuracionMinMs
+        if let duracion = datos.duracionTimbreManualSeg {
+            guard (1...60).contains(duracion) else {
+                throw Abort(.badRequest, reason: "La duración del timbre manual debe estar entre 1 y 60 segundos")
+            }
+            config.duracionTimbreManualSeg = duracion
+        }
+        if let modoUps = datos.modoUps {
+            config.modoUps = modoUps
+        }
         try await config.save(on: req.db)
 
+        await EstadoModulo.compartido.notificarSincronizacion()
         return ConfiguracionDTO(
             config,
             moduloEnLinea: await EstadoModulo.compartido.enLinea()

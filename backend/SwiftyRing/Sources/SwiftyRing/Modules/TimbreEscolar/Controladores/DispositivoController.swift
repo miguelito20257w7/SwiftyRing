@@ -61,6 +61,8 @@ struct HorarioDispositivoResponse: Content {
     let horaServidor: String
     let umbralSismicoG: Double
     let sismoDuracionMinMs: Int
+    let modoUps: Bool
+    let duracionTimbreManualSeg: Int
     let habitual: [TimbreDispositivoDTO]
     let especial: HorarioEspecialDispositivoDTO?
 }
@@ -108,6 +110,7 @@ struct DispositivoController: RouteCollection {
         dispositivo.get("comandos", use: comandos)
         dispositivo.post("activaciones", use: reportarActivacion)
         dispositivo.post("sismos", use: reportarSismo)
+        dispositivo.webSocket("canal", onUpgrade: canal)
     }
 
     /// RF-28: el paquete completo que el módulo guarda en LittleFS. También
@@ -169,6 +172,8 @@ struct DispositivoController: RouteCollection {
             horaServidor: FormatoTiempo.horaActual(),
             umbralSismicoG: config.umbralSismicoG,
             sismoDuracionMinMs: config.sismoDuracionMinMs,
+            modoUps: config.modoUps,
+            duracionTimbreManualSeg: config.duracionTimbreManualSeg,
             habitual: habituales,
             especial: especialDTO
         )
@@ -259,5 +264,23 @@ struct DispositivoController: RouteCollection {
         }
 
         return .created
+    }
+
+    /// Canal WebSocket persistente con el módulo ESP32. Reemplaza el polling
+    /// de comandos: el servidor le empuja las órdenes al instante.
+    func canal(req: Request, ws: WebSocket) async {
+        req.logger.info("módulo ESP32 conectado por WebSocket")
+        await EstadoModulo.compartido.registrarConexion(ws)
+
+        // El módulo acaba de conectar: que sincronice el horario por si
+        // cambió mientras estaba desconectado.
+        await EstadoModulo.compartido.notificarSincronizacion()
+
+        ws.onClose.whenComplete { _ in
+            Task {
+                await EstadoModulo.compartido.desregistrarConexion()
+                req.logger.info("módulo ESP32 desconectado del WebSocket")
+            }
+        }
     }
 }

@@ -91,16 +91,18 @@ struct ActivacionesController: RouteCollection {
             throw Abort(.unauthorized, reason: "Sesión no válida")
         }
 
+        let config = try await ConfiguracionSistema.actual(on: req.db)
+        let duracion = config.duracionTimbreManualSeg
+
         let activacion = ActivacionTimbre(
             tipo: .manualApp,
             origenUsuarioID: usuarioID,
-            duracionSeg: 5
+            duracionSeg: duracion
         )
         try await activacion.create(on: req.db)
 
-        // El módulo consulta sus comandos cada ~2 s; con esto el toque llega
-        // dentro del plazo de RNF-04 sin que el servidor tenga que buscarlo.
-        await EstadoModulo.compartido.ordenarTimbre(duracionSeg: activacion.duracionSeg ?? 5)
+        // El módulo consulta sus comandos cada ~2 s o recibe por WebSocket al instante.
+        await EstadoModulo.compartido.ordenarTimbre(duracionSeg: duracion)
 
         let notificadas = try await NotificadorProximaClase.generar(
             activacionID: activacion.requireID(),

@@ -24,6 +24,7 @@
 #include "freertos/task.h"
 #include "horario.h"
 #include "timbre.h"
+#include "canal.h"
 
 static const char *TAG = "red";
 
@@ -32,8 +33,8 @@ static const char *TAG = "red";
 #define RUTA_COLA RUTA_ALMACEN "/reportes.jsonl"
 #define RUTA_ENVIANDO RUTA_ALMACEN "/enviando.jsonl"
 
-#define INTERVALO_COMANDOS_MS 500              // Consulta rápida de comandos de la app (< 0.5 s)
-#define INTERVALO_SYNC_MS (5 * 60 * 1000)
+#define INTERVALO_COMANDOS_MS 10000             // Respaldo de WS: consulta de comandos (10 s)
+#define INTERVALO_SYNC_MS (30 * 60 * 1000)
 #define INTERVALO_FLUSH_MS 15000
 #define INTERVALO_WIFI_MS 10000
 
@@ -45,7 +46,9 @@ static const char *TAG = "red";
 #define TAM_RESPUESTA_HORARIO 12288
 
 static volatile bool s_en_linea = false;
+static volatile bool s_conectando = false;
 static volatile bool s_flush_pedido = false;
+static volatile bool s_sync_pedido = false;
 static SemaphoreHandle_t s_candado_cola;
 
 // ============================================================
@@ -54,16 +57,18 @@ static SemaphoreHandle_t s_candado_cola;
 
 static void manejar_evento(void *arg, esp_event_base_t base, int32_t id, void *datos) {
     if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
+        s_conectando = true;
         esp_wifi_connect();
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
-        // No se reintenta aquí: lo hace la tarea de red cada 10 s. Mientras
-        // tanto el timbre sigue operando offline (RF-31).
+        wifi_event_sta_disconnected_t *ev = (wifi_event_sta_disconnected_t *)datos;
         s_en_linea = false;
-        ESP_LOGW(TAG, "sin conexión");
+        s_conectando = false;
+        ESP_LOGW(TAG, "sin conexión (motivo: %d)", ev ? ev->reason : -1);
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *evento = (ip_event_got_ip_t *)datos;
         ESP_LOGI(TAG, "conectado, IP " IPSTR, IP2STR(&evento->ip_info.ip));
         s_en_linea = true;
+        s_conectando = false;
     }
 }
 
@@ -86,6 +91,11 @@ void red_iniciar(void) {
         .sta = {
             .ssid = WIFI_SSID,
             .password = WIFI_PASSWORD,
+            .scan_method = WIFI_ALL_CHANNEL_SCAN,
+            .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
+            .ft_enabled = 1,
+            .btm_enabled = 1,
+            .rm_enabled = 1,
         },
     };
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -101,6 +111,8 @@ void red_iniciar(void) {
 }
 
 bool red_en_linea(void) { return s_en_linea; }
+
+void red_pedir_sincronizacion(void) { s_sync_pedido = true; }
 
 // ============================================================
 // 2. HTTP
@@ -208,12 +220,42 @@ static void sincronizar_horario(void) {
 // 4. Órdenes de la app (RNF-04)
 // ============================================================
 //
-// Esta consulta corre cada 2 s y además le sirve al servidor como latido de
-// "módulo en línea".
+// Esta consulta corre periódicamente y reutiliza la conexión HTTP (Keep-Alive)
+// para evitar calcular el handshake criptográfico TLS en cada ciclo.
+
+static esp_http_client_handle_t s_cliente_comandos = NULL;
 
 static void consultar_comandos(void) {
-    char cuerpo[512];
-    if (http_get("/dispositivo/comandos", cuerpo, sizeof(cuerpo)) != 200) return;
+    char url[192];
+    snprintf(url, sizeof(url), "%s/dispositivo/comandos", API_BASE);
+    char cuerpo[512] = {0};
+    respuesta_t respuesta = {.buf = cuerpo, .capacidad = sizeof(cuerpo), .largo = 0};
+
+    if (s_cliente_comandos == NULL) {
+        esp_http_client_config_t cfg = {
+            .url = url,
+            .timeout_ms = 4000,
+            .event_handler = recibir_pedazo,
+            .user_data = &respuesta,
+            .crt_bundle_attach = esp_crt_bundle_attach,
+            .keep_alive_enable = true,
+        };
+        s_cliente_comandos = esp_http_client_init(&cfg);
+        if (s_cliente_comandos == NULL) return;
+        esp_http_client_set_header(s_cliente_comandos, "X-Device-Key", DEVICE_API_KEY);
+    } else {
+        esp_http_client_set_url(s_cliente_comandos, url);
+        esp_http_client_set_user_data(s_cliente_comandos, &respuesta);
+    }
+
+    esp_err_t err = esp_http_client_perform(s_cliente_comandos);
+    if (err != ESP_OK) {
+        esp_http_client_cleanup(s_cliente_comandos);
+        s_cliente_comandos = NULL;
+        return;
+    }
+    int codigo = esp_http_client_get_status_code(s_cliente_comandos);
+    if (codigo != 200) return;
 
     cJSON *doc = cJSON_Parse(cuerpo);
     if (doc == NULL) return;
@@ -417,17 +459,23 @@ void red_tarea(void *argumento) {
         uint32_t ahora = millis();
 
         if (!s_en_linea) {
-            if (ahora - t_wifi >= INTERVALO_WIFI_MS) {
+            if (s_cliente_comandos != NULL) {
+                esp_http_client_cleanup(s_cliente_comandos);
+                s_cliente_comandos = NULL;
+            }
+            if (!s_conectando && ahora - t_wifi >= INTERVALO_WIFI_MS) {
                 t_wifi = ahora;
+                s_conectando = true;
                 esp_wifi_connect();
             }
         } else {
-            if (!sincronizado_alguna_vez || ahora - t_sync >= INTERVALO_SYNC_MS) {
+            if (!sincronizado_alguna_vez || s_sync_pedido || ahora - t_sync >= INTERVALO_SYNC_MS) {
                 t_sync = ahora;
+                s_sync_pedido = false;
                 sincronizado_alguna_vez = true;
                 sincronizar_horario();
             }
-            if (ahora - t_comando >= INTERVALO_COMANDOS_MS) {
+            if (!canal_conectado() && ahora - t_comando >= INTERVALO_COMANDOS_MS) {
                 t_comando = ahora;
                 consultar_comandos();
             }

@@ -53,6 +53,7 @@
 #include "nvs_flash.h"
 #include "pantalla.h"
 #include "red.h"
+#include "canal.h"
 #include "reloj.h"
 #include "sismo.h"
 #include "timbre.h"
@@ -119,9 +120,14 @@ void app_main(void) {
     pantalla_iniciar(bus_pantalla);
     pantalla_mensaje("SwiftyRing", ROL_ESCLAVO ? "Modulo 2..." : "Iniciando...");
 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+    // En ESP32-C3 solo hay un bus I2C (I2C_NUM_0), compartimos el mismo handle
+    reloj_iniciar(bus_pantalla);
+#else
     // Bus I2C 1 (I2C_NUM_1): dedicado al RTC físico DS3231 (aislado de la pantalla)
     i2c_master_bus_handle_t bus_rtc = iniciar_bus_i2c(I2C_RTC_PORT, PIN_I2C_RTC_SDA, PIN_I2C_RTC_SCL);
     reloj_iniciar(bus_rtc);
+#endif
 
     timbre_iniciar();
     led_rgb_iniciar();
@@ -131,6 +137,11 @@ void app_main(void) {
     // el timbre del primer bloque suena igual (RF-31).
     horario_iniciar();
 
+    // Elevamos la prioridad del bucle de control a 3 para que las tareas de fondo
+    // como la criptografía TLS en red_tarea (prioridad 1) nunca congelen el timbre,
+    // el sensor sísmico ni el refresco de pantalla en chips mononúcleo como el ESP32-C3.
+    vTaskPrioritySet(NULL, 3);
+
 #if ROL_ESCLAVO
     // Sin WiFi ni servidor: la radio la enciende enlace.c solo para ESP-NOW, y
     // la hora llega en el latido del maestro (o desde el RTC local si lo tiene).
@@ -139,7 +150,8 @@ void app_main(void) {
     red_iniciar();
     enlace_iniciar();  // ESP-NOW va montado sobre el WiFi que ya dejó red_iniciar
 
-    xTaskCreate(red_tarea, "red", 6144, NULL, 5, NULL);
+    xTaskCreate(red_tarea, "red", 6144, NULL, 1, NULL); // Prioridad 1 (fondo)
+    canal_iniciar();
 #endif
 
     // ---- Bucle de control ----
@@ -152,6 +164,7 @@ void app_main(void) {
         led_rgb_atender(timbre_activo());
         horario_revisar();
         enlace_atender();      // lo que llegó del otro módulo, y los latidos
+        canal_atender();
         sismo_atender_uart();  // drena y procesa las tramas del ESP-01S sin latencia
         sismo_atender();       // evaluación de sacudida propia y confirmación remota
 

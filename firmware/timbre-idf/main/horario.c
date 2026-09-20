@@ -129,6 +129,16 @@ bool horario_aplicar_json(const char *json, bool recien_del_servidor) {
     s_sismo_duracion_min_ms = (int)numero_de(doc, "sismoDuracionMinMs", 800);
     s_version = huella(json);
 
+    const cJSON *dur_manual = cJSON_GetObjectItemCaseSensitive(doc, "duracionTimbreManualSeg");
+    if (cJSON_IsNumber(dur_manual)) {
+        timbre_fijar_duracion_manual((uint8_t)dur_manual->valuedouble);
+    }
+
+    const cJSON *ups = cJSON_GetObjectItemCaseSensitive(doc, "modoUps");
+    if (cJSON_IsBool(ups)) {
+        timbre_fijar_modo_ups(cJSON_IsTrue(ups));
+    }
+
     tomar();
     copiar_timbres(cJSON_GetObjectItemCaseSensitive(doc, "habitual"), &s_habitual);
 

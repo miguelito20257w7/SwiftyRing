@@ -31,6 +31,7 @@ enum TimbreEscolar {
             CreateAsignacion(),
             CreateActivaciones(),
             CreateConfiguracionSistema(),
+            AddModoUpsYDuracionManualAConfiguracion(),
         ]
     }
 

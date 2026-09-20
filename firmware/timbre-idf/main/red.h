@@ -34,3 +34,6 @@ void red_encolar_activacion(const char *tipo, const char *timbre_id, int duracio
 // después por qué sonó (o por qué no) una alarma.
 void red_encolar_sismo(float intensidad_g, uint32_t duracion_ms, bool confirmado_por_nodo2,
                        float intensidad_nodo2_g);
+
+// El WebSocket avisó que hay horario nuevo: sincronizar en el acto.
+void red_pedir_sincronizacion(void);

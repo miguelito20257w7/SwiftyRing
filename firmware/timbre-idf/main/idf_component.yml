@@ -6,3 +6,4 @@
 dependencies:
   espressif/cjson: "^1.7.19"
   espressif/led_strip: "^3.0.0"
+  espressif/esp_websocket_client: "^1.2.0"

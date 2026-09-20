@@ -10,6 +10,7 @@ idf_component_register(
         "timbre.c"
         "sismo.c"
         "red.c"
+        "canal.c"
         "enlace.c"
         "pantalla.c"
         "sh1106.c"

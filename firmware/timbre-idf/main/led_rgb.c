@@ -11,7 +11,7 @@
 #include "config.h"
 #include "esp_log.h"
 
-#if defined(CONFIG_IDF_TARGET_ESP32S3) && defined(PIN_RGB_LED)
+#if (defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3)) && defined(PIN_RGB_LED)
 #include "led_strip.h"
 
 static const char *TAG = "led_rgb";

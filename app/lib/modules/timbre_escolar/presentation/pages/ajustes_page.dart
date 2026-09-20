@@ -135,6 +135,8 @@ class _SeccionSistemaState extends ConsumerState<_SeccionSistema> {
   final _nombre = TextEditingController();
   double? _umbral;
   int? _duracionMs;
+  bool? _modoUps;
+  int? _duracionManualSeg;
   bool _enviando = false;
   bool _inicializado = false;
 
@@ -155,6 +157,8 @@ class _SeccionSistemaState extends ConsumerState<_SeccionSistema> {
         nombreColegio: _nombre.text.trim(),
         umbralSismicoG: umbral,
         sismoDuracionMinMs: duracion,
+        modoUps: _modoUps,
+        duracionTimbreManualSeg: _duracionManualSeg,
       );
       ref.invalidate(configuracionProvider);
       if (mounted) {
@@ -185,9 +189,14 @@ class _SeccionSistemaState extends ConsumerState<_SeccionSistema> {
             _nombre.text = value.nombreColegio ?? '';
             _umbral = value.umbralSismicoG;
             _duracionMs = value.sismoDuracionMinMs;
+            _modoUps = value.modoUps;
+            _duracionManualSeg = value.duracionTimbreManualSeg;
           }
           final umbral = _umbral ?? value.umbralSismicoG;
           final duracion = _duracionMs ?? value.sismoDuracionMinMs;
+          final modoUps = _modoUps ?? value.modoUps;
+          final duracionManual =
+              _duracionManualSeg ?? value.duracionTimbreManualSeg;
 
           return Container(
             width: double.infinity,
@@ -238,7 +247,81 @@ class _SeccionSistemaState extends ConsumerState<_SeccionSistema> {
                   onChanged: (valor) =>
                       setState(() => _duracionMs = valor.round()),
                 ),
+                const SizedBox(height: 12),
+                const Divider(),
                 const SizedBox(height: 8),
+                Text(
+                  'DURACIÓN TIMBRE MANUAL · $duracionManual s',
+                  style: TimbreTextos.rotulo,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    IconButton.outlined(
+                      icon: const Icon(Icons.remove),
+                      tooltip: 'Reducir 1 segundo',
+                      onPressed: duracionManual > 1
+                          ? () => setState(
+                              () => _duracionManualSeg = duracionManual - 1,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 14),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.chipFondo,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$duracionManual segundos',
+                        style: GoogleFonts.workSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: TimbreColors.tinta,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    IconButton.outlined(
+                      icon: const Icon(Icons.add),
+                      tooltip: 'Aumentar 1 segundo',
+                      onPressed: duracionManual < 60
+                          ? () => setState(
+                              () => _duracionManualSeg = duracionManual + 1,
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 4),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  activeTrackColor: AppColors.dorado,
+                  title: Text(
+                    'Modo UPS (Respaldo)',
+                    style: GoogleFonts.workSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: TimbreColors.tinta,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Activa o desactiva el relé en GPIO 7 (ESP32-C3) para alimentación de respaldo.',
+                    style: GoogleFonts.workSans(
+                      fontSize: 13,
+                      color: AppColors.textoApoyo,
+                    ),
+                  ),
+                  value: modoUps,
+                  onChanged: (valor) => setState(() => _modoUps = valor),
+                ),
+                const SizedBox(height: 14),
                 BotonGuardar(
                   texto: 'Guardar configuración',
                   cargando: _enviando,

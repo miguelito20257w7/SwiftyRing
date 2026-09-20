@@ -12,6 +12,7 @@
 //
 
 import Fluent
+import FluentSQL
 import SQLKit
 
 /// Crea un índice si el motor es SQL (en los tests con SQLite en memoria u
@@ -322,3 +323,20 @@ struct CreateConfiguracionSistema: AsyncMigration {
         try await database.schema(ConfiguracionSistema.schema).delete()
     }
 }
+
+struct AddModoUpsYDuracionManualAConfiguracion: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.schema(ConfiguracionSistema.schema)
+            .field("modo_ups", .bool, .sql(.default(false)))
+            .field("duracion_timbre_manual_seg", .int, .sql(.default(5)))
+            .update()
+    }
+
+    func revert(on database: any Database) async throws {
+        try await database.schema(ConfiguracionSistema.schema)
+            .deleteField("modo_ups")
+            .deleteField("duracion_timbre_manual_seg")
+            .update()
+    }
+}
+

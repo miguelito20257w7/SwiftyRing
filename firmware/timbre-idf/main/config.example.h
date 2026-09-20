@@ -89,10 +89,33 @@
 #define PIN_UART_SISMO_TX   17
 #define UART_SISMO_PORT     UART_NUM_1
 
+#elif defined(CONFIG_IDF_TARGET_ESP32C3)
+
+// ESP32-C3 (Super Mini)
+#define PIN_RELE            0   // relé de estado sólido
+#define PIN_RELE_UPS        7   // relé de modo UPS (lógica inversa: 0 = encendido, 1 = apagado)
+#define PIN_BOTON           1   // botón manual
+#define PIN_RGB_LED         2   // tira LED externa (opcional)
+
+// El ESP32-C3 tiene un único bus I2C (I2C_NUM_0).
+// Pantalla OLED y Reloj RTC comparten los mismos pines físicos.
+#define PIN_I2C_OLED_SDA    8
+#define PIN_I2C_OLED_SCL    9
+#define I2C_OLED_PORT       I2C_NUM_0
+
+#define PIN_I2C_RTC_SDA     8
+#define PIN_I2C_RTC_SCL     9
+#define I2C_RTC_PORT        I2C_NUM_0
+
+#define PIN_UART_SISMO_RX   20  // Conectado al TX del coprocesador ESP-01S
+#define PIN_UART_SISMO_TX   21
+#define UART_SISMO_PORT     UART_NUM_1
+
 #else
 
 // ESP32-WROOM-32 (DevKit)
 #define PIN_RELE            26
+#define PIN_RELE_UPS        25  // relé de modo UPS (lógica inversa: 0 = encendido, 1 = apagado)
 #define PIN_BOTON           27
 
 // Bus I2C 0 (I2C_NUM_0): Pantalla OLED SH1106

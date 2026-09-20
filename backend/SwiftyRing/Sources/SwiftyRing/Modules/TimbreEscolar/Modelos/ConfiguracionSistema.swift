@@ -30,6 +30,12 @@ final class ConfiguracionSistema: Model, @unchecked Sendable {
     @Field(key: "modo_offline")
     var modoOffline: Bool
 
+    @Field(key: "modo_ups")
+    var modoUps: Bool
+
+    @Field(key: "duracion_timbre_manual_seg")
+    var duracionTimbreManualSeg: Int
+
     @OptionalField(key: "ultima_sync")
     var ultimaSync: Date?
 
@@ -39,13 +45,17 @@ final class ConfiguracionSistema: Model, @unchecked Sendable {
         nombreColegio: String? = nil,
         umbralSismicoG: Double = 1.2,
         sismoDuracionMinMs: Int = 800,
-        modoOffline: Bool = false
+        modoOffline: Bool = false,
+        modoUps: Bool = false,
+        duracionTimbreManualSeg: Int = 5
     ) {
         self.id = "config"
         self.nombreColegio = nombreColegio
         self.umbralSismicoG = umbralSismicoG
         self.sismoDuracionMinMs = sismoDuracionMinMs
         self.modoOffline = modoOffline
+        self.modoUps = modoUps
+        self.duracionTimbreManualSeg = duracionTimbreManualSeg
     }
 
     /// La fila única, creándola con los valores por defecto si aún no existe.

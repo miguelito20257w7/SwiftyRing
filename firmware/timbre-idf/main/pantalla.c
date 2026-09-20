@@ -2,7 +2,10 @@
 //  pantalla.c
 //  SwiftyRing · firmware del módulo de timbre (ESP-IDF)
 //
-//  Dashboard Científico STA/LTA y Procesamiento Sísmico MPU-6050
+//  Dashboard limpio y simplificado para el timbre escolar (OLED SH1106 128x64):
+//  - Zona superior: Hora grande con insignia de conectividad.
+//  - Zona media: Próximo timbre y cuenta regresiva con buen espaciado.
+//  - Zona inferior: Barra de estado unificada (Temperatura/RTC, MPU, Red).
 //
 
 #include "pantalla.h"
@@ -22,6 +25,14 @@
 
 void pantalla_iniciar(i2c_master_bus_handle_t bus) { sh1106_iniciar(bus); }
 
+static bool hay_conexion(void) {
+#if ROL_ESCLAVO
+    return enlace_pareja_viva();
+#else
+    return red_en_linea();
+#endif
+}
+
 void pantalla_mensaje(const char *linea1, const char *linea2) {
     sh1106_limpiar();
     sh1106_texto_grande(2, 12, linea1);
@@ -32,91 +43,112 @@ void pantalla_mensaje(const char *linea1, const char *linea2) {
 void pantalla_dibujar(void) {
     if (!sh1106_presente()) return;
 
+    // ============================================================
+    // 1. MODO ALERTA COMPLETA (Timbre sonando o Alarma Sísmica)
+    // ============================================================
+    if (timbre_activo()) {
+        sh1106_limpiar();
+        if (strcmp(timbre_motivo(), "SISMO") == 0) {
+            sh1106_texto_grande(16, 12, "¡ALERTA!");
+            sh1106_texto_grande(20, 36, "¡SISMO!");
+        } else {
+            sh1106_texto_grande(16, 14, "¡TIMBRE!");
+            sh1106_texto(16, 42, timbre_motivo());
+        }
+        sh1106_mostrar();
+        return;
+    }
+
     sh1106_limpiar();
 
-    char linea[32];
-    int estado = sismo_estado();
-    bool alarma = timbre_activo() || (estado == 2);
+    struct tm t;
+    bool hora_ok = reloj_hora_local(&t);
 
     // ============================================================
-    // 1. ENCABEZADO DE ESTADO (Y = 0)
+    // 2. PANTALLA DE ESPERA (Si aún no hay hora válida)
     // ============================================================
-    if (alarma) {
-        sh1106_texto(10, 0, "¡¡ ALARMA SISMO ACTIVA !!");
-    } else if (estado == 1) {
-        sh1106_texto(6, 0, ">> PRE-TRIGGER STA/LTA <<");
+    if (!hora_ok) {
+        sh1106_texto_grande(2, 4, "Sin hora");
+        sh1106_linea(0, 22, 127, 22);
+
+        char linea[32];
+        snprintf(linea, sizeof(linea), "RTC: %s",
+                 rtc_presente() ? (rtc_hora_valida() ? "OK" : "Sin pila/hora") : "No detectado");
+        sh1106_texto(2, 28, linea);
+
+        sh1106_texto(2, 40, red_en_linea() ? "WiFi: Conectado" : "WiFi: Conectando...");
+        sh1106_texto(2, 52, "Sincronizando hora...");
+        sh1106_mostrar();
+        return;
+    }
+
+    // ============================================================
+    // 3. ZONA SUPERIOR: HORA GRANDE + INSIGNIA (Y = 2 a 16)
+    // ============================================================
+    char buffer_hora[16];
+    snprintf(buffer_hora, sizeof(buffer_hora), "%02d:%02d:%02d", t.tm_hour, t.tm_min, t.tm_sec);
+    sh1106_texto_grande(2, 2, buffer_hora);
+
+    // Insignia de conectividad arriba a la derecha
+    sh1106_texto(100, 6, hay_conexion() ? "WiFi" : "OFF");
+
+    // Línea separadora superior
+    sh1106_linea(0, 19, 127, 19);
+
+    // ============================================================
+    // 4. ZONA MEDIA: PRÓXIMO TIMBRE Y CUENTA REGRESIVA (Y = 23 a 44)
+    // ============================================================
+    char linea[48];
+    timbre_programado_t proximo;
+    if (horario_proximo(&t, &proximo)) {
+        snprintf(linea, sizeof(linea), "Prox: %s %s", proximo.hora, proximo.etiqueta);
+        sh1106_texto(2, 23, linea);
+
+        int hh = 0, mm = 0;
+        sscanf(proximo.hora, "%d:%d", &hh, &mm);
+        int faltan = (hh * 3600 + mm * 60) - (t.tm_hour * 3600 + t.tm_min * 60 + t.tm_sec);
+        if (faltan < 0) faltan = 0;
+        snprintf(linea, sizeof(linea), "Faltan: %02d:%02d:%02d",
+                 faltan / 3600, (faltan % 3600) / 60, faltan % 60);
+        sh1106_texto(2, 35, linea);
     } else {
-        sh1106_texto(12, 0, "= SISMOMETRO STA/LTA =");
+        sh1106_texto(2, 23, "Sin mas timbres hoy");
+        sh1106_texto(2, 35, "Jornada finalizada");
     }
 
-    sh1106_linea(0, 9, 127, 9);
+    // Línea separadora inferior
+    sh1106_linea(0, 48, 127, 48);
 
     // ============================================================
-    // 2. COCIENTE STA/LTA (Y = 11)
+    // 5. ZONA INFERIOR: BARRA DE ESTADO Y SENSORES (Y = 52)
     // ============================================================
-    float ratio = sismo_ratio_actual();
-    snprintf(linea, sizeof(linea), "STA/LTA: %4.1f (Trig:4.5)", ratio);
-    sh1106_texto(0, 11, linea);
+    int estado_sismo = sismo_estado();
 
-    // ============================================================
-    // 3. PGA DINÁMICO (0.5 - 10.0 Hz) (Y = 20)
-    // ============================================================
-    float pga = sismo_dynamic_magnitude();
-    float min_pga = horario_umbral_sismico();
-    snprintf(linea, sizeof(linea), "PGA: %.3fg  (Min:%.2fg)", pga, min_pga);
-    sh1106_texto(0, 20, linea);
-
-    // ============================================================
-    // 4. VÚMETRO DEL RATIO STA/LTA (Y = 29 a 35)
-    // ============================================================
-    // Marco exterior (120 px de ancho, escala de 0.0 a 10.0 de Ratio)
-    sh1106_linea(4, 29, 124, 29);
-    sh1106_linea(4, 35, 124, 35);
-    sh1106_linea(4, 29, 4, 35);
-    sh1106_linea(124, 29, 124, 35);
-
-    // Relleno proporcional al ratio STA/LTA
-    int relleno_w = (int)((ratio / 10.0f) * 118);
-    if (relleno_w > 118) relleno_w = 118;
-    if (relleno_w > 0) {
-        sh1106_rect(5, 30, relleno_w, 5);
-    }
-
-    // Muesca vertical en el umbral de disparo Alfa = 4.5
-    int muesca_x = 5 + (int)((4.5f / 10.0f) * 118);
-    sh1106_linea(muesca_x, 28, muesca_x, 36);
-
-    // ============================================================
-    // 5. TIEMPO SOSTENIDO Y PROGRESO (Y = 38)
-    // ============================================================
-    int muestras = sismo_contador_muestras();
-    int requeridas = sismo_muestras_requeridas();
-    int pct = requeridas > 0 ? (muestras * 100) / requeridas : 0;
-    if (pct > 100) pct = 100;
-    snprintf(linea, sizeof(linea), "T: %dms / %dms (%d%%)",
-             muestras * 10, requeridas * 10, pct);
-    sh1106_texto(0, 38, linea);
-
-    // ============================================================
-    // 6. TASA CAV (Velocidad Absoluta Acumulada) (Y = 47)
-    // ============================================================
-    float cav_rate = sismo_cav_rate();
-    snprintf(linea, sizeof(linea), "CAV: %.3f g*s/s (>=.02)", cav_rate);
-    sh1106_texto(0, 47, linea);
-
-    // ============================================================
-    // 7. MODO Y ENLACE UART (Y = 56)
-    // ============================================================
-    bool uart_ok = sismo_coprocesador_conectado();
-    bool pareja = enlace_pareja_viva();
-    if (alarma) {
-        snprintf(linea, sizeof(linea), "RELE ACTIVADO (30s)");
+    if (estado_sismo >= 1) {
+        // Alerta prioritaria si hay vibración sísmica detectada
+        snprintf(linea, sizeof(linea), "! SISMO: %.2fg !", sismo_dynamic_magnitude());
+    } else if (horario_especial_vigente(&t)) {
+        char nombre[25];
+        horario_especial_nombre(nombre, sizeof(nombre));
+        snprintf(linea, sizeof(linea), "Esp: %s", nombre);
+    } else if (!enlace_pareja_viva()) {
+        snprintf(linea, sizeof(linea), "%s", ROL_ESCLAVO ? "M1: Sin enlace" : "M2: Sin enlace");
     } else {
-        snprintf(linea, sizeof(linea), "UART:%s | %s",
-                 uart_ok ? "100Hz" : "NO",
-                 pareja ? "Pareja" : "Solo");
+        // En reposo normal: muestra temperatura RTC + MPU + Estado de red
+        float temp = rtc_temperatura();
+        char str_temp[10];
+        if (temp > -50.0f) {
+            snprintf(str_temp, sizeof(str_temp), "%.0fC", temp);
+        } else {
+            snprintf(str_temp, sizeof(str_temp), "RTC");
+        }
+
+        snprintf(linea, sizeof(linea), "%s  MPU:%s  %s",
+                 str_temp,
+                 sismo_coprocesador_conectado() ? "OK" : "NO",
+                 red_en_linea() ? "NET:OK" : "OFF");
     }
-    sh1106_texto(0, 56, linea);
+    sh1106_texto(2, 52, linea);
 
     sh1106_mostrar();
 }

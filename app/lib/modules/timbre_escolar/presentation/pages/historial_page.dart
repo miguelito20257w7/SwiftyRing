@@ -117,6 +117,7 @@ class _FilaHistorial extends StatelessWidget {
   final Color fondo;
   final String titulo;
   final String detalle;
+  final VoidCallback? onTap;
 
   const _FilaHistorial({
     required this.icono,
@@ -124,50 +125,73 @@ class _FilaHistorial extends StatelessWidget {
     required this.fondo,
     required this.titulo,
     required this.detalle,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.blanco,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.chipFondo),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(color: fondo, shape: BoxShape.circle),
-            child: Icon(icono, size: 22, color: color),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
               children: [
-                Text(
-                  titulo,
-                  style: TimbreTextos.etiquetaTarjeta.copyWith(fontSize: 16),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  detalle,
-                  style: GoogleFonts.workSans(
-                    fontSize: 13,
-                    color: AppColors.textoApoyo,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: fondo,
+                    shape: BoxShape.circle,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  child: Icon(icono, size: 22, color: color),
                 ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: TimbreTextos.etiquetaTarjeta.copyWith(
+                          fontSize: 16,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        detalle,
+                        style: GoogleFonts.workSans(
+                          fontSize: 13,
+                          color: AppColors.textoApoyo,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                if (onTap != null) ...[
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.chipTexto,
+                    size: 20,
+                  ),
+                ],
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -224,6 +248,12 @@ class _ListaActivaciones extends ConsumerWidget {
                 _fecha(activacion.ocurridoAt),
                 if (activacion.usuarioNombre != null) activacion.usuarioNombre!,
               ].join(' · '),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      DetalleEventoPage.activacion(activacion: activacion),
+                ),
+              ),
             ),
         ],
       ),
@@ -259,6 +289,11 @@ class _ListaSismos extends ConsumerWidget {
               detalle:
                   '${_fecha(sismo.ocurridoAt)}'
                   '${sismo.timbreActivado ? ' · Activó el timbre' : ''}',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DetalleEventoPage.sismo(sismo: sismo),
+                ),
+              ),
             ),
         ],
       ),
@@ -294,6 +329,13 @@ class _ListaNotificaciones extends ConsumerWidget {
               titulo: notificacion.profesorNombre,
               detalle:
                   '${notificacion.mensaje} · ${_fecha(notificacion.ocurridoAt)}',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DetalleEventoPage.notificacion(
+                    notificacion: notificacion,
+                  ),
+                ),
+              ),
             ),
         ],
       ),
@@ -305,3 +347,297 @@ class _ListaNotificaciones extends ConsumerWidget {
     };
   }
 }
+
+/// Pantalla de detalle exhaustiva para cualquier evento del historial.
+class DetalleEventoPage extends StatelessWidget {
+  final String titulo;
+  final String subtitulo;
+  final IconData icono;
+  final Color colorIcono;
+  final Color fondoIcono;
+  final List<({IconData icono, String etiqueta, String valor})> datos;
+
+  const DetalleEventoPage({
+    super.key,
+    required this.titulo,
+    required this.subtitulo,
+    required this.icono,
+    required this.colorIcono,
+    required this.fondoIcono,
+    required this.datos,
+  });
+
+  factory DetalleEventoPage.activacion({required Activacion activacion}) {
+    final icono = switch (activacion.tipo) {
+      TipoActivacion.automatico => Icons.schedule,
+      TipoActivacion.manualApp => Icons.smartphone,
+      TipoActivacion.manualFisico => Icons.touch_app_outlined,
+      TipoActivacion.sismico => Icons.warning_amber_rounded,
+    };
+    final color = switch (activacion.tipo) {
+      TipoActivacion.automatico => const Color(0xFF2980B9),
+      TipoActivacion.sismico => const Color(0xFFC0392B),
+      _ => AppColors.dorado,
+    };
+    final fondo = switch (activacion.tipo) {
+      TipoActivacion.automatico => const Color(0xFFCFE5F7),
+      TipoActivacion.sismico => const Color(0xFFFFD3D6),
+      _ => TimbreColors.amarillo.withValues(alpha: 0.45),
+    };
+
+    final origen = switch (activacion.tipo) {
+      TipoActivacion.automatico => 'Horario escolar programado',
+      TipoActivacion.manualApp =>
+        activacion.usuarioNombre != null
+            ? 'Usuario: ${activacion.usuarioNombre}'
+            : 'Activación manual desde App',
+      TipoActivacion.manualFisico => 'Pulsador físico en módulo ESP32',
+      TipoActivacion.sismico => 'Alarma automática por sensor MPU-6050',
+    };
+
+    return DetalleEventoPage(
+      titulo: activacion.tipo.etiqueta,
+      subtitulo: 'Registro de activación del timbre',
+      icono: icono,
+      colorIcono: color,
+      fondoIcono: fondo,
+      datos: [
+        (
+          icono: Icons.calendar_today_outlined,
+          etiqueta: 'Fecha y hora',
+          valor: _fecha(activacion.ocurridoAt),
+        ),
+        (
+          icono: Icons.timer_outlined,
+          etiqueta: 'Duración del toque',
+          valor: activacion.duracionSeg != null
+              ? '${activacion.duracionSeg} segundos'
+              : 'Predeterminada (5 s)',
+        ),
+        (
+          icono: Icons.person_outline,
+          etiqueta: 'Origen / Responsable',
+          valor: origen,
+        ),
+        (
+          icono: Icons.fingerprint,
+          etiqueta: 'ID de registro',
+          valor: activacion.id,
+        ),
+      ],
+    );
+  }
+
+  factory DetalleEventoPage.sismo({required Sismo sismo}) {
+    return DetalleEventoPage(
+      titulo: '${sismo.intensidadG.toStringAsFixed(2)} g',
+      subtitulo: 'Evento sísmico detectado',
+      icono: Icons.warning_amber_rounded,
+      colorIcono: const Color(0xFFC0392B),
+      fondoIcono: const Color(0xFFFFD3D6),
+      datos: [
+        (
+          icono: Icons.speed,
+          etiqueta: 'Aceleración pico',
+          valor: '${sismo.intensidadG.toStringAsFixed(3)} g',
+        ),
+        (
+          icono: Icons.timer_outlined,
+          etiqueta: 'Duración de la vibración',
+          valor: '${sismo.duracionMs} ms (${(sismo.duracionMs / 1000).toStringAsFixed(2)} s)',
+        ),
+        (
+          icono: Icons.notifications_active_outlined,
+          etiqueta: 'Alarma de evacuación',
+          valor: sismo.timbreActivado
+              ? 'Sonó automáticamente'
+              : 'No activó el timbre (bajo umbral)',
+        ),
+        (
+          icono: Icons.calendar_today_outlined,
+          etiqueta: 'Fecha y hora',
+          valor: _fecha(sismo.ocurridoAt),
+        ),
+        (
+          icono: Icons.fingerprint,
+          etiqueta: 'ID del evento',
+          valor: sismo.id,
+        ),
+      ],
+    );
+  }
+
+  factory DetalleEventoPage.notificacion({
+    required Notificacion notificacion,
+  }) {
+    return DetalleEventoPage(
+      titulo: notificacion.profesorNombre,
+      subtitulo: 'Notificación de próxima clase',
+      icono: Icons.notifications_none,
+      colorIcono: const Color(0xFF00796B),
+      fondoIcono: const Color(0xFFCDEFE8),
+      datos: [
+        (
+          icono: Icons.person_outline,
+          etiqueta: 'Docente',
+          valor: notificacion.profesorNombre,
+        ),
+        (
+          icono: Icons.message_outlined,
+          etiqueta: 'Mensaje transmitido',
+          valor: notificacion.mensaje,
+        ),
+        (
+          icono: Icons.send_outlined,
+          etiqueta: 'Estado de entrega',
+          valor: notificacion.enviada
+              ? 'Entregada por FCM'
+              : 'Registrada en bitácora',
+        ),
+        (
+          icono: Icons.calendar_today_outlined,
+          etiqueta: 'Fecha y hora',
+          valor: _fecha(notificacion.ocurridoAt),
+        ),
+        (
+          icono: Icons.fingerprint,
+          etiqueta: 'ID de notificación',
+          valor: notificacion.id,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.fondo,
+      appBar: AppBar(
+        title: const Text('Detalle del evento'),
+        backgroundColor: AppColors.fondo,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.blanco,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.chipFondo),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: fondoIcono,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icono, size: 32, color: colorIcono),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      titulo,
+                      style: GoogleFonts.workSans(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: TimbreColors.tinta,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitulo,
+                      style: GoogleFonts.workSans(
+                        fontSize: 14,
+                        color: AppColors.textoApoyo,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'INFORMACIÓN REGISTRADA',
+                style: TimbreTextos.rotulo,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.blanco,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.chipFondo),
+                ),
+                child: Column(
+                  children: [
+                    for (int i = 0; i < datos.length; i++) ...[
+                      if (i > 0) const Divider(height: 24),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            datos[i].icono,
+                            size: 20,
+                            color: AppColors.textoApoyo,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  datos[i].etiqueta,
+                                  style: GoogleFonts.workSans(
+                                    fontSize: 12,
+                                    color: AppColors.textoApoyo,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  datos[i].valor,
+                                  style: GoogleFonts.workSans(
+                                    fontSize: 15,
+                                    color: TimbreColors.tinta,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Volver al historial'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  foregroundColor: TimbreColors.tinta,
+                  side: const BorderSide(color: AppColors.chipFondo),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

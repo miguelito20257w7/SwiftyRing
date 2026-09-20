@@ -291,10 +291,14 @@ class TimbreApi {
     String? nombreColegio,
     required double umbralSismicoG,
     required int sismoDuracionMinMs,
+    bool? modoUps,
+    int? duracionTimbreManualSeg,
   }) => _put('/configuracion', {
     'nombreColegio': nombreColegio,
     'umbralSismicoG': umbralSismicoG,
     'sismoDuracionMinMs': sismoDuracionMinMs,
+    'modoUps': ?modoUps,
+    'duracionTimbreManualSeg': ?duracionTimbreManualSeg,
   });
 
   // ---- Cuentas (RF-03, dentro de Configuración) ----

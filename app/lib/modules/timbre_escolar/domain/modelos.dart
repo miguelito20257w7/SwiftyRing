@@ -537,6 +537,8 @@ class Configuracion {
   final double umbralSismicoG;
   final int sismoDuracionMinMs;
   final bool modoOffline;
+  final bool modoUps;
+  final int duracionTimbreManualSeg;
 
   /// ¿El módulo ESP32 se reportó al servidor hace segundos? Es el latido de
   /// sus consultas de comandos, no un valor guardado.
@@ -550,6 +552,8 @@ class Configuracion {
     required this.umbralSismicoG,
     required this.sismoDuracionMinMs,
     required this.modoOffline,
+    this.modoUps = false,
+    this.duracionTimbreManualSeg = 5,
     required this.moduloEnLinea,
     required this.ultimaSync,
   });
@@ -558,7 +562,9 @@ class Configuracion {
     nombreColegio: json['nombreColegio'] as String?,
     umbralSismicoG: (json['umbralSismicoG'] as num).toDouble(),
     sismoDuracionMinMs: json['sismoDuracionMinMs'] as int,
-    modoOffline: json['modoOffline'] as bool,
+    modoOffline: json['modoOffline'] as bool? ?? false,
+    modoUps: json['modoUps'] as bool? ?? false,
+    duracionTimbreManualSeg: json['duracionTimbreManualSeg'] as int? ?? 5,
     moduloEnLinea: json['moduloEnLinea'] as bool? ?? false,
     ultimaSync: json['ultimaSync'] == null
         ? null

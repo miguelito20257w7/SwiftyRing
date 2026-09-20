@@ -19,6 +19,8 @@ static const char *TAG = "timbre";
 static bool s_activo = false;
 static uint32_t s_hasta = 0;  // millis() en que se apaga el relé
 static char s_motivo[33] = "";
+static bool s_modo_ups = false;
+static uint8_t s_duracion_manual_seg = 5;
 
 // Orden dejada por la tarea de red. `volatile` porque la escribe una tarea y
 // la lee otra.
@@ -30,7 +32,17 @@ void timbre_iniciar(void) {
         .mode = GPIO_MODE_OUTPUT,
     };
     gpio_config(&rele);
-    gpio_set_level(PIN_RELE, 0);
+    gpio_set_level(PIN_RELE, 1);
+
+#ifdef PIN_RELE_UPS
+    gpio_config_t rele_ups = {
+        .pin_bit_mask = 1ULL << PIN_RELE_UPS,
+        .mode = GPIO_MODE_OUTPUT,
+    };
+    gpio_config(&rele_ups);
+    // El módulo de relé tiene lógica inversa: 1 = apagado, 0 = encendido
+    gpio_set_level(PIN_RELE_UPS, 1);
+#endif
 
 #if !ROL_ESCLAVO
     // El esclavo no lleva botón: su placa no tiene nada cableado a ese pin y
@@ -45,7 +57,7 @@ void timbre_iniciar(void) {
 }
 
 void timbre_activar(uint8_t duracion_seg, const char *motivo) {
-    gpio_set_level(PIN_RELE, 1);
+    gpio_set_level(PIN_RELE, 0);
     s_activo = true;
     s_hasta = millis() + (uint32_t)duracion_seg * 1000;
     strlcpy(s_motivo, motivo, sizeof(s_motivo));
@@ -56,6 +68,26 @@ void timbre_pedir_desde_app(uint8_t duracion_seg) { s_orden_app_seg = duracion_s
 bool timbre_activo(void) { return s_activo; }
 
 const char *timbre_motivo(void) { return s_motivo; }
+
+void timbre_fijar_modo_ups(bool activo) {
+    s_modo_ups = activo;
+#ifdef PIN_RELE_UPS
+    // Lógica inversa: 0 = encendido/activado, 1 = apagado/desactivado
+    gpio_set_level(PIN_RELE_UPS, activo ? 0 : 1);
+    ESP_LOGI(TAG, "modo UPS: %s (GPIO %d = %d)", activo ? "ACTIVADO" : "DESACTIVADO", PIN_RELE_UPS, activo ? 0 : 1);
+#endif
+}
+
+bool timbre_modo_ups(void) { return s_modo_ups; }
+
+void timbre_fijar_duracion_manual(uint8_t duracion_seg) {
+    if (duracion_seg >= 1 && duracion_seg <= 60) {
+        s_duracion_manual_seg = duracion_seg;
+        ESP_LOGI(TAG, "duración timbre manual: %u s", duracion_seg);
+    }
+}
+
+uint8_t timbre_duracion_manual(void) { return s_duracion_manual_seg; }
 
 // El botón físico (RF-15): flanco de bajada más 150 ms de guarda contra
 // rebotes del contacto (respuesta instantánea al presionar). Solo lo tiene el
@@ -69,11 +101,12 @@ static void atender_boton(void) {
     int estado = gpio_get_level(PIN_BOTON);
     if (estado_anterior == 1 && estado == 0 && (millis() - ultima_pulsacion > 150)) {
         ultima_pulsacion = millis();
-        ESP_LOGI(TAG, "botón físico");
-        timbre_activar(5, "Manual");
-        red_encolar_activacion("manual_fisico", NULL, 5);  // RF-17
+        uint8_t dur = s_duracion_manual_seg;
+        ESP_LOGI(TAG, "botón físico (duración %u s)", dur);
+        timbre_activar(dur, "Manual");
+        red_encolar_activacion("manual_fisico", NULL, dur);  // RF-17
         // Que suene también en el otro edificio.
-        enlace_ordenar_alarma(5, "Manual");
+        enlace_ordenar_alarma(dur, "Manual");
     }
     estado_anterior = estado;
 }
@@ -81,7 +114,7 @@ static void atender_boton(void) {
 
 void timbre_atender(void) {
     if (s_activo && millis() >= s_hasta) {
-        gpio_set_level(PIN_RELE, 0);
+        gpio_set_level(PIN_RELE, 1);
         s_activo = false;
     }
 

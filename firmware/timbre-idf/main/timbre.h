@@ -27,3 +27,12 @@ void timbre_pedir_desde_app(uint8_t duracion_seg);
 
 bool timbre_activo(void);
 const char *timbre_motivo(void);
+
+// Control del relé de modo UPS (lógica inversa: 0 = activo, 1 = inactivo)
+void timbre_fijar_modo_ups(bool activo);
+bool timbre_modo_ups(void);
+
+// Duración del timbre al accionar manualmente (botón físico en módulo)
+void timbre_fijar_duracion_manual(uint8_t duracion_seg);
+uint8_t timbre_duracion_manual(void);
+
