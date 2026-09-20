@@ -46,3 +46,4 @@ int sismo_estado(void);
 int sismo_contador_muestras(void);
 int sismo_muestras_requeridas(void);
 bool sismo_agitacion_activa(void);
+bool sismo_grabando(void);

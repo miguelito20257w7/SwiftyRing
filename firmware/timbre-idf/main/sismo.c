@@ -129,7 +129,17 @@ static float s_sta_energy = 0.0f;
 static float s_lta_energy = 1.0e-4f;
 static float s_pico_sismo = 0.0f;
 
+// Variables de sesión del sismógrafo
+static bool s_grabacion_activa = false;
+static uint32_t s_sismo_inicio_ms = 0;
+static uint32_t s_sismo_fin_ms = 0;
+static float s_sismo_pico_max_g = 0.0f;
+static bool s_sismo_confirmado = false;
+static float s_sismo_intensidad_remota = 0.0f;
+static uint32_t s_sismo_muestras_evento = 0;
+
 static void anotar_sacudida_propia(float pico_g, uint32_t duracion_ms);
+static void finalizar_registro_sismografo(void);
 
 esp_err_t sismo_iniciar(void) {
     uart_config_t cfg = {
@@ -223,12 +233,17 @@ static void procesar_muestra(float ax_raw, float ay_raw, float az_raw) {
                 s_state_counter = 1;
                 s_cumulative_velocity = dynamic_magnitude * DT;
                 s_pico_sismo = dynamic_magnitude;
+                s_sismo_inicio_ms = millis();
+                s_sismo_pico_max_g = dynamic_magnitude;
+                s_sismo_muestras_evento = 1;
             }
             break;
 
         case STATE_PRE_TRIGGER:
             s_cumulative_velocity += dynamic_magnitude * DT;
+            s_sismo_muestras_evento++;
             if (dynamic_magnitude > s_pico_sismo) s_pico_sismo = dynamic_magnitude;
+            if (dynamic_magnitude > s_sismo_pico_max_g) s_sismo_pico_max_g = dynamic_magnitude;
 
             if (s_current_ratio >= THRESHOLD_DETRIGGER) {
                 s_state_counter++;
@@ -260,7 +275,18 @@ static void procesar_muestra(float ax_raw, float ay_raw, float az_raw) {
 
         case STATE_CONFIRMED_SEISM:
             s_cumulative_velocity += dynamic_magnitude * DT;
-            if (dynamic_magnitude > s_pico_sismo) s_pico_sismo = dynamic_magnitude;
+            s_sismo_muestras_evento++;
+            if (dynamic_magnitude > s_pico_sismo) {
+                s_pico_sismo = dynamic_magnitude;
+                static uint32_t s_ultimo_aviso_pico = 0;
+                if (millis() - s_ultimo_aviso_pico > 500) {
+                    s_ultimo_aviso_pico = millis();
+                    enlace_avisar_sacudida(s_pico_sismo, (s_sismo_muestras_evento * 1000) / 100);
+                }
+            }
+            if (dynamic_magnitude > s_sismo_pico_max_g) {
+                s_sismo_pico_max_g = dynamic_magnitude;
+            }
 
             if (s_current_ratio < THRESHOLD_DETRIGGER) {
                 s_state_counter--;
@@ -268,7 +294,11 @@ static void procesar_muestra(float ax_raw, float ay_raw, float az_raw) {
                     s_system_state = STATE_QUIET;
                     s_state_counter = 0;
                     s_cumulative_velocity = 0.0f;
-                    ESP_LOGI(TAG, "Sismo concluido. Reanudando rastreo ambiental basal LTA.");
+                    s_sismo_fin_ms = millis();
+                    ESP_LOGI(TAG, "Sismo concluido (cesó la sacudida). Reanudando rastreo ambiental basal LTA.");
+                    if (s_grabacion_activa) {
+                        finalizar_registro_sismografo();
+                    }
                 }
             } else {
                 s_state_counter = min_sustained;
@@ -357,7 +387,7 @@ float sismo_ratio_actual(void) { return s_current_ratio; }
 float sismo_sta_energy(void) { return s_sta_energy; }
 float sismo_lta_energy(void) { return s_lta_energy; }
 float sismo_cav_rate(void) { return s_computed_cav_rate; }
-float sismo_pico_actual(void) { return s_pico_sismo; }
+float sismo_pico_actual(void) { return fmaxf(s_pico_sismo, s_sismo_pico_max_g); }
 float sismo_temperatura(void) { return s_temp_mpu; }
 int sismo_estado(void) { return (int)s_system_state; }
 int sismo_contador_muestras(void) { return s_state_counter; }
@@ -365,10 +395,11 @@ int sismo_muestras_requeridas(void) {
     int m = (horario_sismo_duracion_min_ms() * 100) / 1000;
     return m < 30 ? 30 : m;
 }
-bool sismo_agitacion_activa(void) { return s_system_state != STATE_QUIET; }
+bool sismo_agitacion_activa(void) { return (s_system_state != STATE_QUIET) || s_grabacion_activa; }
+bool sismo_grabando(void) { return s_grabacion_activa; }
 
 // ============================================================
-// Confirmación cruzada entre los dos módulos (RF-19)
+// Sismógrafo y Confirmación cruzada entre los dos módulos (RF-19)
 // ============================================================
 
 #define VENTANA_CONFIRMACION_MS 3000
@@ -392,10 +423,44 @@ static void anotar_sacudida_propia(float pico_g, uint32_t duracion_ms) {
     s_propia_ms = duracion_ms;
 }
 
+static void finalizar_registro_sismografo(void) {
+    if (!s_grabacion_activa) return;
+
+    uint32_t ahora = millis();
+    uint32_t duracion_total_ms = 0;
+    if (s_sismo_fin_ms > s_sismo_inicio_ms) {
+        duracion_total_ms = s_sismo_fin_ms - s_sismo_inicio_ms;
+    } else if (ahora > s_sismo_inicio_ms) {
+        duracion_total_ms = ahora - s_sismo_inicio_ms;
+    }
+    if (duracion_total_ms < s_propia_ms) {
+        duracion_total_ms = s_propia_ms;
+    }
+
+    float pico_final = fmaxf(s_pico_sismo, s_sismo_pico_max_g);
+
+    ESP_LOGW(TAG, "==================================================");
+    ESP_LOGW(TAG, "SISMÓGRAFO: SISMO FINALIZADO (SACUDIDA DETENIDA)");
+    ESP_LOGW(TAG, "Duración total del sismo: %lu ms", (unsigned long)duracion_total_ms);
+    ESP_LOGW(TAG, "Aceleración pico máxima (PGA): %.4f g", pico_final);
+    ESP_LOGW(TAG, "Confirmado por pareja: %s (PGA remota: %.4f g)",
+             s_sismo_confirmado ? "SÍ" : "NO", s_sismo_intensidad_remota);
+    ESP_LOGW(TAG, "Enviando reporte completo a la bitácora del backend...");
+    ESP_LOGW(TAG, "==================================================");
+
+    red_encolar_sismo(pico_final, duracion_total_ms, s_sismo_confirmado, s_sismo_intensidad_remota);
+
+    s_grabacion_activa = false;
+    s_sismo_fin_ms = 0;
+}
+
 void sismo_sacudida_remota(float pico_g, uint32_t duracion_ms) {
     s_remota_valida = true;
     s_remota_t = millis();
     s_remota_g = pico_g;
+    if (s_grabacion_activa && pico_g > s_sismo_intensidad_remota) {
+        s_sismo_intensidad_remota = pico_g;
+    }
     ESP_LOGW(TAG, "El otro módulo sintió %.2f g durante %lu ms", pico_g,
              (unsigned long)duracion_ms);
 }
@@ -414,6 +479,13 @@ void sismo_atender(void) {
         s_remota_valida = false;
     }
 
+    // Salvaguarda: si el sismo lleva más de 120 s grabando, cerrar y emitir reporte
+    if (s_grabacion_activa && (ahora - s_sismo_inicio_ms > 120000)) {
+        ESP_LOGW(TAG, "SISMÓGRAFO: Límite de seguridad alcanzado (120 s). Cerrando reporte.");
+        s_sismo_fin_ms = ahora;
+        finalizar_registro_sismografo();
+    }
+
     if (!s_propia_valida) return;
 
     bool solo = !enlace_pareja_viva();
@@ -426,12 +498,25 @@ void sismo_atender(void) {
         bool primera = (s_ultimo_evento == 0);
         if (primera || ahora - s_ultimo_evento > GUARDA_ENTRE_EVENTOS_MS) {
             s_ultimo_evento = ahora;
-            ESP_LOGW(TAG, "SISMO %s: %.2f g durante %lu ms",
+            ESP_LOGW(TAG, "SISMO %s: %.2f g. Activando alarma inmediata y sismógrafo...",
                      confirmada ? "confirmado por ambos módulos" : "(decisión autónoma)",
-                     s_propia_g, (unsigned long)s_propia_ms);
-            // RF-22: Alarma inmediata de 30 segundos
+                     s_propia_g);
+
+            // 1. Alarma acústica INMEDIATA (30 segundos para evacuación segura)
             timbre_activar(30, "SISMO");
-            red_encolar_sismo(s_propia_g, s_propia_ms, confirmada, confirmada ? s_remota_g : 0);
+
+            // 2. Activar sismógrafo en tiempo real para registrar todo el evento hasta que pare
+            s_grabacion_activa = true;
+            s_sismo_confirmado = confirmada;
+            s_sismo_intensidad_remota = confirmada ? s_remota_g : 0.0f;
+            if (s_propia_g > s_sismo_pico_max_g) {
+                s_sismo_pico_max_g = s_propia_g;
+            }
+
+            // Si el movimiento ya cesó antes de la confirmación (sismo ultracorto):
+            if (s_system_state == STATE_QUIET) {
+                finalizar_registro_sismografo();
+            }
         }
     } else {
         ESP_LOGI(TAG, "Sacudida de %.2f g descartada: el otro módulo no la sintió", s_propia_g);
@@ -440,3 +525,4 @@ void sismo_atender(void) {
     s_propia_valida = false;
     s_remota_valida = false;
 }
+

@@ -164,16 +164,17 @@ void pantalla_dibujar(void) {
     // ============================================================
     char buffer_hora[16];
     snprintf(buffer_hora, sizeof(buffer_hora), "%02d:%02d:%02d", t.tm_hour, t.tm_min, t.tm_sec);
-    sh1106_texto_grande(2, 2, buffer_hora);
+    sh1106_texto_grande(0, 2, buffer_hora);
 
-    // Insignia de conectividad arriba a la derecha
+    // Insignia de conectividad arriba a la derecha (alineada al borde derecho)
     const char *badge = "OFF";
     if (canal_conectado()) {
         badge = "WS";
     } else if (hay_conexion()) {
         badge = "WiFi";
     }
-    sh1106_texto(96, 6, badge);
+    int ancho_badge = sh1106_ancho_texto(badge);
+    sh1106_texto(127 - ancho_badge, 6, badge);
 
     // Línea separadora superior
     sh1106_linea(0, 19, 127, 19);
@@ -215,8 +216,8 @@ void pantalla_dibujar(void) {
     // ============================================================
     int estado_sismo = sismo_estado();
 
-    if (estado_sismo >= 1) {
-        // Alerta prioritaria si hay vibración sísmica detectada
+    if (estado_sismo >= 1 || sismo_grabando()) {
+        // Alerta prioritaria si hay vibración sísmica detectada o sismógrafo grabando
         snprintf(linea, sizeof(linea), "! SISMO: %.2fg !", sismo_dynamic_magnitude());
     } else if (s_especial_vigente_cache) {
         snprintf(linea, sizeof(linea), "Esp: %s", s_especial_nombre_cache);

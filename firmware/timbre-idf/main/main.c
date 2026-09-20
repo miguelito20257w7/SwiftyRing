@@ -188,7 +188,7 @@ void app_main(void) {
             }
         }
 
-        if (timbre_activo() || sismo_estado() >= 1 || pantalla_tiene_aviso()) {
+        if (timbre_activo() || sismo_estado() >= 1 || sismo_grabando() || pantalla_tiene_aviso()) {
             if (ahora - t_pantalla >= 200) {
                 debe_dibujar = true;
             }
