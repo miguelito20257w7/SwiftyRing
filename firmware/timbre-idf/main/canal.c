@@ -296,8 +296,13 @@ void canal_atender(void) {
                 pantalla_notificar_cambio("HORARIO ESPECIAL", "ACTUALIZANDO...");
                 red_pedir_sincronizacion_motivo("especial");
             } else if (motivo != NULL && strcmp(motivo, "inicio") == 0) {
-                // Sincronización silenciosa en reconexión / inicio: no genera popup molesto
-                red_pedir_sincronizacion_motivo("inicio");
+                // Si el horario ya se sincronizó hace menos de 20 segundos (al conectar el WiFi en el arranque),
+                // no repetimos la petición HTTP ni saturamos la conexión TLS.
+                if (red_tiempo_desde_sync() < 20000) {
+                    ESP_LOGI(TAG, "sincronización de inicio omitida (horario reciente)");
+                } else {
+                    red_pedir_sincronizacion_motivo("inicio");
+                }
             } else {
                 pantalla_notificar_cambio("HORARIOS", "ACTUALIZANDO...");
                 red_pedir_sincronizacion_motivo(motivo ? motivo : "horario");

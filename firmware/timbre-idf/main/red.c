@@ -50,6 +50,7 @@ static volatile bool s_en_linea = false;
 static volatile bool s_conectando = false;
 static volatile bool s_flush_pedido = false;
 static volatile bool s_sync_pedido = false;
+static volatile uint32_t s_ultima_sync_exitosa_ms = 0;
 static SemaphoreHandle_t s_candado_cola;
 
 // ============================================================
@@ -224,6 +225,7 @@ static void sincronizar_horario(void) {
 
     int codigo = http_get("/dispositivo/horario", cuerpo, TAM_RESPUESTA_HORARIO);
     if (codigo == 200) {
+        s_ultima_sync_exitosa_ms = millis();
         horario_aplicar_json(cuerpo, true);
         if (strcmp(s_sync_motivo, "especial") == 0) {
             pantalla_notificar_cambio("HORARIO ESPECIAL", "ACTUALIZADO");
@@ -238,6 +240,11 @@ static void sincronizar_horario(void) {
     }
     s_sync_motivo[0] = '\0';
     free(cuerpo);
+}
+
+uint32_t red_tiempo_desde_sync(void) {
+    if (s_ultima_sync_exitosa_ms == 0) return UINT32_MAX;
+    return millis() - s_ultima_sync_exitosa_ms;
 }
 
 // ============================================================
@@ -533,22 +540,34 @@ void red_tarea(void *argumento) {
                 esp_wifi_connect();
             }
         } else {
-            canal_conectar();
-
-            if (!sincronizado_alguna_vez || s_sync_pedido || ahora - t_sync >= INTERVALO_SYNC_MS) {
+            if (!sincronizado_alguna_vez) {
+                // Al conectar WiFi, primero sincronizamos el horario por HTTP de forma secuencial.
+                // Luego damos un respiro a la CPU (FreeRTOS IDLE task resetea el watchdog)
+                // y conectamos el WebSocket. Nunca ambos a la vez para no colapsar la CPU con
+                // dos negociaciones TLS en paralelo en el ESP32-C3.
+                sincronizado_alguna_vez = true;
                 t_sync = ahora;
                 s_sync_pedido = false;
-                sincronizado_alguna_vez = true;
                 sincronizar_horario();
-            }
-            if (!canal_conectado() && ahora - t_comando >= INTERVALO_COMANDOS_MS) {
-                t_comando = ahora;
-                consultar_comandos();
-            }
-            if (s_flush_pedido || ahora - t_flush >= INTERVALO_FLUSH_MS) {
-                t_flush = ahora;
-                s_flush_pedido = false;
-                enviar_reportes_pendientes();
+                vTaskDelay(pdMS_TO_TICKS(150));
+                canal_conectar();
+            } else {
+                canal_conectar();
+
+                if (s_sync_pedido || ahora - t_sync >= INTERVALO_SYNC_MS) {
+                    t_sync = ahora;
+                    s_sync_pedido = false;
+                    sincronizar_horario();
+                }
+                if (!canal_conectado() && ahora - t_comando >= INTERVALO_COMANDOS_MS) {
+                    t_comando = ahora;
+                    consultar_comandos();
+                }
+                if (s_flush_pedido || ahora - t_flush >= INTERVALO_FLUSH_MS) {
+                    t_flush = ahora;
+                    s_flush_pedido = false;
+                    enviar_reportes_pendientes();
+                }
             }
         }
 
