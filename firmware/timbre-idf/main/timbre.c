@@ -12,6 +12,7 @@
 #include "driver/gpio.h"
 #include "enlace.h"
 #include "esp_log.h"
+#include "pantalla.h"
 #include "red.h"
 
 static const char *TAG = "timbre";
@@ -95,19 +96,44 @@ uint8_t timbre_duracion_manual(void) { return s_duracion_manual_seg; }
 // ordena.
 #if !ROL_ESCLAVO
 static void atender_boton(void) {
-    static uint32_t ultima_pulsacion = 0;
     static int estado_anterior = 1;
+    static uint32_t t_presionado = 0;
+    static bool accion_larga_disparada = false;
 
     int estado = gpio_get_level(PIN_BOTON);
-    if (estado_anterior == 1 && estado == 0 && (millis() - ultima_pulsacion > 150)) {
-        ultima_pulsacion = millis();
-        uint8_t dur = s_duracion_manual_seg;
-        ESP_LOGI(TAG, "botón físico (duración %u s)", dur);
-        timbre_activar(dur, "Manual");
-        red_encolar_activacion("manual_fisico", NULL, dur);  // RF-17
-        // Que suene también en el otro edificio.
-        enlace_ordenar_alarma(dur, "Manual");
+
+    // Flanco de bajada: se comenzó a presionar el botón físico
+    if (estado_anterior == 1 && estado == 0) {
+        t_presionado = millis();
+        accion_larga_disparada = false;
     }
+    // Mientras permanece presionado:
+    else if (estado == 0) {
+        uint32_t tiempo_mantenido = millis() - t_presionado;
+        // Si se mantiene presionado por 5 segundos (5000 ms), conmuta Modo UPS
+        if (!accion_larga_disparada && tiempo_mantenido >= 5000) {
+            accion_larga_disparada = true;
+            bool nuevo_ups = !timbre_modo_ups();
+            timbre_fijar_modo_ups(nuevo_ups);
+            ESP_LOGW(TAG, "¡Botón presionado por 5 s! Modo UPS: %s", nuevo_ups ? "ACTIVADO" : "DESACTIVADO");
+            pantalla_notificar_cambio("MODO UPS", nuevo_ups ? "ACTIVADO" : "DESACTIVADO");
+        }
+    }
+    // Flanco de subida: se soltó el botón
+    else if (estado_anterior == 0 && estado == 1) {
+        uint32_t tiempo_mantenido = millis() - t_presionado;
+        // Si no fue pulsación larga de 5 s y superó el antirrebote (mínimo 50 ms):
+        if (!accion_larga_disparada && tiempo_mantenido >= 50) {
+            uint8_t dur = s_duracion_manual_seg;
+            ESP_LOGI(TAG, "Botón físico liberado tras %lu ms -> activando timbre (%u s)",
+                     (unsigned long)tiempo_mantenido, dur);
+            timbre_activar(dur, "Manual");
+            red_encolar_activacion("manual_fisico", NULL, dur);  // RF-17
+            // Que suene también en el otro edificio vía ESP-NOW
+            enlace_ordenar_alarma(dur, "Manual");
+        }
+    }
+
     estado_anterior = estado;
 }
 #endif

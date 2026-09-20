@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:swiftyring/core/theme/app_theme.dart';
 import 'package:swiftyring/modules/timbre_escolar/domain/modelos.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/widgets/grafica_sismograma.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/widgets/timbre_ui.dart';
 import 'package:swiftyring/modules/timbre_escolar/providers.dart';
 import 'package:swiftyring/modules/timbre_escolar/timbre_escolar_routes.dart';
@@ -272,6 +273,8 @@ class _ListaSismos extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sismos = ref.watch(sismosProvider);
+    final configAsync = ref.watch(configuracionProvider);
+    final umbralG = configAsync.value?.umbralSismicoG ?? 0.15;
 
     return switch (sismos) {
       AsyncData(:final value) when value.isEmpty => const _MensajeLista(
@@ -291,7 +294,10 @@ class _ListaSismos extends ConsumerWidget {
                   '${sismo.timbreActivado ? ' · Activó el timbre' : ''}',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => DetalleEventoPage.sismo(sismo: sismo),
+                  builder: (_) => DetalleEventoPage.sismo(
+                    sismo: sismo,
+                    umbralG: umbralG,
+                  ),
                 ),
               ),
             ),
@@ -356,6 +362,7 @@ class DetalleEventoPage extends StatelessWidget {
   final Color colorIcono;
   final Color fondoIcono;
   final List<({IconData icono, String etiqueta, String valor})> datos;
+  final Widget? contenidoExtra;
 
   const DetalleEventoPage({
     super.key,
@@ -365,6 +372,7 @@ class DetalleEventoPage extends StatelessWidget {
     required this.colorIcono,
     required this.fondoIcono,
     required this.datos,
+    this.contenidoExtra,
   });
 
   factory DetalleEventoPage.activacion({required Activacion activacion}) {
@@ -428,29 +436,36 @@ class DetalleEventoPage extends StatelessWidget {
     );
   }
 
-  factory DetalleEventoPage.sismo({required Sismo sismo}) {
+  factory DetalleEventoPage.sismo({
+    required Sismo sismo,
+    double umbralG = 0.15,
+  }) {
     return DetalleEventoPage(
       titulo: '${sismo.intensidadG.toStringAsFixed(2)} g',
       subtitulo: 'Evento sísmico detectado',
       icono: Icons.warning_amber_rounded,
       colorIcono: const Color(0xFFC0392B),
       fondoIcono: const Color(0xFFFFD3D6),
+      contenidoExtra: GraficaSismograma(
+        sismo: sismo,
+        umbralG: umbralG,
+      ),
       datos: [
         (
           icono: Icons.speed,
-          etiqueta: 'Aceleración pico',
+          etiqueta: 'Aceleración pico (PGA)',
           valor: '${sismo.intensidadG.toStringAsFixed(3)} g',
         ),
         (
           icono: Icons.timer_outlined,
-          etiqueta: 'Duración de la vibración',
+          etiqueta: 'Duración de la sacudida',
           valor: '${sismo.duracionMs} ms (${(sismo.duracionMs / 1000).toStringAsFixed(2)} s)',
         ),
         (
           icono: Icons.notifications_active_outlined,
           etiqueta: 'Alarma de evacuación',
           valor: sismo.timbreActivado
-              ? 'Sonó automáticamente'
+              ? 'Sonó automáticamente (30 s)'
               : 'No activó el timbre (bajo umbral)',
         ),
         (
@@ -563,6 +578,10 @@ class DetalleEventoPage extends StatelessWidget {
                   ],
                 ),
               ),
+              if (contenidoExtra != null) ...[
+                const SizedBox(height: 20),
+                contenidoExtra!,
+              ],
               const SizedBox(height: 20),
               Text(
                 'INFORMACIÓN REGISTRADA',

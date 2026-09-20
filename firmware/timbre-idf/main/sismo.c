@@ -288,20 +288,28 @@ static void procesar_muestra(float ax_raw, float ay_raw, float az_raw) {
                 s_sismo_pico_max_g = dynamic_magnitude;
             }
 
-            if (s_current_ratio < THRESHOLD_DETRIGGER) {
+            // Criterio híbrido de fin de sismo:
+            // 1. Ratio STA/LTA < THRESHOLD_DETRIGGER (1.5)
+            // 2. Magnitud dinámica física por debajo del piso de vibración
+            // 3. Persistencia de 1.5 segundos (150 muestras a 100 Hz) continuos de calma
+            int muestras_calma = (min_sustained < 150) ? 150 : min_sustained;
+            bool calma_actual = (s_current_ratio < THRESHOLD_DETRIGGER) &&
+                                (dynamic_magnitude < fmaxf(MIN_PGA_PISO_G * 1.2f, min_pga * 0.45f));
+
+            if (calma_actual) {
                 s_state_counter--;
                 if (s_state_counter <= 0) {
                     s_system_state = STATE_QUIET;
                     s_state_counter = 0;
                     s_cumulative_velocity = 0.0f;
                     s_sismo_fin_ms = millis();
-                    ESP_LOGI(TAG, "Sismo concluido (cesó la sacudida). Reanudando rastreo ambiental basal LTA.");
+                    ESP_LOGI(TAG, "Sismo concluido (cesó la sacudida por calma sostenida). Reanudando LTA.");
                     if (s_grabacion_activa) {
                         finalizar_registro_sismografo();
                     }
                 }
             } else {
-                s_state_counter = min_sustained;
+                s_state_counter = muestras_calma;
             }
             break;
     }
