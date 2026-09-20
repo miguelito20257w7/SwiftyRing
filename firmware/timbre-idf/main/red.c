@@ -114,7 +114,20 @@ void red_iniciar(void) {
 
 bool red_en_linea(void) { return s_en_linea; }
 
-void red_pedir_sincronizacion(void) { s_sync_pedido = true; }
+static char s_sync_motivo[16] = {0};
+
+void red_pedir_sincronizacion_motivo(const char *motivo) {
+    if (motivo != NULL) {
+        snprintf(s_sync_motivo, sizeof(s_sync_motivo), "%s", motivo);
+    } else {
+        s_sync_motivo[0] = '\0';
+    }
+    s_sync_pedido = true;
+}
+
+void red_pedir_sincronizacion(void) {
+    red_pedir_sincronizacion_motivo("general");
+}
 
 // ============================================================
 // 2. HTTP
@@ -212,10 +225,18 @@ static void sincronizar_horario(void) {
     int codigo = http_get("/dispositivo/horario", cuerpo, TAM_RESPUESTA_HORARIO);
     if (codigo == 200) {
         horario_aplicar_json(cuerpo, true);
-        pantalla_notificar_cambio("HORARIOS", "ACTUALIZADO");
+        if (strcmp(s_sync_motivo, "especial") == 0) {
+            pantalla_notificar_cambio("HORARIO ESPECIAL", "ACTUALIZADO");
+        } else if (strcmp(s_sync_motivo, "horario") == 0) {
+            pantalla_notificar_cambio("HORARIOS", "ACTUALIZADO");
+        } else if (strcmp(s_sync_motivo, "general") == 0) {
+            pantalla_notificar_cambio("HORARIOS", "ACTUALIZADO");
+        }
+        // "inicio" o sincronización periódica de fondo no emiten popup molesto
     } else {
         ESP_LOGW(TAG, "sincronización falló (%d); sigo con el horario de la flash", codigo);
     }
+    s_sync_motivo[0] = '\0';
     free(cuerpo);
 }
 
@@ -269,12 +290,18 @@ static void consultar_comandos(void) {
         timbre_pedir_desde_app((uint8_t)segundos);
     }
 
+    int cambios_cfg = 0;
+    char cfg_tit[24] = {0};
+    char cfg_det[32] = {0};
+
     const cJSON *ups = cJSON_GetObjectItemCaseSensitive(doc, "modoUps");
     if (cJSON_IsBool(ups)) {
         bool nuevo_ups = cJSON_IsTrue(ups);
         if (nuevo_ups != timbre_modo_ups()) {
             timbre_fijar_modo_ups(nuevo_ups);
-            pantalla_notificar_cambio("MODO UPS", nuevo_ups ? "ACTIVADO" : "DESACTIVADO");
+            cambios_cfg++;
+            snprintf(cfg_tit, sizeof(cfg_tit), "MODO UPS");
+            snprintf(cfg_det, sizeof(cfg_det), "%s", nuevo_ups ? "ACTIVADO" : "DESACTIVADO");
             ESP_LOGI(TAG, "modo UPS actualizado (polling): %s", nuevo_ups ? "ON" : "OFF");
         }
     }
@@ -284,16 +311,22 @@ static void consultar_comandos(void) {
         uint8_t nuevo_dur = (uint8_t)dur_man->valuedouble;
         if (nuevo_dur != timbre_duracion_manual()) {
             timbre_fijar_duracion_manual(nuevo_dur);
-            char det[32];
-            snprintf(det, sizeof(det), "%d seg", nuevo_dur);
-            pantalla_notificar_cambio("DURACION TIMBRE", det);
+            cambios_cfg++;
+            snprintf(cfg_tit, sizeof(cfg_tit), "DURACION TIMBRE");
+            snprintf(cfg_det, sizeof(cfg_det), "%d seg", nuevo_dur);
             ESP_LOGI(TAG, "duracion manual actualizada (polling): %d seg", nuevo_dur);
         }
     }
 
+    if (cambios_cfg > 1) {
+        pantalla_notificar_cambio("CONFIGURACION", "ACTUALIZADA");
+    } else if (cambios_cfg == 1) {
+        pantalla_notificar_cambio(cfg_tit, cfg_det);
+    }
+
     if (cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(doc, "sincronizar"))) {
         pantalla_notificar_cambio("HORARIOS", "ACTUALIZANDO...");
-        red_pedir_sincronizacion();
+        red_pedir_sincronizacion_motivo("horario");
     }
 
     cJSON_Delete(doc);

@@ -60,21 +60,30 @@ actor EstadoModulo {
     }
 
     func notificarConfiguracion(
-        modoUps: Bool,
-        duracionManualSeg: Int,
+        modoUps: Bool? = nil,
+        duracionManualSeg: Int? = nil,
         umbralSismicoG: Double? = nil,
         sismoDuracionMinMs: Int? = nil
     ) {
         if let ws = conexionWS, !ws.isClosed {
-            var json = "{\"tipo\":\"config\",\"modoUps\":\(modoUps),\"duracionManualSeg\":\(duracionManualSeg)"
-            if let umbral = umbralSismicoG {
-                json += ",\"umbralSismicoG\":\(umbral)"
+            var partes: [String] = ["\"tipo\":\"config\""]
+            if let ups = modoUps {
+                partes.append("\"modoUps\":\(ups)")
             }
-            if let dur = sismoDuracionMinMs {
-                json += ",\"sismoDuracionMinMs\":\(dur)"
+            if let dur = duracionManualSeg {
+                partes.append("\"duracionManualSeg\":\(dur)")
             }
-            json += "}"
-            ws.send(json)
+            if let umb = umbralSismicoG {
+                partes.append("\"umbralSismicoG\":\(umb)")
+            }
+            if let smin = sismoDuracionMinMs {
+                partes.append("\"sismoDuracionMinMs\":\(smin)")
+            }
+            // Solo enviar si hay al menos un campo modificado
+            if partes.count > 1 {
+                let json = "{" + partes.joined(separator: ",") + "}"
+                ws.send(json)
+            }
         }
     }
 

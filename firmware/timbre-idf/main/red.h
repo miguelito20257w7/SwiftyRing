@@ -37,3 +37,4 @@ void red_encolar_sismo(float intensidad_g, uint32_t duracion_ms, bool confirmado
 
 // El WebSocket avisó que hay horario nuevo: sincronizar en el acto.
 void red_pedir_sincronizacion(void);
+void red_pedir_sincronizacion_motivo(const char *motivo);

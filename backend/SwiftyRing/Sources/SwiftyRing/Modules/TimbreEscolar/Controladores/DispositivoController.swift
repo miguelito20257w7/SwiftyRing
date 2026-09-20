@@ -284,8 +284,8 @@ struct DispositivoController: RouteCollection {
         await EstadoModulo.compartido.registrarConexion(ws)
 
         // El módulo acaba de conectar: que sincronice el horario por si
-        // cambió mientras estaba desconectado.
-        await EstadoModulo.compartido.notificarSincronizacion()
+        // cambió mientras estaba desconectado (sincronización silenciosa).
+        await EstadoModulo.compartido.notificarSincronizacion(motivo: "inicio")
 
         ws.onClose.whenComplete { _ in
             Task {

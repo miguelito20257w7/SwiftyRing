@@ -224,33 +224,61 @@ void canal_atender(void) {
             const cJSON *umb = cJSON_GetObjectItemCaseSensitive(doc, "umbralSismicoG");
             const cJSON *smin = cJSON_GetObjectItemCaseSensitive(doc, "sismoDuracionMinMs");
 
+            int cambios = 0;
+            char titulo[24] = {0};
+            char detalle[32] = {0};
+
             if (cJSON_IsBool(ups)) {
                 bool modo = cJSON_IsTrue(ups);
-                timbre_fijar_modo_ups(modo);
-                pantalla_notificar_cambio("MODO UPS", modo ? "ACTIVADO" : "DESACTIVADO");
-                ESP_LOGI(TAG, "modo UPS actualizado a: %s", modo ? "ON" : "OFF");
+                if (modo != timbre_modo_ups()) {
+                    timbre_fijar_modo_ups(modo);
+                    cambios++;
+                    snprintf(titulo, sizeof(titulo), "MODO UPS");
+                    snprintf(detalle, sizeof(detalle), "%s", modo ? "ACTIVADO" : "DESACTIVADO");
+                    ESP_LOGI(TAG, "modo UPS actualizado a: %s", modo ? "ON" : "OFF");
+                }
             }
             if (cJSON_IsNumber(dur)) {
                 uint8_t d = (uint8_t)dur->valuedouble;
-                timbre_fijar_duracion_manual(d);
-                char det[32];
-                snprintf(det, sizeof(det), "%d seg", d);
-                pantalla_notificar_cambio("DURACION TIMBRE", det);
-                ESP_LOGI(TAG, "duracion manual actualizada a: %d seg", d);
+                if (d != timbre_duracion_manual()) {
+                    timbre_fijar_duracion_manual(d);
+                    cambios++;
+                    snprintf(titulo, sizeof(titulo), "DURACION TIMBRE");
+                    snprintf(detalle, sizeof(detalle), "%d seg", d);
+                    ESP_LOGI(TAG, "duracion manual actualizada a: %d seg", d);
+                }
             }
-            if (cJSON_IsNumber(umb) && cJSON_IsNumber(smin)) {
-                horario_fijar_sismo((float)umb->valuedouble, (int)smin->valuedouble);
+            if (cJSON_IsNumber(umb) || cJSON_IsNumber(smin)) {
+                float nuevo_umb = cJSON_IsNumber(umb) ? (float)umb->valuedouble : horario_umbral_sismico();
+                int nuevo_smin = cJSON_IsNumber(smin) ? (int)smin->valuedouble : horario_sismo_duracion_min_ms();
+                if (nuevo_umb != horario_umbral_sismico() || nuevo_smin != horario_sismo_duracion_min_ms()) {
+                    horario_fijar_sismo(nuevo_umb, nuevo_smin);
+                    cambios++;
+                    snprintf(titulo, sizeof(titulo), "SENSOR SISMICO");
+                    snprintf(detalle, sizeof(detalle), "%.2f G / %d ms", nuevo_umb, nuevo_smin);
+                    ESP_LOGI(TAG, "calibracion sismica actualizada a: %.2f G, %d ms", nuevo_umb, nuevo_smin);
+                }
+            }
+
+            if (cambios > 1) {
+                pantalla_notificar_cambio("CONFIGURACION", "ACTUALIZADA");
+            } else if (cambios == 1) {
+                pantalla_notificar_cambio(titulo, detalle);
             }
         } else if (strcmp(tipo, "sincronizar") == 0) {
             const cJSON *motivo_json = cJSON_GetObjectItemCaseSensitive(doc, "motivo");
             const char *motivo = cJSON_GetStringValue(motivo_json);
             if (motivo != NULL && strcmp(motivo, "especial") == 0) {
                 pantalla_notificar_cambio("HORARIO ESPECIAL", "ACTUALIZANDO...");
+                red_pedir_sincronizacion_motivo("especial");
+            } else if (motivo != NULL && strcmp(motivo, "inicio") == 0) {
+                // Sincronización silenciosa en reconexión / inicio: no genera popup molesto
+                red_pedir_sincronizacion_motivo("inicio");
             } else {
                 pantalla_notificar_cambio("HORARIOS", "ACTUALIZANDO...");
+                red_pedir_sincronizacion_motivo(motivo ? motivo : "horario");
             }
             ESP_LOGI(TAG, "sincronización solicitada por el servidor (motivo: %s)", motivo ? motivo : "general");
-            red_pedir_sincronizacion();
         } else {
             ESP_LOGD(TAG, "tipo desconocido: %s", tipo);
         }

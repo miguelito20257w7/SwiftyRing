@@ -102,25 +102,40 @@ struct ConfiguracionController: RouteCollection {
         }
 
         let config = try await ConfiguracionSistema.actual(on: req.db)
-        config.nombreColegio = datos.nombreColegio?.vacioComoNil()
-        config.umbralSismicoG = datos.umbralSismicoG
-        config.sismoDuracionMinMs = datos.sismoDuracionMinMs
+
+        let cambioUmbral = (datos.umbralSismicoG != config.umbralSismicoG)
+        let cambioSismoDur = (datos.sismoDuracionMinMs != config.sismoDuracionMinMs)
+
+        var cambioDuracion = false
         if let duracion = datos.duracionTimbreManualSeg {
             guard (1...60).contains(duracion) else {
                 throw Abort(.badRequest, reason: "La duración del timbre manual debe estar entre 1 y 60 segundos")
             }
-            config.duracionTimbreManualSeg = duracion
+            if duracion != config.duracionTimbreManualSeg {
+                cambioDuracion = true
+                config.duracionTimbreManualSeg = duracion
+            }
         }
+
+        var cambioUps = false
         if let modoUps = datos.modoUps {
-            config.modoUps = modoUps
+            if modoUps != config.modoUps {
+                cambioUps = true
+                config.modoUps = modoUps
+            }
         }
+
+        config.nombreColegio = datos.nombreColegio?.vacioComoNil()
+        config.umbralSismicoG = datos.umbralSismicoG
+        config.sismoDuracionMinMs = datos.sismoDuracionMinMs
+
         try await config.save(on: req.db)
 
         await EstadoModulo.compartido.notificarConfiguracion(
-            modoUps: config.modoUps,
-            duracionManualSeg: config.duracionTimbreManualSeg,
-            umbralSismicoG: config.umbralSismicoG,
-            sismoDuracionMinMs: config.sismoDuracionMinMs
+            modoUps: cambioUps ? config.modoUps : nil,
+            duracionManualSeg: cambioDuracion ? config.duracionTimbreManualSeg : nil,
+            umbralSismicoG: cambioUmbral ? config.umbralSismicoG : nil,
+            sismoDuracionMinMs: cambioSismoDur ? config.sismoDuracionMinMs : nil
         )
         return ConfiguracionDTO(
             config,
