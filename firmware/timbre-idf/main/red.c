@@ -34,7 +34,7 @@ static const char *TAG = "red";
 #define RUTA_COLA RUTA_ALMACEN "/reportes.jsonl"
 #define RUTA_ENVIANDO RUTA_ALMACEN "/enviando.jsonl"
 
-#define INTERVALO_COMANDOS_MS 10000             // Respaldo de WS: consulta de comandos (10 s)
+#define INTERVALO_COMANDOS_MS 2000              // Respaldo de WS: consulta de comandos cada 2 s
 #define INTERVALO_SYNC_MS (30 * 60 * 1000)
 #define INTERVALO_FLUSH_MS 15000
 #define INTERVALO_WIFI_MS 10000
@@ -64,12 +64,14 @@ static void manejar_evento(void *arg, esp_event_base_t base, int32_t id, void *d
         wifi_event_sta_disconnected_t *ev = (wifi_event_sta_disconnected_t *)datos;
         s_en_linea = false;
         s_conectando = false;
+        canal_desconectar();
         ESP_LOGW(TAG, "sin conexión (motivo: %d)", ev ? ev->reason : -1);
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *evento = (ip_event_got_ip_t *)datos;
         ESP_LOGI(TAG, "conectado, IP " IPSTR, IP2STR(&evento->ip_info.ip));
         s_en_linea = true;
         s_conectando = false;
+        canal_conectar();
     }
 }
 
@@ -267,6 +269,34 @@ static void consultar_comandos(void) {
         int segundos = cJSON_IsNumber(duracion) ? (int)duracion->valuedouble : 5;
         timbre_pedir_desde_app((uint8_t)segundos);
     }
+
+    const cJSON *ups = cJSON_GetObjectItemCaseSensitive(doc, "modoUps");
+    if (cJSON_IsBool(ups)) {
+        bool nuevo_ups = cJSON_IsTrue(ups);
+        if (nuevo_ups != timbre_modo_ups()) {
+            timbre_fijar_modo_ups(nuevo_ups);
+            pantalla_notificar_cambio("MODO UPS", nuevo_ups ? "ACTIVADO" : "DESACTIVADO");
+            ESP_LOGI(TAG, "modo UPS actualizado (polling): %s", nuevo_ups ? "ON" : "OFF");
+        }
+    }
+
+    const cJSON *dur_man = cJSON_GetObjectItemCaseSensitive(doc, "duracionTimbreManualSeg");
+    if (cJSON_IsNumber(dur_man)) {
+        uint8_t nuevo_dur = (uint8_t)dur_man->valuedouble;
+        if (nuevo_dur != timbre_duracion_manual()) {
+            timbre_fijar_duracion_manual(nuevo_dur);
+            char det[32];
+            snprintf(det, sizeof(det), "%d seg", nuevo_dur);
+            pantalla_notificar_cambio("DURACION TIMBRE", det);
+            ESP_LOGI(TAG, "duracion manual actualizada (polling): %d seg", nuevo_dur);
+        }
+    }
+
+    if (cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(doc, "sincronizar"))) {
+        pantalla_notificar_cambio("HORARIOS", "ACTUALIZANDO...");
+        red_pedir_sincronizacion();
+    }
+
     cJSON_Delete(doc);
 }
 

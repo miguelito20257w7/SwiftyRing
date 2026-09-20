@@ -14,8 +14,14 @@
 
 #include <stdbool.h>
 
-// Abre el WebSocket al servidor. Se llama una vez, después de red_iniciar().
+// Prepara la cola y recursos del canal.
 void canal_iniciar(void);
+
+// Conecta o reconecta el WebSocket (se llama cuando el WiFi ya tiene IP).
+void canal_conectar(void);
+
+// Desconecta el WebSocket (se llama cuando se pierde la conexión WiFi).
+void canal_desconectar(void);
 
 // Se llama en cada vuelta del bucle de control: procesa los mensajes que
 // llegaron por el WebSocket y los despacha (timbrar, sincronizar...).

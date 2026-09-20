@@ -19,6 +19,7 @@ actor EstadoModulo {
     static let compartido = EstadoModulo()
     private var ultimoContacto: Date?
     private var ordenPendiente: Int?
+    private var ordenSincronizar: Bool = false
     private var conexionWS: WebSocket?
 
     func registrarContacto() {
@@ -43,6 +44,7 @@ actor EstadoModulo {
     }
 
     func notificarSincronizacion(motivo: String? = nil) {
+        ordenSincronizar = true
         if let ws = conexionWS, !ws.isClosed {
             if let motivo = motivo {
                 ws.send("{\"tipo\":\"sincronizar\",\"motivo\":\"\(motivo)\"}")
@@ -50,6 +52,11 @@ actor EstadoModulo {
                 ws.send("{\"tipo\":\"sincronizar\"}")
             }
         }
+    }
+
+    func retirarOrdenSincronizacion() -> Bool {
+        defer { ordenSincronizar = false }
+        return ordenSincronizar
     }
 
     func notificarConfiguracion(

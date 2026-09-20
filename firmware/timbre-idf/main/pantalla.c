@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "canal.h"
 #include "comun.h"
 #include "config.h"
 #include "enlace.h"
@@ -147,7 +148,13 @@ void pantalla_dibujar(void) {
     sh1106_texto_grande(2, 2, buffer_hora);
 
     // Insignia de conectividad arriba a la derecha
-    sh1106_texto(100, 6, hay_conexion() ? "WiFi" : "OFF");
+    const char *badge = "OFF";
+    if (canal_conectado()) {
+        badge = "WS";
+    } else if (hay_conexion()) {
+        badge = "WiFi";
+    }
+    sh1106_texto(96, 6, badge);
 
     // Línea separadora superior
     sh1106_linea(0, 19, 127, 19);

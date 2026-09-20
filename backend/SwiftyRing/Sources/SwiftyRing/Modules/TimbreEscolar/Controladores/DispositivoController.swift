@@ -71,6 +71,9 @@ struct ComandosResponse: Content {
     /// ¿Hay orden de timbre manual pendiente? (RF-14, RNF-04)
     let timbrar: Bool
     let duracionSeg: Int?
+    let sincronizar: Bool
+    let modoUps: Bool
+    let duracionTimbreManualSeg: Int
 }
 
 struct ReporteActivacionRequest: Content {
@@ -185,7 +188,15 @@ struct DispositivoController: RouteCollection {
     func comandos(req: Request) async throws -> ComandosResponse {
         await EstadoModulo.compartido.registrarContacto()
         let duracion = await EstadoModulo.compartido.retirarOrden()
-        return ComandosResponse(timbrar: duracion != nil, duracionSeg: duracion)
+        let sincronizar = await EstadoModulo.compartido.retirarOrdenSincronizacion()
+        let config = try await ConfiguracionSistema.actual(on: req.db)
+        return ComandosResponse(
+            timbrar: duracion != nil,
+            duracionSeg: duracion,
+            sincronizar: sincronizar,
+            modoUps: config.modoUps,
+            duracionTimbreManualSeg: config.duracionTimbreManualSeg
+        )
     }
 
     /// RF-17: bitácora de lo que sonó en el colegio, venga del horario

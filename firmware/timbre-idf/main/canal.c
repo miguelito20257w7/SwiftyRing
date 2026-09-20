@@ -107,7 +107,7 @@ static void manejar_evento(void *arg, esp_event_base_t base, int32_t id, void *d
         break;
 
     case WEBSOCKET_EVENT_ERROR:
-        ESP_LOGW(TAG, "error en el WebSocket");
+        ESP_LOGW(TAG, "error en el WebSocket (tipo=%d)", ev ? ev->error_handle.error_type : -1);
         s_conectado = false;
         break;
 
@@ -117,15 +117,27 @@ static void manejar_evento(void *arg, esp_event_base_t base, int32_t id, void *d
 }
 
 // ============================================================
-// 3. Arranque
+// 3. Arranque y Ciclo de Vida
 // ============================================================
 
 void canal_iniciar(void) {
-    s_cola = xQueueCreate(4, sizeof(mensaje_ws_t));
     if (s_cola == NULL) {
-        ESP_LOGE(TAG, "sin memoria para la cola del WebSocket");
+        s_cola = xQueueCreate(4, sizeof(mensaje_ws_t));
+        if (s_cola == NULL) {
+            ESP_LOGE(TAG, "sin memoria para la cola del WebSocket");
+        }
+    }
+}
+
+void canal_conectar(void) {
+    if (s_cliente != NULL) {
+        if (!esp_websocket_client_is_connected(s_cliente)) {
+            esp_websocket_client_start(s_cliente);
+        }
         return;
     }
+
+    canal_iniciar();
 
     char url[192];
     construir_url(url, sizeof(url));
@@ -137,7 +149,9 @@ void canal_iniciar(void) {
     esp_websocket_client_config_t cfg = {
         .uri = url,
         .headers = cabecera,
-        .reconnect_timeout_ms = 5000,
+        .task_prio = 1,                 // Prioridad 1 (fondo, nunca bloquea el bucle de control a prioridad 3)
+        .task_stack = 8192,             // 8 KB holgados para TLS y verificación de certificados
+        .reconnect_timeout_ms = 10000,  // Reintento cada 10 s para no saturar CPU en caídas de red
         .network_timeout_ms = 10000,
         .crt_bundle_attach = esp_crt_bundle_attach,
         .pingpong_timeout_sec = 30,
@@ -158,6 +172,13 @@ void canal_iniciar(void) {
     }
 
     ESP_LOGI(TAG, "canal WebSocket abierto hacia %s", url);
+}
+
+void canal_desconectar(void) {
+    if (s_cliente != NULL) {
+        esp_websocket_client_stop(s_cliente);
+        s_conectado = false;
+    }
 }
 
 // ============================================================
@@ -234,6 +255,8 @@ bool canal_conectado(void) {
 
 // El esclavo no habla con el servidor: todo le llega del maestro por ESP-NOW.
 void canal_iniciar(void) { }
+void canal_conectar(void) { }
+void canal_desconectar(void) { }
 void canal_atender(void) { }
 bool canal_conectado(void) { return false; }
 

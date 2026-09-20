@@ -182,9 +182,13 @@ void app_main(void) {
                 s_ultimo_sec = t_chk.tm_sec;
                 debe_dibujar = true;
             }
+        } else {
+            if (ahora - t_pantalla >= 1000) {
+                debe_dibujar = true;
+            }
         }
 
-        if (timbre_activo() || sismo_estado() >= 1 || pantalla_tiene_aviso() || (ahora - t_pantalla >= 1000)) {
+        if (timbre_activo() || sismo_estado() >= 1 || pantalla_tiene_aviso()) {
             if (ahora - t_pantalla >= 200) {
                 debe_dibujar = true;
             }
