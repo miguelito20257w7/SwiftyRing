@@ -36,6 +36,7 @@ typedef struct {
 static esp_websocket_client_handle_t s_cliente = NULL;
 static QueueHandle_t s_cola = NULL;
 static volatile bool s_conectado = false;
+static volatile bool s_iniciado = false;
 
 // ============================================================
 // 1. Construir la URL del WebSocket
@@ -81,14 +82,18 @@ static void manejar_evento(void *arg, esp_event_base_t base, int32_t id, void *d
     esp_websocket_event_data_t *ev = (esp_websocket_event_data_t *)datos;
 
     switch (id) {
+    case WEBSOCKET_EVENT_BEFORE_CONNECT:
+        ESP_LOGI(TAG, "iniciando saludo WebSocket con el servidor...");
+        break;
+
     case WEBSOCKET_EVENT_CONNECTED:
         s_conectado = true;
-        ESP_LOGI(TAG, "conectado al servidor");
+        ESP_LOGI(TAG, "conectado al servidor (WebSocket activo)");
         break;
 
     case WEBSOCKET_EVENT_DISCONNECTED:
         s_conectado = false;
-        ESP_LOGW(TAG, "desconectado; reconectando...");
+        ESP_LOGW(TAG, "desconectado del servidor; reconectando...");
         break;
 
     case WEBSOCKET_EVENT_DATA:
@@ -107,7 +112,9 @@ static void manejar_evento(void *arg, esp_event_base_t base, int32_t id, void *d
         break;
 
     case WEBSOCKET_EVENT_ERROR:
-        ESP_LOGW(TAG, "error en el WebSocket (tipo=%d)", ev ? ev->error_handle.error_type : -1);
+        ESP_LOGW(TAG, "error en el WebSocket (tipo=%d, status=%d)",
+                 ev ? ev->error_handle.error_type : -1,
+                 ev ? ev->error_handle.esp_ws_handshake_status_code : -1);
         s_conectado = false;
         break;
 
@@ -131,8 +138,11 @@ void canal_iniciar(void) {
 
 void canal_conectar(void) {
     if (s_cliente != NULL) {
-        if (!esp_websocket_client_is_connected(s_cliente)) {
-            esp_websocket_client_start(s_cliente);
+        if (!s_iniciado) {
+            esp_err_t err = esp_websocket_client_start(s_cliente);
+            if (err == ESP_OK) {
+                s_iniciado = true;
+            }
         }
         return;
     }
@@ -170,13 +180,15 @@ void canal_conectar(void) {
         ESP_LOGE(TAG, "no se pudo abrir el WebSocket (%s)", esp_err_to_name(err));
         return;
     }
+    s_iniciado = true;
 
     ESP_LOGI(TAG, "canal WebSocket abierto hacia %s", url);
 }
 
 void canal_desconectar(void) {
-    if (s_cliente != NULL) {
+    if (s_cliente != NULL && s_iniciado) {
         esp_websocket_client_stop(s_cliente);
+        s_iniciado = false;
         s_conectado = false;
     }
 }

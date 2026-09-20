@@ -71,7 +71,6 @@ static void manejar_evento(void *arg, esp_event_base_t base, int32_t id, void *d
         ESP_LOGI(TAG, "conectado, IP " IPSTR, IP2STR(&evento->ip_info.ip));
         s_en_linea = true;
         s_conectando = false;
-        canal_conectar();
     }
 }
 
@@ -501,6 +500,8 @@ void red_tarea(void *argumento) {
                 esp_wifi_connect();
             }
         } else {
+            canal_conectar();
+
             if (!sincronizado_alguna_vez || s_sync_pedido || ahora - t_sync >= INTERVALO_SYNC_MS) {
                 t_sync = ahora;
                 s_sync_pedido = false;
