@@ -475,3 +475,8 @@ void horario_especial_nombre(char *destino, size_t tam) {
 float horario_umbral_sismico(void) { return s_umbral_sismico_g; }
 
 int horario_sismo_duracion_min_ms(void) { return s_sismo_duracion_min_ms; }
+
+void horario_fijar_sismo(float umbral_g, int duracion_min_ms) {
+    if (umbral_g > 0.05f) s_umbral_sismico_g = umbral_g;
+    if (duracion_min_ms > 0) s_sismo_duracion_min_ms = duracion_min_ms;
+}

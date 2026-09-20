@@ -116,7 +116,12 @@ struct ConfiguracionController: RouteCollection {
         }
         try await config.save(on: req.db)
 
-        await EstadoModulo.compartido.notificarSincronizacion()
+        await EstadoModulo.compartido.notificarConfiguracion(
+            modoUps: config.modoUps,
+            duracionManualSeg: config.duracionTimbreManualSeg,
+            umbralSismicoG: config.umbralSismicoG,
+            sismoDuracionMinMs: config.sismoDuracionMinMs
+        )
         return ConfiguracionDTO(
             config,
             moduloEnLinea: await EstadoModulo.compartido.enLinea()

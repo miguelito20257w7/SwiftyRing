@@ -93,7 +93,7 @@ struct HorariosEspecialesController: RouteCollection {
             try await crearTimbres(datos.timbres, en: horario.requireID(), on: db)
         }
 
-        await EstadoModulo.compartido.notificarSincronizacion()
+        await EstadoModulo.compartido.notificarSincronizacion(motivo: "especial")
         return try await recargar(horario.requireID(), on: req.db)
     }
 
@@ -123,7 +123,7 @@ struct HorariosEspecialesController: RouteCollection {
             try await crearTimbres(datos.timbres, en: horarioID, on: db)
         }
 
-        await EstadoModulo.compartido.notificarSincronizacion()
+        await EstadoModulo.compartido.notificarSincronizacion(motivo: "especial")
         return try await recargar(horario.requireID(), on: req.db)
     }
 
@@ -133,7 +133,7 @@ struct HorariosEspecialesController: RouteCollection {
             throw Abort(.notFound, reason: "El horario especial no existe")
         }
         try await horario.delete(on: req.db)
-        await EstadoModulo.compartido.notificarSincronizacion()
+        await EstadoModulo.compartido.notificarSincronizacion(motivo: "especial")
         return .noContent
     }
 

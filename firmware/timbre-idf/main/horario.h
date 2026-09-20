@@ -80,6 +80,7 @@ void horario_especial_nombre(char *destino, size_t tam);
 // Calibración del detector de sismos que baja del servidor (RF-19).
 float horario_umbral_sismico(void);
 int horario_sismo_duracion_min_ms(void);
+void horario_fijar_sismo(float umbral_g, int duracion_min_ms);
 
 // ---- Lo que usa el enlace entre los dos módulos ----
 

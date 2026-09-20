@@ -19,13 +19,15 @@
 #include "esp_websocket_client.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "horario.h"
+#include "pantalla.h"
 #include "red.h"
 #include "timbre.h"
 
 static const char *TAG = "canal";
 
-// Los mensajes del servidor son cortos: un JSON de menos de 128 bytes.
-#define TAM_MENSAJE 128
+// Los mensajes del servidor son JSON compactos.
+#define TAM_MENSAJE 256
 
 typedef struct {
     char texto[TAM_MENSAJE];
@@ -183,8 +185,38 @@ void canal_atender(void) {
             if (seg > 120) seg = 120;
             ESP_LOGI(TAG, "orden de timbrar recibida (%d s)", seg);
             timbre_pedir_desde_app((uint8_t)seg);
+        } else if (strcmp(tipo, "config") == 0) {
+            const cJSON *ups = cJSON_GetObjectItemCaseSensitive(doc, "modoUps");
+            const cJSON *dur = cJSON_GetObjectItemCaseSensitive(doc, "duracionManualSeg");
+            const cJSON *umb = cJSON_GetObjectItemCaseSensitive(doc, "umbralSismicoG");
+            const cJSON *smin = cJSON_GetObjectItemCaseSensitive(doc, "sismoDuracionMinMs");
+
+            if (cJSON_IsBool(ups)) {
+                bool modo = cJSON_IsTrue(ups);
+                timbre_fijar_modo_ups(modo);
+                pantalla_notificar_cambio("MODO UPS", modo ? "ACTIVADO" : "DESACTIVADO");
+                ESP_LOGI(TAG, "modo UPS actualizado a: %s", modo ? "ON" : "OFF");
+            }
+            if (cJSON_IsNumber(dur)) {
+                uint8_t d = (uint8_t)dur->valuedouble;
+                timbre_fijar_duracion_manual(d);
+                char det[32];
+                snprintf(det, sizeof(det), "%d seg", d);
+                pantalla_notificar_cambio("DURACION TIMBRE", det);
+                ESP_LOGI(TAG, "duracion manual actualizada a: %d seg", d);
+            }
+            if (cJSON_IsNumber(umb) && cJSON_IsNumber(smin)) {
+                horario_fijar_sismo((float)umb->valuedouble, (int)smin->valuedouble);
+            }
         } else if (strcmp(tipo, "sincronizar") == 0) {
-            ESP_LOGI(TAG, "sincronización solicitada por el servidor");
+            const cJSON *motivo_json = cJSON_GetObjectItemCaseSensitive(doc, "motivo");
+            const char *motivo = cJSON_GetStringValue(motivo_json);
+            if (motivo != NULL && strcmp(motivo, "especial") == 0) {
+                pantalla_notificar_cambio("HORARIO ESPECIAL", "ACTUALIZANDO...");
+            } else {
+                pantalla_notificar_cambio("HORARIOS", "ACTUALIZANDO...");
+            }
+            ESP_LOGI(TAG, "sincronización solicitada por el servidor (motivo: %s)", motivo ? motivo : "general");
             red_pedir_sincronizacion();
         } else {
             ESP_LOGD(TAG, "tipo desconocido: %s", tipo);

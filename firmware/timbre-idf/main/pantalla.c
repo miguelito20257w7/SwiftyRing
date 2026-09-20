@@ -33,6 +33,27 @@ static bool hay_conexion(void) {
 #endif
 }
 
+static char s_aviso_titulo[24] = "";
+static char s_aviso_detalle[32] = "";
+static uint32_t s_aviso_hasta = 0;
+static int s_ultimo_minuto_prox = -1;
+static timbre_programado_t s_proximo_cache;
+static bool s_hay_proximo_cache = false;
+static bool s_especial_vigente_cache = false;
+static char s_especial_nombre_cache[25] = "";
+
+void pantalla_notificar_cambio(const char *titulo, const char *detalle) {
+    strlcpy(s_aviso_titulo, titulo ? titulo : "", sizeof(s_aviso_titulo));
+    strlcpy(s_aviso_detalle, detalle ? detalle : "", sizeof(s_aviso_detalle));
+    s_aviso_hasta = millis() + 3000;
+    s_ultimo_minuto_prox = -1;
+    pantalla_dibujar();
+}
+
+bool pantalla_tiene_aviso(void) {
+    return millis() < s_aviso_hasta;
+}
+
 void pantalla_mensaje(const char *linea1, const char *linea2) {
     sh1106_limpiar();
     sh1106_texto_grande(2, 12, linea1);
@@ -42,6 +63,41 @@ void pantalla_mensaje(const char *linea1, const char *linea2) {
 
 void pantalla_dibujar(void) {
     if (!sh1106_presente()) return;
+
+    // ============================================================
+    // 0. AVISO VISUAL DE CAMBIO (Popup temporal de 3 segundos)
+    // ============================================================
+    if (millis() < s_aviso_hasta && !timbre_activo()) {
+        sh1106_limpiar();
+        // Borde exterior del popup
+        sh1106_linea(0, 0, 127, 0);
+        sh1106_linea(0, 63, 127, 63);
+        sh1106_linea(0, 0, 0, 63);
+        sh1106_linea(127, 0, 127, 63);
+        sh1106_linea(0, 16, 127, 16);
+
+        // Encabezado centrado
+        const char *hdr = "[ CAMBIO APLICADO ]";
+        int ancho_hdr = sh1106_ancho_texto(hdr);
+        int x_hdr = (128 - ancho_hdr) / 2;
+        if (x_hdr < 2) x_hdr = 2;
+        sh1106_texto(x_hdr, 4, hdr);
+
+        // Título en texto grande centrado
+        int ancho_tit = sh1106_ancho_texto(s_aviso_titulo) * 2;
+        int x_tit = (128 - ancho_tit) / 2;
+        if (x_tit < 4) x_tit = 4;
+        sh1106_texto_grande(x_tit, 22, s_aviso_titulo);
+
+        // Detalle en texto normal centrado
+        int ancho_det = sh1106_ancho_texto(s_aviso_detalle);
+        int x_det = (128 - ancho_det) / 2;
+        if (x_det < 4) x_det = 4;
+        sh1106_texto(x_det, 46, s_aviso_detalle);
+
+        sh1106_mostrar();
+        return;
+    }
 
     // ============================================================
     // 1. MODO ALERTA COMPLETA (Timbre sonando o Alarma Sísmica)
@@ -98,14 +154,22 @@ void pantalla_dibujar(void) {
     // ============================================================
     // 4. ZONA MEDIA: PRÓXIMO TIMBRE Y CUENTA REGRESIVA (Y = 23 a 44)
     // ============================================================
+    if (t.tm_min != s_ultimo_minuto_prox || s_ultimo_minuto_prox == -1) {
+        s_ultimo_minuto_prox = t.tm_min;
+        s_hay_proximo_cache = horario_proximo(&t, &s_proximo_cache);
+        s_especial_vigente_cache = horario_especial_vigente(&t);
+        if (s_especial_vigente_cache) {
+            horario_especial_nombre(s_especial_nombre_cache, sizeof(s_especial_nombre_cache));
+        }
+    }
+
     char linea[48];
-    timbre_programado_t proximo;
-    if (horario_proximo(&t, &proximo)) {
-        snprintf(linea, sizeof(linea), "Prox: %s %s", proximo.hora, proximo.etiqueta);
+    if (s_hay_proximo_cache) {
+        snprintf(linea, sizeof(linea), "Prox: %s %s", s_proximo_cache.hora, s_proximo_cache.etiqueta);
         sh1106_texto(2, 23, linea);
 
         int hh = 0, mm = 0;
-        sscanf(proximo.hora, "%d:%d", &hh, &mm);
+        sscanf(s_proximo_cache.hora, "%d:%d", &hh, &mm);
         int faltan = (hh * 3600 + mm * 60) - (t.tm_hour * 3600 + t.tm_min * 60 + t.tm_sec);
         if (faltan < 0) faltan = 0;
         snprintf(linea, sizeof(linea), "Faltan: %02d:%02d:%02d",
@@ -127,14 +191,12 @@ void pantalla_dibujar(void) {
     if (estado_sismo >= 1) {
         // Alerta prioritaria si hay vibración sísmica detectada
         snprintf(linea, sizeof(linea), "! SISMO: %.2fg !", sismo_dynamic_magnitude());
-    } else if (horario_especial_vigente(&t)) {
-        char nombre[25];
-        horario_especial_nombre(nombre, sizeof(nombre));
-        snprintf(linea, sizeof(linea), "Esp: %s", nombre);
+    } else if (s_especial_vigente_cache) {
+        snprintf(linea, sizeof(linea), "Esp: %s", s_especial_nombre_cache);
     } else if (!enlace_pareja_viva()) {
         snprintf(linea, sizeof(linea), "%s", ROL_ESCLAVO ? "M1: Sin enlace" : "M2: Sin enlace");
     } else {
-        // En reposo normal: muestra temperatura RTC + MPU + Estado de red
+        // En reposo normal: muestra temperatura RTC + MPU/UPS + Estado de red
         float temp = rtc_temperatura();
         char str_temp[10];
         if (temp > -50.0f) {
@@ -143,10 +205,16 @@ void pantalla_dibujar(void) {
             snprintf(str_temp, sizeof(str_temp), "RTC");
         }
 
-        snprintf(linea, sizeof(linea), "%s  MPU:%s  %s",
-                 str_temp,
-                 sismo_coprocesador_conectado() ? "OK" : "NO",
-                 red_en_linea() ? "NET:OK" : "OFF");
+        if (timbre_modo_ups()) {
+            snprintf(linea, sizeof(linea), "%s UPS:ON NET:%s",
+                     str_temp,
+                     red_en_linea() ? "OK" : "OFF");
+        } else {
+            snprintf(linea, sizeof(linea), "%s MPU:%s NET:%s",
+                     str_temp,
+                     sismo_coprocesador_conectado() ? "OK" : "NO",
+                     red_en_linea() ? "OK" : "OFF");
+        }
     }
     sh1106_texto(2, 52, linea);
 

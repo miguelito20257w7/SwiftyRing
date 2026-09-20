@@ -152,7 +152,7 @@ struct TimbresController: RouteCollection {
             }
         }
 
-        await EstadoModulo.compartido.notificarSincronizacion()
+        await EstadoModulo.compartido.notificarSincronizacion(motivo: "horario")
         return TimbreDTO(
             id: try timbre.requireID(),
             etiqueta: timbre.etiqueta,
@@ -188,7 +188,7 @@ struct TimbresController: RouteCollection {
             }
         }
 
-        await EstadoModulo.compartido.notificarSincronizacion()
+        await EstadoModulo.compartido.notificarSincronizacion(motivo: "horario")
         return TimbreDTO(
             id: try timbre.requireID(),
             etiqueta: timbre.etiqueta,
@@ -207,7 +207,7 @@ struct TimbresController: RouteCollection {
             throw Abort(.notFound, reason: "El timbre no existe")
         }
         try await timbre.delete(on: req.db)
-        await EstadoModulo.compartido.notificarSincronizacion()
+        await EstadoModulo.compartido.notificarSincronizacion(motivo: "horario")
         return .noContent
     }
 

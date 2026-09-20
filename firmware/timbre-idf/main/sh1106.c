@@ -90,9 +90,13 @@ bool sh1106_presente(void) { return s_presente; }
 void sh1106_mostrar(void) {
     if (!s_presente) return;
     for (int pagina = 0; pagina < SH1106_PAGINAS; pagina++) {
-        enviar_comando(0xB0 + pagina);                                 // página
-        enviar_comando(0x00 | (SH1106_DESFASE_COLUMNA & 0x0F));        // columna, mitad baja
-        enviar_comando(0x10 | (SH1106_DESFASE_COLUMNA >> 4));          // columna, mitad alta
+        uint8_t marco_cmd[4] = {
+            0x00,
+            (uint8_t)(0xB0 + pagina),
+            (uint8_t)(0x00 | (SH1106_DESFASE_COLUMNA & 0x0F)),
+            (uint8_t)(0x10 | (SH1106_DESFASE_COLUMNA >> 4)),
+        };
+        i2c_master_transmit(s_pantalla, marco_cmd, sizeof(marco_cmd), 50);
         enviar_pagina(s_buf[pagina]);
     }
 }

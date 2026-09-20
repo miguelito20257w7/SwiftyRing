@@ -15,5 +15,10 @@ void pantalla_iniciar(i2c_master_bus_handle_t bus);
 // Dos líneas sueltas, para los mensajes del arranque.
 void pantalla_mensaje(const char *linea1, const char *linea2);
 
-// La pantalla normal de operación. Se redibuja cuatro veces por segundo.
+// La pantalla normal de operación.
 void pantalla_dibujar(void);
+
+// Notifica un cambio recibido del servidor o app (ej. Modo UPS, duración, horario).
+// Muestra una tarjeta temporal emergente durante 3 segundos.
+void pantalla_notificar_cambio(const char *titulo, const char *detalle);
+bool pantalla_tiene_aviso(void);

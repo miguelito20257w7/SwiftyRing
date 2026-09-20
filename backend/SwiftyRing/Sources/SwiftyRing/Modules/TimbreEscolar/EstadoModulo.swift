@@ -42,9 +42,32 @@ actor EstadoModulo {
         return Date().timeIntervalSince(ultimoContacto) < margen
     }
 
-    func notificarSincronizacion() {
+    func notificarSincronizacion(motivo: String? = nil) {
         if let ws = conexionWS, !ws.isClosed {
-            ws.send("{\"tipo\":\"sincronizar\"}")
+            if let motivo = motivo {
+                ws.send("{\"tipo\":\"sincronizar\",\"motivo\":\"\(motivo)\"}")
+            } else {
+                ws.send("{\"tipo\":\"sincronizar\"}")
+            }
+        }
+    }
+
+    func notificarConfiguracion(
+        modoUps: Bool,
+        duracionManualSeg: Int,
+        umbralSismicoG: Double? = nil,
+        sismoDuracionMinMs: Int? = nil
+    ) {
+        if let ws = conexionWS, !ws.isClosed {
+            var json = "{\"tipo\":\"config\",\"modoUps\":\(modoUps),\"duracionManualSeg\":\(duracionManualSeg)"
+            if let umbral = umbralSismicoG {
+                json += ",\"umbralSismicoG\":\(umbral)"
+            }
+            if let dur = sismoDuracionMinMs {
+                json += ",\"sismoDuracionMinMs\":\(dur)"
+            }
+            json += "}"
+            ws.send(json)
         }
     }
 

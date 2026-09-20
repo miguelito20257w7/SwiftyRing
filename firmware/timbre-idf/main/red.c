@@ -25,6 +25,7 @@
 #include "horario.h"
 #include "timbre.h"
 #include "canal.h"
+#include "pantalla.h"
 
 static const char *TAG = "red";
 
@@ -210,6 +211,7 @@ static void sincronizar_horario(void) {
     int codigo = http_get("/dispositivo/horario", cuerpo, TAM_RESPUESTA_HORARIO);
     if (codigo == 200) {
         horario_aplicar_json(cuerpo, true);
+        pantalla_notificar_cambio("HORARIOS", "ACTUALIZADO");
     } else {
         ESP_LOGW(TAG, "sincronización falló (%d); sigo con el horario de la flash", codigo);
     }

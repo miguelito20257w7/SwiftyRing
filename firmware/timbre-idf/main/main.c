@@ -168,7 +168,29 @@ void app_main(void) {
         sismo_atender_uart();  // drena y procesa las tramas del ESP-01S sin latencia
         sismo_atender();       // evaluación de sacudida propia y confirmación remota
 
-        if (ahora - t_pantalla >= INTERVALO_PANTALLA_MS) {
+        // Refresco inteligente de la pantalla OLED:
+        // En reposo normal, la hora cambia una vez por segundo. Redibujamos justo al
+        // cambiar el segundo local para máxima fluidez y mínimo consumo de I2C/CPU.
+        // Si hay una alerta activa (timbre, sismo o aviso visual de cambio), refrescamos
+        // con mayor frecuencia (cada 200 ms).
+        static int s_ultimo_sec = -1;
+        bool debe_dibujar = false;
+        struct tm t_chk;
+
+        if (reloj_hora_local(&t_chk)) {
+            if (t_chk.tm_sec != s_ultimo_sec) {
+                s_ultimo_sec = t_chk.tm_sec;
+                debe_dibujar = true;
+            }
+        }
+
+        if (timbre_activo() || sismo_estado() >= 1 || pantalla_tiene_aviso() || (ahora - t_pantalla >= 1000)) {
+            if (ahora - t_pantalla >= 200) {
+                debe_dibujar = true;
+            }
+        }
+
+        if (debe_dibujar) {
             t_pantalla = ahora;
             pantalla_dibujar();
         }
