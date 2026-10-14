@@ -95,7 +95,7 @@ class ConfirmacionSalidaPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: () => context.go(RutasBanos.autorizar),
+                  onPressed: () => context.pushReplacement(RutasBanos.autorizar),
                   child: const Text('+ NUEVA SALIDA', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),

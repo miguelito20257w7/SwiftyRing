@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:swiftyring/modules/proyecto_banos/data/banos_config.dart';
 import 'package:swiftyring/modules/proyecto_banos/data/banos_fake_data.dart';
 import 'package:swiftyring/core/router/rutas.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
@@ -21,9 +22,17 @@ class _AutorizarSalidaPageState extends ConsumerState<AutorizarSalidaPage> {
 
   final _formKey = GlobalKey<FormState>();
   final _estudianteCtrl = TextEditingController();
-  final _gradoCtrl = TextEditingController(text: '11-B');
+  late final TextEditingController _gradoCtrl;
   final _notaCtrl = TextEditingController();
   MotivoSalida _motivo = MotivoSalida.bano;
+
+  @override
+  void initState() {
+    super.initState();
+    _gradoCtrl = TextEditingController(
+      text: ref.read(banosConfigProvider).gradoPorDefecto,
+    );
+  }
 
   @override
   void dispose() {
@@ -48,7 +57,7 @@ class _AutorizarSalidaPageState extends ConsumerState<AutorizarSalidaPage> {
     // (autorizarSalida la agrega al inicio), así que la tomamos de ahí para
     // llevarla a la pantalla de confirmación.
     final creada = ref.read(banosProvider).first;
-    context.go(RutasBanos.confirmacion, extra: creada);
+    context.pushReplacement(RutasBanos.confirmacion, extra: creada);
   }
 
   @override
@@ -166,7 +175,7 @@ class _AutorizarSalidaPageState extends ConsumerState<AutorizarSalidaPage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.canPop() ? context.pop() : context.go(RutasBanos.inicio),
                     child: const Text('CANCELAR', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),

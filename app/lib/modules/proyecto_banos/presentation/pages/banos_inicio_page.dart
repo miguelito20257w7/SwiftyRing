@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:swiftyring/core/auth/auth_provider.dart';
 import 'package:swiftyring/core/auth/domain/rol_usuario.dart';
 import 'package:swiftyring/core/router/rutas.dart';
+import 'package:swiftyring/modules/proyecto_banos/data/banos_config.dart';
 import 'package:swiftyring/modules/proyecto_banos/data/banos_fake_data.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 import 'package:swiftyring/modules/proyecto_banos/proyecto_banos_routes.dart';
@@ -68,6 +69,13 @@ class BanosInicioPage extends ConsumerWidget {
           onPressed: () => context.go(Rutas.lanzador),
         ),
         title: const Text('Control Baños SS'),
+        actions: [
+          IconButton(
+            tooltip: 'Configuración',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push(RutasBanos.configuracion),
+          ),
+        ],
       ),
       bottomNavigationBar: const BanosBottomNav(indiceActual: 0),
       body: ListView(
@@ -211,6 +219,8 @@ class _FilaEnCurso extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final limite = ref.watch(banosConfigProvider).minutosLimite;
+    final excedido = salida.duracionMinutos >= limite;
     final iniciales = salida.estudianteNombre
         .split(' ')
         .take(2)
@@ -229,7 +239,14 @@ class _FilaEnCurso extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(salida.estudianteNombre, style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text(_haceMinutos(salida.horaSalida), style: const TextStyle(color: Colors.red, fontSize: 12)),
+                Text(
+                  _haceMinutos(salida.horaSalida),
+                  style: TextStyle(
+                    color: excedido ? Colors.red : const Color(0xFF6B7189),
+                    fontSize: 12,
+                    fontWeight: excedido ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
               ],
             ),
           ),

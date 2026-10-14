@@ -122,7 +122,7 @@ class _HistorialPageState extends ConsumerState<HistorialPage> {
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtradas.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, i) => _FilaHistorial(salida: filtradas[i]),
                   ),
           ),
