@@ -5,16 +5,22 @@ import 'package:swiftyring/core/auth/auth_provider.dart';
 import 'package:swiftyring/core/red/servidor.dart';
 import 'package:swiftyring/core/router/rutas.dart';
 import 'package:swiftyring/modules/proyecto_banos/data/banos_config.dart';
+import 'package:swiftyring/modules/proyecto_banos/data/banos_fake_data.dart';
 import 'package:swiftyring/modules/proyecto_banos/proyecto_banos_routes.dart';
 
-/// Configuración del módulo: cuenta, servidor y parámetros de salidas.
+const _navy = Color(0xFF1E2545);
+const _verde = Color(0xFF2D8C3E);
+const _gris = Color(0xFF6B7189);
+
+/// Configuración del módulo: cuenta, servidor, reglas de salidas y
+/// preferencias.
 ///
 /// Sigue la idea de "Ajustes" del timbre (tarjetas por secciones), pero solo
 /// con lo que le sirve a Control Baños SS:
 /// - Cuenta: quién está dentro y con qué rol (viene de `core/auth`).
-/// - Servidor: atajo a los ajustes de red, que viven en `core/` porque la
-///   dirección del servidor es de toda la aplicación.
-/// - Parámetros: grado por defecto (cualquiera) y minutos límite (solo admin).
+/// - Servidor: atajo a los ajustes de red, que viven en `core/`.
+/// - Reglas de salidas: solo las edita el administrador (la coordinadora).
+/// - Preferencias: las puede cambiar cualquier docente.
 class ConfiguracionPage extends ConsumerStatefulWidget {
   const ConfiguracionPage({super.key});
 
@@ -23,10 +29,6 @@ class ConfiguracionPage extends ConsumerStatefulWidget {
 }
 
 class _ConfiguracionPageState extends ConsumerState<ConfiguracionPage> {
-  static const _navy = Color(0xFF1E2545);
-  static const _verde = Color(0xFF2D8C3E);
-  static const _gris = Color(0xFF6B7189);
-
   late final TextEditingController _gradoCtrl;
 
   @override
@@ -49,7 +51,9 @@ class _ConfiguracionPageState extends ConsumerState<ConfiguracionPage> {
     if (sesion == null) return const SizedBox.shrink();
 
     final config = ref.watch(banosConfigProvider);
+    final notifier = ref.read(banosConfigProvider.notifier);
     final servidor = ref.watch(servidorProvider);
+    final grados = ref.watch(gradosProvider);
     final puedeAdministrar = sesion.rol.puedeAdministrar;
 
     return Scaffold(
@@ -72,7 +76,7 @@ class _ConfiguracionPageState extends ConsumerState<ConfiguracionPage> {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _navy),
           ),
           const Text(
-            'Cuenta, servidor y parámetros de salidas',
+            'Cuenta, servidor, reglas y preferencias',
             style: TextStyle(color: _gris, fontSize: 12),
           ),
           const SizedBox(height: 16),
@@ -140,15 +144,93 @@ class _ConfiguracionPageState extends ConsumerState<ConfiguracionPage> {
           ),
           const SizedBox(height: 20),
 
-          // --- Parámetros ---
-          const Text('Parámetros de salidas',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _navy)),
-          const SizedBox(height: 8),
+          // --- Reglas ---
+          const _Titulo('Reglas de salidas'),
           _Tarjeta(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('GRADO POR DEFECTO',
+                _Contador(
+                  etiqueta: 'SALIDAS POR ESTUDIANTE AL DÍA',
+                  valor: '${config.maxSalidasDia}',
+                  ayuda: 'Enfermería no cuenta.',
+                  onMenos: puedeAdministrar
+                      ? () => notifier.cambiarMaxSalidasDia(config.maxSalidasDia - 1)
+                      : null,
+                  onMas: puedeAdministrar
+                      ? () => notifier.cambiarMaxSalidasDia(config.maxSalidasDia + 1)
+                      : null,
+                ),
+                const Divider(height: 28),
+                _Contador(
+                  etiqueta: 'ESTUDIANTES A LA VEZ POR GRUPO',
+                  valor: '${config.capacidadPorGrupo}',
+                  ayuda: 'Los demás quedan en fila de espera.',
+                  onMenos: puedeAdministrar
+                      ? () => notifier.cambiarCapacidadPorGrupo(config.capacidadPorGrupo - 1)
+                      : null,
+                  onMas: puedeAdministrar
+                      ? () => notifier.cambiarCapacidadPorGrupo(config.capacidadPorGrupo + 1)
+                      : null,
+                ),
+                const Divider(height: 28),
+                _Contador(
+                  etiqueta: 'TIEMPO LÍMITE FUERA DEL AULA',
+                  valor: '${config.minutosLimite} min',
+                  ayuda: 'Verde hasta el 70 %, amarillo hasta el límite, rojo después.',
+                  onMenos: puedeAdministrar
+                      ? () => notifier.cambiarMinutosLimite(config.minutosLimite - 1)
+                      : null,
+                  onMas: puedeAdministrar
+                      ? () => notifier.cambiarMinutosLimite(config.minutosLimite + 1)
+                      : null,
+                ),
+                if (!puedeAdministrar)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: Text(
+                      'Solo el administrador puede cambiar estas reglas.',
+                      style: TextStyle(fontSize: 11, color: _gris),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // --- Preferencias ---
+          const _Titulo('Preferencias'),
+          _Tarjeta(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Alerta sonora', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text(
+                    'Suena y vibra cuando alguien supera el tiempo límite.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: config.alertaSonora,
+                  onChanged: notifier.cambiarAlertaSonora,
+                ),
+                const Divider(),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Elegir grupo manualmente',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(
+                    puedeAdministrar
+                        ? 'El administrador siempre elige el grupo a mano.'
+                        : 'En vez de usar tu horario del timbre. Útil para pruebas.',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  value: puedeAdministrar || config.modoManual,
+                  onChanged: puedeAdministrar ? null : notifier.cambiarModoManual,
+                ),
+                const Divider(),
+                const SizedBox(height: 8),
+                const Text('GRUPO POR DEFECTO (MODO MANUAL)',
                     style: TextStyle(fontSize: 12, color: _gris, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 6),
                 Row(
@@ -156,66 +238,30 @@ class _ConfiguracionPageState extends ConsumerState<ConfiguracionPage> {
                     Expanded(
                       child: TextField(
                         controller: _gradoCtrl,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
                           isDense: true,
-                          hintText: 'Ej: 11-B',
+                          hintText: grados.isEmpty ? 'Ej: 11-B' : 'Ej: ${grados.first}',
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: _verde, foregroundColor: Colors.white),
+                        backgroundColor: _verde,
+                        foregroundColor: Colors.white,
+                      ),
                       onPressed: () {
                         final grado = _gradoCtrl.text.trim();
                         if (grado.isEmpty) return;
-                        ref.read(banosConfigProvider.notifier).cambiarGrado(grado);
+                        notifier.cambiarGrado(grado);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Grado por defecto: $grado')),
+                          SnackBar(content: Text('Grupo por defecto: $grado')),
                         );
                       },
                       child: const Text('Guardar'),
                     ),
                   ],
-                ),
-                const Text('Aparece ya escrito al autorizar una salida.',
-                    style: TextStyle(fontSize: 11, color: _gris)),
-                const Divider(height: 28),
-                const Text('TIEMPO LÍMITE FUERA DEL AULA',
-                    style: TextStyle(fontSize: 12, color: _gris, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    IconButton.outlined(
-                      onPressed: puedeAdministrar
-                          ? () => ref
-                              .read(banosConfigProvider.notifier)
-                              .cambiarMinutosLimite(config.minutosLimite - 1)
-                          : null,
-                      icon: const Icon(Icons.remove),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('${config.minutosLimite} min',
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold, color: _navy)),
-                    ),
-                    IconButton.outlined(
-                      onPressed: puedeAdministrar
-                          ? () => ref
-                              .read(banosConfigProvider.notifier)
-                              .cambiarMinutosLimite(config.minutosLimite + 1)
-                          : null,
-                      icon: const Icon(Icons.add),
-                    ),
-                  ],
-                ),
-                Text(
-                  puedeAdministrar
-                      ? 'Pasado este tiempo, el estudiante se resalta en rojo.'
-                      : 'Solo el administrador puede cambiar este valor.',
-                  style: const TextStyle(fontSize: 11, color: _gris),
                 ),
               ],
             ),
@@ -238,6 +284,60 @@ class _ConfiguracionPageState extends ConsumerState<ConfiguracionPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _Titulo extends StatelessWidget {
+  final String texto;
+  const _Titulo(this.texto);
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      texto,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _navy),
+    ),
+  );
+}
+
+/// Etiqueta + valor con botones − y + (null = deshabilitado).
+class _Contador extends StatelessWidget {
+  final String etiqueta;
+  final String valor;
+  final String ayuda;
+  final VoidCallback? onMenos;
+  final VoidCallback? onMas;
+
+  const _Contador({
+    required this.etiqueta,
+    required this.valor,
+    required this.ayuda,
+    required this.onMenos,
+    required this.onMas,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(etiqueta, style: const TextStyle(fontSize: 12, color: _gris, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            IconButton.outlined(onPressed: onMenos, icon: const Icon(Icons.remove)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(valor,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _navy)),
+            ),
+            IconButton.outlined(onPressed: onMas, icon: const Icon(Icons.add)),
+          ],
+        ),
+        Text(ayuda, style: const TextStyle(fontSize: 11, color: _gris)),
+      ],
     );
   }
 }

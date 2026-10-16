@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:swiftyring/core/router/rutas.dart';
+import 'package:swiftyring/modules/proyecto_banos/data/banos_config.dart';
+import 'package:swiftyring/modules/proyecto_banos/data/banos_fake_data.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 import 'package:swiftyring/modules/proyecto_banos/presentation/pages/autorizar_salida_page.dart';
 import 'package:swiftyring/modules/proyecto_banos/proyecto_banos_routes.dart';
-import 'package:swiftyring/core/router/rutas.dart';
 
 /// Pantalla "Confirmación de salida" del prototipado: el check verde, los
-/// datos del registro, y los dos botones de siguiente acción.
-class ConfirmacionSalidaPage extends StatelessWidget {
+/// datos del registro, cuántas salidas lleva el estudiante hoy y los botones
+/// de siguiente acción.
+class ConfirmacionSalidaPage extends ConsumerWidget {
   final SalidaBano salida;
   const ConfirmacionSalidaPage({super.key, required this.salida});
 
@@ -15,7 +19,23 @@ class ConfirmacionSalidaPage extends StatelessWidget {
   static const _verde = Color(0xFF2D8C3E);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final config = ref.watch(banosConfigProvider);
+    final salidas = ref.watch(banosProvider);
+    final usadas = salidasContadasHoy(salidas, salida.estudianteId);
+    final restantes = config.maxSalidasDia - usadas;
+
+    final String regla;
+    if (salida.motivo.exento) {
+      regla = 'Salida a enfermería: no cuenta para el límite diario.';
+    } else if (restantes <= 0) {
+      regla = 'Salida $usadas de ${config.maxSalidasDia} de hoy. Ya no podrá salir más hoy.';
+    } else {
+      regla =
+          'Salida $usadas de ${config.maxSalidasDia} de hoy. '
+          'Le ${restantes == 1 ? 'queda 1 salida' : 'quedan $restantes salidas'} hoy.';
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
       appBar: AppBar(
@@ -46,26 +66,36 @@ class ConfirmacionSalidaPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Color(0xFF6B7189)),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  regla,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: _navy, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(salida.estudianteNombre, style: const TextStyle(fontWeight: FontWeight.bold, color: _navy)),
+                  child: Text(
+                    salida.estudianteNombre,
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: _navy),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(formatearFecha(salida.horaSalida)),
-                    Text(formatearHora(salida.horaSalida), style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(formatearHora(salida.horaSalida),
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Grado: ${salida.grado}'),
+                    Text('Grupo: ${salida.grado}'),
                     Text(salida.motivo.etiqueta.toLowerCase()),
                   ],
                 ),
@@ -84,7 +114,8 @@ class ConfirmacionSalidaPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => context.go(RutasBanos.inicio),
-                  child: const Text('VOLVER AL\nINICIO', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('VOLVER AL\nINICIO',
+                      textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -95,6 +126,8 @@ class ConfirmacionSalidaPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
+                  // Cambia esta pantalla por el formulario sin borrar el camino
+                  // de regreso, para que Cancelar siempre funcione.
                   onPressed: () => context.pushReplacement(RutasBanos.autorizar),
                   child: const Text('+ NUEVA SALIDA', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
