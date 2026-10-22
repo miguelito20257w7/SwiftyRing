@@ -5,6 +5,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../firebase_options.dart';
+
 /// El canal de notificaciones push de la aplicación institucional.
 ///
 /// Vive en `core/` porque es infraestructura, igual que el cliente HTTP: se
@@ -56,7 +58,9 @@ class ServicioPush {
       // GoogleService-Info.plist (iOS), que genera `flutterfire configure`.
       // Si no están, esto lanza y se atrapa abajo.
       if (Firebase.apps.isEmpty) {
-        await Firebase.initializeApp();
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
       }
 
       final messaging = FirebaseMessaging.instance;
