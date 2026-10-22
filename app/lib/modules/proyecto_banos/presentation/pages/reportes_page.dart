@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:swiftyring/modules/proyecto_banos/data/banos_config.dart';
 import 'package:swiftyring/modules/proyecto_banos/data/banos_fake_data.dart';
 import 'package:swiftyring/modules/proyecto_banos/domain/modelos_banos.dart';
 import 'package:swiftyring/modules/proyecto_banos/presentation/widgets/banos_bottom_nav.dart';
@@ -22,6 +23,7 @@ class ReportesPage extends ConsumerWidget {
     final todas = ref.watch(banosProvider);
     final completadas = todas.where((s) => !s.enCurso).toList();
 
+    final limite = ref.watch(banosConfigProvider).minutosLimite;
     final total = todas.length;
     final duracionProm = completadas.isEmpty
         ? 0
@@ -66,7 +68,11 @@ class ReportesPage extends ConsumerWidget {
           _TarjetaMetrica(
             titulo: 'DURACIÓN PROM',
             valor: '$duracionProm min',
-            nota: completadas.isEmpty ? 'Todavía no hay salidas completadas' : null,
+            nota: completadas.isEmpty
+                ? 'Todavía no hay salidas completadas'
+                : (duracionProm <= limite
+                    ? 'Dentro del rango esperado (hasta $limite min)'
+                    : 'Por encima del límite de $limite min'),
           ),
           const SizedBox(height: 12),
           _TarjetaMetrica(titulo: 'EMERGENCIAS', valor: '$emergencias', valorColor: Colors.red),
