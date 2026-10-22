@@ -21,6 +21,7 @@ struct ActivacionDTO: Content {
     let ocurridoAt: Date
     let usuarioNombre: String?
     let duracionSeg: Int?
+    let timbreNombre: String?
     /// Cuántos profesores tenían clase a continuación (solo al activar).
     let notificacionesGeneradas: Int?
 }
@@ -115,6 +116,7 @@ struct ActivacionesController: RouteCollection {
             ocurridoAt: activacion.ocurridoAt,
             usuarioNombre: payload.nombre,
             duracionSeg: activacion.duracionSeg,
+            timbreNombre: nil,
             notificacionesGeneradas: notificadas
         )
     }
@@ -144,6 +146,26 @@ struct ActivacionesController: RouteCollection {
             .all()
         let nombrePorID = Dictionary(uniqueKeysWithValues: try usuarios.map { (try $0.requireID(), $0.nombre) })
 
+        // Resolver etiquetas de timbres (incluye soft-deleted y especiales)
+        let timbreIDs = activaciones.compactMap(\.horarioTimbreID)
+        let timbresHabituales = try await HorarioTimbre.query(on: req.db)
+            .withDeleted()
+            .filter(\.$id ~~ timbreIDs)
+            .all()
+        var timbreNombrePorID = Dictionary(uniqueKeysWithValues: try timbresHabituales.map { (try $0.requireID(), $0.etiqueta) })
+
+        let idsFaltantes = timbreIDs.filter { timbreNombrePorID[$0] == nil }
+        if !idsFaltantes.isEmpty {
+            let timbresEspeciales = try await TimbreEspecial.query(on: req.db)
+                .filter(\.$id ~~ idsFaltantes)
+                .all()
+            for especial in timbresEspeciales {
+                if let id = try? especial.requireID() {
+                    timbreNombrePorID[id] = especial.etiqueta
+                }
+            }
+        }
+
         return try activaciones.map { activacion in
             ActivacionDTO(
                 id: try activacion.requireID(),
@@ -151,6 +173,7 @@ struct ActivacionesController: RouteCollection {
                 ocurridoAt: activacion.ocurridoAt,
                 usuarioNombre: activacion.origenUsuarioID.flatMap { nombrePorID[$0] },
                 duracionSeg: activacion.duracionSeg,
+                timbreNombre: activacion.horarioTimbreID.flatMap { timbreNombrePorID[$0] },
                 notificacionesGeneradas: nil
             )
         }

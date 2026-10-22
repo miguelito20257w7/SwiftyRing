@@ -340,3 +340,18 @@ struct AddModoUpsYDuracionManualAConfiguracion: AsyncMigration {
     }
 }
 
+struct AddDeletedAtAHorarioTimbres: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.schema(HorarioTimbre.schema)
+            .field("deleted_at", .datetime)
+            .update()
+    }
+
+    func revert(on database: any Database) async throws {
+        try await database.schema(HorarioTimbre.schema)
+            .deleteField("deleted_at")
+            .update()
+    }
+}
+
+

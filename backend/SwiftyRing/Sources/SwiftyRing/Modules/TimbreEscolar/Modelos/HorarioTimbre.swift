@@ -39,6 +39,10 @@ final class HorarioTimbre: Model, @unchecked Sendable {
     @Timestamp(key: "creado_at", on: .create)
     var creadoAt: Date?
 
+    /// Soporte para eliminación suave (soft delete).
+    @Timestamp(key: "deleted_at", on: .delete)
+    var deletedAt: Date?
+
     @Children(for: \.$timbre)
     var dias: [TimbreDia]
 

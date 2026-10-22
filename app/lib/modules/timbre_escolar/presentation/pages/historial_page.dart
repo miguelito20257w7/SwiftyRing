@@ -244,9 +244,13 @@ class _ListaActivaciones extends ConsumerWidget {
                 TipoActivacion.sismico => const Color(0xFFFFD3D6),
                 _ => TimbreColors.amarillo.withValues(alpha: 0.45),
               },
-              titulo: activacion.tipo.etiqueta,
+              titulo: activacion.timbreNombre?.isNotEmpty == true
+                  ? activacion.timbreNombre!
+                  : activacion.tipo.etiqueta,
               detalle: [
                 _fecha(activacion.ocurridoAt),
+                if (activacion.timbreNombre?.isNotEmpty == true)
+                  activacion.tipo.etiqueta,
                 if (activacion.usuarioNombre != null) activacion.usuarioNombre!,
               ].join(' · '),
               onTap: () => Navigator.of(context).push(
@@ -403,13 +407,26 @@ class DetalleEventoPage extends StatelessWidget {
       TipoActivacion.sismico => 'Alarma automática por sensor MPU-6050',
     };
 
+    final titulo = activacion.timbreNombre?.isNotEmpty == true
+        ? activacion.timbreNombre!
+        : activacion.tipo.etiqueta;
+    final subtitulo = activacion.timbreNombre?.isNotEmpty == true
+        ? 'Horario programado · ${activacion.tipo.etiqueta}'
+        : 'Registro de activación del timbre';
+
     return DetalleEventoPage(
-      titulo: activacion.tipo.etiqueta,
-      subtitulo: 'Registro de activación del timbre',
+      titulo: titulo,
+      subtitulo: subtitulo,
       icono: icono,
       colorIcono: color,
       fondoIcono: fondo,
       datos: [
+        if (activacion.timbreNombre?.isNotEmpty == true)
+          (
+            icono: Icons.label_outline,
+            etiqueta: 'Nombre del timbre',
+            valor: activacion.timbreNombre!,
+          ),
         (
           icono: Icons.calendar_today_outlined,
           etiqueta: 'Fecha y hora',

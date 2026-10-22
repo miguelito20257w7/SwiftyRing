@@ -463,6 +463,7 @@ class Activacion {
   final DateTime ocurridoAt;
   final String? usuarioNombre;
   final int? duracionSeg;
+  final String? timbreNombre;
 
   const Activacion({
     required this.id,
@@ -470,6 +471,7 @@ class Activacion {
     required this.ocurridoAt,
     required this.usuarioNombre,
     required this.duracionSeg,
+    this.timbreNombre,
   });
 
   factory Activacion.fromJson(Map<String, dynamic> json) => Activacion(
@@ -478,6 +480,7 @@ class Activacion {
     ocurridoAt: DateTime.parse(json['ocurridoAt'] as String).toLocal(),
     usuarioNombre: json['usuarioNombre'] as String?,
     duracionSeg: json['duracionSeg'] as int?,
+    timbreNombre: json['timbreNombre'] as String?,
   );
 }
 

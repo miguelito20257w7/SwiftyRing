@@ -32,6 +32,7 @@ enum TimbreEscolar {
             CreateActivaciones(),
             CreateConfiguracionSistema(),
             AddModoUpsYDuracionManualAConfiguracion(),
+            AddDeletedAtAHorarioTimbres(),
         ]
     }
 
