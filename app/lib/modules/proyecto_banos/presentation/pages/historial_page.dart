@@ -32,7 +32,11 @@ class _HistorialPageState extends ConsumerState<HistorialPage> {
   Widget build(BuildContext context) {
     final todas = ref.watch(banosProvider);
     final filtradas = todas
-        .where((s) => s.estudianteNombre.toLowerCase().contains(_busqueda.toLowerCase()))
+        .where(
+          (s) => s.estudianteNombre.toLowerCase().contains(
+            _busqueda.toLowerCase(),
+          ),
+        )
         .toList();
 
     return Scaffold(
@@ -56,7 +60,11 @@ class _HistorialPageState extends ConsumerState<HistorialPage> {
               children: [
                 const Text(
                   'Historial de salidas',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _navy),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: _navy,
+                  ),
                 ),
                 const Text(
                   'CONSULTA TODAS LAS SALIDAS REGISTRADAS.',
@@ -77,7 +85,11 @@ class _HistorialPageState extends ConsumerState<HistorialPage> {
                     ),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Exportar estará disponible cuando el historial venga del servidor.')),
+                        const SnackBar(
+                          content: Text(
+                            'Exportar estará disponible cuando el historial venga del servidor.',
+                          ),
+                        ),
                       );
                     },
                     child: const Text('EXPORTAR'),
@@ -104,12 +116,53 @@ class _HistorialPageState extends ConsumerState<HistorialPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: const Row(
               children: [
-                SizedBox(width: 56, child: Text('FECHA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6B7189)))),
-                Expanded(child: Text('ESTUDIANTE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6B7189)))),
+                SizedBox(
+                  width: 56,
+                  child: Text(
+                    'FECHA',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6B7189),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'ESTUDIANTE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6B7189),
+                    ),
+                  ),
+                ),
                 SizedBox(width: 8),
-                SizedBox(width: 64, child: Text('DURACIÓN', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6B7189)))),
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    'DURACIÓN',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6B7189),
+                    ),
+                  ),
+                ),
                 SizedBox(width: 8),
-                SizedBox(width: 76, child: Text('ESTADO', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF6B7189)))),
+                SizedBox(
+                  width: 76,
+                  child: Text(
+                    'ESTADO',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6B7189),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -117,13 +170,17 @@ class _HistorialPageState extends ConsumerState<HistorialPage> {
           Expanded(
             child: filtradas.isEmpty
                 ? const Center(
-                    child: Text('No hay salidas que coincidan.', style: TextStyle(color: Color(0xFF6B7189))),
+                    child: Text(
+                      'No hay salidas que coincidan.',
+                      style: TextStyle(color: Color(0xFF6B7189)),
+                    ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtradas.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, i) => _FilaHistorial(salida: filtradas[i]),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (context, i) =>
+                        _FilaHistorial(salida: filtradas[i]),
                   ),
           ),
         ],
@@ -143,9 +200,19 @@ class _FilaHistorial extends StatelessWidget {
       color: Colors.white,
       child: Row(
         children: [
-          SizedBox(width: 56, child: Text(formatearHora(salida.horaSalida), style: const TextStyle(fontSize: 12, color: Color(0xFF6B7189)))),
+          SizedBox(
+            width: 56,
+            child: Text(
+              formatearHora(salida.horaSalida),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7189)),
+            ),
+          ),
           Expanded(
-            child: Text(salida.estudianteNombre, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+            child: Text(
+              salida.estudianteNombre,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           const SizedBox(width: 8),
           SizedBox(
@@ -176,10 +243,17 @@ class _EtiquetaEstado extends StatelessWidget {
     final color = enCurso ? const Color(0xFF2D8C3E) : const Color(0xFF1E2545);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(border: Border.all(color: color), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        border: Border.all(color: color),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Text(
         enCurso ? 'en curso' : 'OK',
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
