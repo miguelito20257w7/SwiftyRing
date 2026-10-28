@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftyRing — Manual de Uso · Aplicación Móvil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SWIFTY DEVS · SISTEMA DE MARCA OFICIAL
+   Tokens de diseño del Manual de Marca v1.0
+   ============================================================ */
+:root {
+  --carbon: #0A0A0A;
+  --obsidian: #1C1C1E;
+  --swift-orange: #FF6B35;
+  --glow: #FF8C5A;
+  --ivory: #F2F2F7;
+  --white: #FFFFFF;
+  --gray-1: #3A3A3C;
+  --gray-2: #6E6E73;
+  --gray-3: #A1A1A6;
+  --hairline: #E5E5EA;
+
+  /* Identidad del producto SwiftyRing */
+  --sr-yellow: #F5B301;
+  --sr-yellow-soft: #FFE7A3;
+  --sr-orange: #DB712F;
+  --sr-graphite: #3B3B30;
+  --sr-ivory: #FAF8F2;
+  --sr-gold: #735C00;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+
+  --radius-card: 16px;
+  --radius-sm: 10px;
+  --shadow-soft: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-xs: 0 2px 8px rgba(0,0,0,0.05);
+
+  --page-w: 210mm;
+  --page-pad: 18mm;
+}
+
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body {
+  margin: 0;
+  background: #D8D8DC;
+  color: var(--carbon);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 10pt;
+  line-height: 1.6;
+}
+
+.doc {
+  max-width: calc(var(--page-w) + 40px);
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+.page {
+  background: var(--white);
+  width: var(--page-w);
+  min-height: 297mm;
+  margin: 0 auto 22px;
+  padding: var(--page-pad);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.16);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; color: var(--carbon); margin: 0; }
+p { margin: 0 0 12px; }
+strong { font-weight: 500; color: var(--carbon); }
+em { font-style: italic; }
+a { color: var(--swift-orange); text-decoration: none; }
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 8.5pt;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--swift-orange);
+  margin: 0 0 8px;
+  display: block;
+}
+
+.mono { font-family: var(--font-mono); }
+
+/* ENCABEZADO SUPERIOR */
+.runhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 8px;
+  margin-bottom: 22px;
+}
+.runhead .rh-brand {
+  font-family: var(--font-display);
+  font-size: 14pt;
+  letter-spacing: -0.3px;
+}
+.runhead .rh-brand .dot { color: var(--swift-orange); }
+.runhead .rh-brand .ring { color: var(--sr-orange); }
+.runhead .rh-meta {
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  color: var(--gray-3);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* PIE DE PÁGINA */
+.page-foot {
+  margin-top: auto;
+  border-top: 1px solid var(--hairline);
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  color: var(--gray-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ENCABEZADOS DE SECCIÓN */
+.sec-head { margin: 0 0 18px; }
+.sec-head .num {
+  font-family: var(--font-mono);
+  font-size: 9.5pt;
+  color: var(--swift-orange);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+.sec-head h2 { font-size: 24pt; line-height: 1.1; letter-spacing: -0.6px; margin-top: 3px; }
+.sec-head .sub { color: var(--gray-2); font-size: 10.5pt; margin-top: 6px; }
+
+/* PORTADA OFICIAL SWIFTY DEVS */
+.cover-page {
+  min-height: 297mm;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  padding: var(--page-pad);
+  position: relative;
+  overflow: hidden;
+}
+.cover-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--sr-orange), var(--sr-yellow));
+}
+.cover-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.cover-studio { font-family: var(--font-display); font-size: 15pt; letter-spacing: -0.3px; }
+.cover-studio .dot { color: var(--swift-orange); }
+.cover-studio .tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+  margin-top: 2px;
+}
+.cover-badge {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 8pt;
+  color: var(--gray-2);
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+.cover-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.cover-logo-img { width: 140px; height: 140px; margin-bottom: 20px; }
+.cover-eyebrow {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 9.5pt;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--sr-orange);
+  margin-bottom: 10px;
+}
+.cover-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 42pt;
+  line-height: 0.98;
+  letter-spacing: -1.5px;
+}
+.cover-title .ring { color: var(--sr-orange); }
+.cover-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 15pt;
+  color: var(--gray-1);
+  margin-top: 10px;
+}
+.cover-line {
+  width: 56px;
+  height: 3px;
+  background: var(--sr-orange);
+  border-radius: 2px;
+  margin: 18px auto 14px;
+}
+.cover-desc { max-width: 52ch; color: var(--gray-2); font-size: 10pt; line-height: 1.6; }
+.cover-meta { border-top: 1px solid var(--hairline); padding-top: 16px; margin-top: auto; }
+.cover-meta .mrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 24px; }
+.meta-item .k {
+  font-family: var(--font-mono);
+  font-size: 7.2pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+}
+.meta-item .v { font-size: 10pt; margin-top: 2px; }
+.cover-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  color: var(--gray-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.endorse { font-family: var(--font-display); font-size: 10.5pt; letter-spacing: -0.2px; }
+.endorse .dot { color: var(--swift-orange); }
+
+/* TARJETAS Y COMPONENTES */
+.card {
+  background: var(--white);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-xs);
+  margin: 12px 0;
+}
+.card.tint { background: var(--ivory); border-color: transparent; }
+.card.dark { background: var(--obsidian); border-color: transparent; color: var(--ivory); }
+.card.dark h3, .card.dark strong { color: var(--white); }
+
+.callout {
+  border-left: 3px solid var(--sr-orange);
+  background: linear-gradient(90deg, rgba(219,113,47,0.07), rgba(219,113,47,0));
+  padding: 12px 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 14px 0;
+  font-size: 9.5pt;
+}
+.callout .lbl {
+  font-weight: 600;
+  color: var(--sr-orange);
+  font-size: 8.5pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 3px;
+}
+
+/* GRILLAS DE PANTALLA Y MOCKUPS */
+.screen-pair {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 24px;
+  align-items: start;
+  margin: 14px 0 20px;
+}
+.screen-pair.reverse {
+  grid-template-columns: 1fr 210px;
+}
+
+.screen-duo {
+  display: grid;
+  grid-template-columns: 200px 200px 1fr;
+  gap: 20px;
+  align-items: start;
+  margin: 14px 0 20px;
+}
+
+.phone-mockup {
+  width: 100%;
+  max-width: 210px;
+  border-radius: 30px;
+  border: 6px solid #1C1D21;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.06);
+  overflow: hidden;
+  background: #000;
+  display: block;
+}
+.phone-mockup img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.feature-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sr-orange);
+  background: rgba(219,113,47,0.1);
+  padding: 3px 8px;
+  border-radius: 5px;
+  margin-bottom: 8px;
+}
+
+.feature-title {
+  font-family: var(--font-display);
+  font-size: 15pt;
+  font-weight: 600;
+  margin: 0 0 6px;
+  color: var(--carbon);
+}
+
+ul.bullet-list {
+  padding-left: 18px;
+  margin: 8px 0 12px;
+  font-size: 9.5pt;
+  color: var(--gray-1);
+}
+ul.bullet-list li { margin-bottom: 6px; }
+
+/* TABLAS */
+table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 9.5pt; }
+thead th {
+  background: var(--carbon);
+  color: var(--white);
+  text-align: left;
+  font-weight: 500;
+  padding: 8px 12px;
+  font-size: 8.5pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--gray-1);
+}
+tbody tr:hover td { background: var(--sr-ivory); }
+
+/* CIERRE */
+.closing {
+  min-height: 297mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: var(--carbon);
+  color: var(--ivory);
+  padding: var(--page-pad);
+}
+.closing .big {
+  font-family: var(--font-display);
+  font-size: 30pt;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  color: var(--white);
+  max-width: 22ch;
+}
+.closing .sig { font-family: var(--font-display); font-size: 16pt; margin-top: 24px; color: var(--sr-yellow); }
+.closing .sig .dot { color: var(--swift-orange); }
+.closing .meta {
+  font-family: var(--font-mono);
+  font-size: 8pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gray-3);
+  margin-top: 6px;
+}
+.closing .line {
+  width: 50px;
+  height: 3px;
+  background: var(--swift-orange);
+  border-radius: 2px;
+  margin: 20px auto;
+}
+
+@media print {
+  body { background: #FFF; }
+  .doc { padding: 0; margin: 0; }
+  .page {
+    box-shadow: none;
+    margin: 0;
+    page-break-after: always;
+    break-after: page;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <!-- ==================== PÁGINA 1: PORTADA ==================== -->
+  <div class="page cover-page">
+    <div class="cover-top">
+      <div class="cover-studio">
+        Swifty Devs<span class="dot">.</span>
+        <span class="tag">Estudio de Software</span>
+      </div>
+      <div class="cover-badge">
+        Manual de Uso · App Móvil v1.0<br>
+        SENA CDITI · Risaralda · 2026
+      </div>
+    </div>
+
+    <div class="cover-hero">
+      <img src="assets/logo_swiftyring_sin_texto.svg" alt="Logo SwiftyRing" class="cover-logo-img">
+      <span class="cover-eyebrow">Manual Técnico de Operación</span>
+      <h1 class="cover-title">Swifty<span class="ring">Ring</span></h1>
+      <div class="cover-sub">Sistema de Timbre Escolar Inteligente y Alerta Sísmica</div>
+      <div class="cover-line"></div>
+      <p class="cover-desc">Guía exhaustiva para la gestión de horarios, control manual inmediato, asignación académica docente, bitácora de auditoría y respuesta ante eventos telúricos.</p>
+    </div>
+
+    <div class="cover-meta">
+      <div class="mrow">
+        <div class="meta-item">
+          <div class="k">Institución Educativa</div>
+          <div class="v">I.E. Santa Sofía · Dosquebradas</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Centro de Formación</div>
+          <div class="v">SENA CDITI · Risaralda</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Autor y Desarrollador</div>
+          <div class="v">Miguel Ángel Salazar García</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Plataforma Móvil</div>
+          <div class="v">Flutter 3.24+ (iOS & Android)</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Arquitectura de Seguridad</div>
+          <div class="v">JWT Asimétrico (RS256)</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Fecha de Publicación</div>
+          <div class="v">Octubre de 2026</div>
+        </div>
+      </div>
+      <div class="cover-foot">
+        <div class="endorse">Swifty Devs<span class="dot">.</span> Apps hechas con intención.</div>
+        <div>CDITI · Grado 11</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 2: ROLES Y LANZADOR ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">01 · Acceso y Lanzador Institucional</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">01</span>
+      <h2>Acceso y Navegación</h2>
+      <div class="sub">Autenticación segura por token, separación de privilegios y lanzador core</div>
+    </div>
+
+    <p>La aplicación móvil de <strong>SwiftyRing</strong> constituye el punto de mando para la comunidad educativa de la I.E. Santa Sofía. Al iniciar sesión con credenciales institucionales, el sistema valida la firma del token criptográfico y conduce al usuario a las vistas autorizadas según su rol:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Rol de Usuario</th>
+          <th>Pantalla de Entrada</th>
+          <th>Acciones Clave Autorizadas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Profesor (Docente)</strong></td>
+          <td>Mi Horario</td>
+          <td>Consulta de clase actual, próxima aula asignada, cuenta regresiva al siguiente timbre y alertas sísmicas.</td>
+        </tr>
+        <tr>
+          <td><strong>Administrador</strong></td>
+          <td>Control de Timbres</td>
+          <td>Accionamiento manual inmediato, programación regular y especial, asignación horaria docente y calibración física.</td>
+        </tr>
+        <tr>
+          <td><strong>Operador</strong></td>
+          <td>Control de Timbres</td>
+          <td>Supervisión de la jornada y accionamiento manual ante contingencias.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="screen-pair">
+      <div class="phone-mockup">
+        <img src="assets/01_lanzador_aplicaciones.png" alt="Lanzador Institucional">
+      </div>
+      <div>
+        <span class="feature-tag">Core Institucional</span>
+        <h3 class="feature-title">Lanzador de Módulos</h3>
+        <p>Cumple con el requerimiento de aislamiento arquitectónico (RNF-12): la recepción (<code>core/</code>) presenta los módulos disponibles sin acoplar dependencias internas.</p>
+        <ul class="bullet-list">
+          <li><strong>Perfil Activo:</strong> Muestra el saludo oficial y el rol con el que se ha autenticado (ej. <em>Administrador</em>).</li>
+          <li><strong>Acceso a SwiftyRing:</strong> Tarjeta con el color dorado institucional y resumen descriptivo de las capacidades del timbre.</li>
+          <li><strong>Cierre de Sesión Centralizado:</strong> El botón superior revoca el token en el dispositivo de forma segura.</li>
+        </ul>
+        <div class="callout">
+          <span class="lbl">Sesión Persistente</span>
+          El token JWT (RS256) se almacena en el llavero seguro del sistema operativo (Secure Storage), manteniendo la sesión abierta entre reinicios del teléfono.
+        </div>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 02</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 3: CONTROL DE TIMBRES Y TIMBRE ACTIVO ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">02 · Control de Timbres y Accionamiento Manual</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">02</span>
+      <h2>Control de Timbres</h2>
+      <div class="sub">Operación de la jornada diaria y accionamiento manual con aviso inmediato</div>
+    </div>
+
+    <p>La pantalla principal del módulo de timbre (F-02) ofrece al administrador el panorama completo de los eventos programados para el día y el control directo sobre el actuador físico del timbre escolar:</p>
+
+    <div class="screen-duo">
+      <div class="phone-mockup">
+        <img src="assets/02_control_timbres_principal.png" alt="Control de Timbres">
+      </div>
+      <div class="phone-mockup">
+        <img src="assets/05_aviso_timbre_activo.png" alt="Aviso ¡Timbre Activo!">
+      </div>
+      <div>
+        <span class="feature-tag">Operación en Vivo</span>
+        <h3 class="feature-title">Accionamiento Inmediato</h3>
+        <p>Al presionar el botón central con ícono de campana, la orden viaja al servidor y se refleja al instante tanto en el colegio como en la pantalla:</p>
+        <ul class="bullet-list">
+          <li><strong>Ventana ¡Timbre Activo!:</strong> Como se observa en la segunda captura, la app confirma con el aviso <em>"La señal está sonando ahora..."</em> mientras el relé conmuta la campana física.</li>
+          <li><strong>Próximo Toque:</strong> Tarjeta destacada con la hora inminente (ej. <em>09:05 AM</em>) y el motivo pedagógico.</li>
+          <li><strong>Selector NORMAL / ESPECIAL:</strong> Permite comprobar si el colegio opera bajo horario habitual o evento extraordinario.</li>
+        </ul>
+        <div class="callout">
+          <span class="lbl">Auditoría Automática</span>
+          Cada toque manual queda registrado en la bitácora con el nombre del funcionario que lo activó y la hora exacta en milisegundos.
+        </div>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 03</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 4: PROGRAMACIÓN DE TIMBRES REGULARES ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">03 · Programación de Timbres Habituales</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">03</span>
+      <h2>Programación Habitual</h2>
+      <div class="sub">Configuración de toques regulares, duración en segundos y sincronización flash</div>
+    </div>
+
+    <p>Para estructurar la rutina ordinaria de la institución (entradas, cambios de clase de 55 minutos, descansos y salidas de jornada):</p>
+
+    <div class="screen-pair reverse">
+      <div>
+        <span class="feature-tag">Gestión Regular</span>
+        <h3 class="feature-title">Formulario de Timbre</h3>
+        <p>Al pulsar el botón flotante <strong>"+"</strong> o el ícono de lápiz en cualquier tarjeta del día, se abre el formulario de precisión horaria:</p>
+        <ul class="bullet-list">
+          <li><strong>Rueda Horaria Digital:</strong> Selección exacta de la hora y minuto militar (ej. <em>07:00 AM</em>).</li>
+          <li><strong>Días Activos:</strong> Puntos selectores para fijar los días de la semana en que debe sonar (Lunes a Viernes).</li>
+          <li><strong>Etiqueta Descriptiva:</strong> Nombre pedagógico del evento (ej. <em>Primera hora</em>, <em>Salida a Descanso</em>).</li>
+          <li><strong>Duración en Segundos:</strong> Lapso de cierre del relé de estado sólido (estándar: 3 segundos para cambio de hora; 5 segundos para entrada o salida).</li>
+        </ul>
+        <div class="callout">
+          <span class="lbl">Sincronización Offline</span>
+          Al pulsar <em>Guardar</em>, los cambios se envían a PostgreSQL y se descargan a la memoria flash del ESP32 en su siguiente consulta (máximo 5 minutos).
+        </div>
+      </div>
+      <div class="phone-mockup">
+        <img src="assets/04_agregar_editar_timbre.png" alt="Agregar y Editar Timbre">
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 04</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 5: HORARIOS ESPECIALES ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">04 · Horarios Especiales y Eventos</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">04</span>
+      <h2>Horarios Especiales</h2>
+      <div class="sub">Gestión de jornadas pedagógicas, actos culturales y horarios reducidos</div>
+    </div>
+
+    <p>Cuando la institución modifica la jornada de forma temporal, los horarios especiales permiten definir una rutina paralela sin sobreescribir la programación regular:</p>
+
+    <div class="screen-duo">
+      <div class="phone-mockup">
+        <img src="assets/03_horarios_especiales_lista.png" alt="Lista de Horarios Especiales">
+      </div>
+      <div class="phone-mockup">
+        <img src="assets/06_editar_horario_especial.png" alt="Editar Horario Especial">
+      </div>
+      <div>
+        <span class="feature-tag">Flexibilidad Institucional</span>
+        <h3 class="feature-title">Programas y Calendario</h3>
+        <p>El administrador puede anticipar los eventos del año escolar y calendarizarlos con antelación:</p>
+        <ul class="bullet-list">
+          <li><strong>Catálogo de Programas:</strong> Tarjetas con el nombre del evento (ej. <em>Prueba 1</em>, <em>Acto Cívico</em>) y conteo de timbres asociados.</li>
+          <li><strong>Rango de Vigencia:</strong> Fechas exactas de inicio y término (ej. <em>2026-10-22 al 2026-11-30</em>).</li>
+          <li><strong>Reversión Autónoma:</strong> Cumplida la fecha límite, el microcontrolador retoma automáticamente la rutina normal sin requerir ajustes manuales.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 05</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 6: DIRECTORIO DOCENTE ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">05 · Directorio Docente y Gestión de Personal</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">05</span>
+      <h2>Directorio Docente</h2>
+      <div class="sub">Registro de educadores, vinculación institucional y perfil curricular</div>
+    </div>
+
+    <p>Para garantizar que cada profesor reciba los avisos tempranos de su clase, el módulo cuenta con una base de datos docente sincronizada con el servidor de identidad:</p>
+
+    <div class="screen-duo">
+      <div class="phone-mockup">
+        <img src="assets/07_directorio_docentes.png" alt="Directorio Docente">
+      </div>
+      <div class="phone-mockup">
+        <img src="assets/11_agregar_nuevo_docente.png" alt="Agregar Docente">
+      </div>
+      <div>
+        <span class="feature-tag">Talento Humano</span>
+        <h3 class="feature-title">Alta y Búsqueda</h3>
+        <p>Herramientas ágiles para la administración de la planta docente del colegio:</p>
+        <ul class="bullet-list">
+          <li><strong>Buscador Instantáneo:</strong> Filtro en tiempo real por nombre, apellido o materia pedagógica.</li>
+          <li><strong>Tarjetas Informativas:</strong> Muestra las iniciales del docente, áreas impartidas (ej. <em>Lengua Castellana, Ortografía</em>) y estado.</li>
+          <li><strong>Formulario de Registro:</strong> Alta rápida indicando nombre completo, correo institucional y número de identificación.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 06</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 7: ASIGNACIÓN HORARIA ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">06 · Asignación Académica y Distribución Semanal</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">06</span>
+      <h2>Asignación Horaria</h2>
+      <div class="sub">Distribución semanal por docente y salón para despacho de avisos push</div>
+    </div>
+
+    <p>Permite relacionar las horas de clase de cada profesor con las aulas físicas del plantel educativo:</p>
+
+    <div class="screen-duo">
+      <div class="phone-mockup">
+        <img src="assets/08_docente_detalle_distribucion.png" alt="Detalle del Docente">
+      </div>
+      <div class="phone-mockup">
+        <img src="assets/10_asignacion_horaria_salon.png" alt="Asignación Horaria">
+      </div>
+      <div>
+        <span class="feature-tag">Matriz Académica</span>
+        <h3 class="feature-title">Distribución y Salones</h3>
+        <p>Visualización y asignación bidireccional de la jornada:</p>
+        <ul class="bullet-list">
+          <li><strong>Ficha de Distribución:</strong> Desglose semanal de clases, horas pedagógicas y espacios libres del educador.</li>
+          <li><strong>Modo POR SALÓN:</strong> Permite consultar qué docente y qué grupo ocupa cada aula física en una hora determinada.</li>
+          <li><strong>Modo POR DOCENTE:</strong> Permite armar la carga horaria semanal del profesor seleccionando día y bloque.</li>
+        </ul>
+        <div class="callout">
+          <span class="lbl">Avisos Push (FCM)</span>
+          Basándose en esta matriz, el backend despacha notificaciones automáticas a los teléfonos de los docentes 10 y 5 minutos antes de cada cambio de clase.
+        </div>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 07</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 8: HISTORIAL Y AUDITORÍA ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">07 · Bitácora de Auditoría e Historial</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">07</span>
+      <h2>Historial y Auditoría</h2>
+      <div class="sub">Trazabilidad inmutable de activaciones automáticas, manuales y alertas sísmicas</div>
+    </div>
+
+    <p>En cumplimiento con el requerimiento de auditoría RF-17, la plataforma registra de forma permanente cada evento sonoro o de emergencia ocurrido en la institución:</p>
+
+    <div class="screen-pair">
+      <div class="phone-mockup">
+        <img src="assets/12_historial_activaciones_sismos.png" alt="Historial y Auditoría">
+      </div>
+      <div>
+        <span class="feature-tag">Transparencia y Control</span>
+        <h3 class="feature-title">Pestañas de Monitoreo</h3>
+        <p>La vista de historial clasifica las bitácoras en tres áreas de consulta:</p>
+        <ul class="bullet-list">
+          <li><strong>Pestaña TIMBRES:</strong> Registro cronológico de todos los toques. Detalla si fue automático (por horario), manual desde la app (con el nombre del usuario) o manual desde el botón físico de la caja.</li>
+          <li><strong>Pestaña SISMOS:</strong> Historial de eventos telúricos registrados por el sensor inercial MPU-6050, indicando aceleración pico y duración de la alarma.</li>
+          <li><strong>Pestaña AVISOS:</strong> Registro de notificaciones de cambio de aula entregadas a los docentes.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 08</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 9: CONFIGURACIÓN Y MÓDULO FÍSICO ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">08 · Diagnóstico de Hardware y Modo UPS</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">08</span>
+      <h2>Configuración de Hardware</h2>
+      <div class="sub">Estado en línea del microcontrolador ESP32, respaldo UPS y dispositivos</div>
+    </div>
+
+    <p>Panel reservado exclusivamente para la administración institucional para verificar la conectividad de la caja física y gobernar la energía de respaldo:</p>
+
+    <div class="screen-duo">
+      <div class="phone-mockup">
+        <img src="assets/13_configuracion_modulo_esp32.png" alt="Configuración Módulo ESP32">
+      </div>
+      <div class="phone-mockup">
+        <img src="assets/14_configuracion_ups_usuarios.png" alt="Modo UPS y Usuarios">
+      </div>
+      <div>
+        <span class="feature-tag">Diagnóstico Avanzado</span>
+        <h3 class="feature-title">Salud del Microcontrolador</h3>
+        <p>Monitoreo continuo de los componentes de hardware:</p>
+        <ul class="bullet-list">
+          <li><strong>Estado del ESP32:</strong> Señala si el módulo está <em>ONLINE</em> recibiendo órdenes cada 2 segundos o <em>OFFLINE</em> operando de manera autónoma.</li>
+          <li><strong>Calibración Sísmica:</strong> Ajuste del umbral de aceleración para evitar falsas alarmas por tráfico pesado o portazos.</li>
+          <li><strong>Modo UPS (GPIO 7):</strong> Control del relé secundario de respaldo para conmutar la alimentación ante cortes en la red comercial.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 09</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 10: PROTOCOLO SÍSMICO Y SOPORTE ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">09 · Protocolo Sísmico y Soporte Operativo</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">09</span>
+      <h2>Seguridad y Soporte</h2>
+      <div class="sub">Actuación ante sismos y resolución de incidencias operativas</div>
+    </div>
+
+    <div class="card dark">
+      <span class="eyebrow" style="color:var(--swift-orange);">PROTOCOLO DE EMERGENCIA SÍSMICA</span>
+      <h3>Actuación ante Detección Telúrica (MPU-6050)</h3>
+      <p style="color:#C9CDD4;">Cuando el acelerómetro físico detecta un patrón inercial continuo característico de un sismo, el microcontrolador activa la campana en modo evacuación (sonido continuo/intermitente) y notifica de inmediato a los celulares de la comunidad escolar.</p>
+      <ul class="bullet-list" style="color:#C9CDD4;">
+        <li><strong>Suspensión de Clases:</strong> Todo docente debe pausar actividades académicas al primer toque de alarma.</li>
+        <li><strong>Evacuación Inmediata:</strong> Guiar al estudiantado de forma ordenada hacia los puntos de encuentro predeterminados.</li>
+        <li><strong>Autonomía Crítica:</strong> La alarma física sonará incluso si las telecomunicaciones o la red de internet comercial colapsan.</li>
+      </ul>
+    </div>
+
+    <div class="card tint">
+      <h4>Preguntas Frecuentes y Contingencias</h4>
+      <p><strong>¿Qué ocurre si se corta la energía eléctrica?</strong><br>
+      Si la caja física cuenta con respaldo UPS en el circuito de 5V y campana de respaldo, el sistema continuará operando. El chip RTC DS3231 mantendrá la hora exacta con su batería de respaldo de litio.</p>
+      <p><strong>¿Qué hacer si un docente no recibe notificaciones en su teléfono?</strong><br>
+      Verifique en los ajustes del celular que la app cuente con permisos de notificaciones habilitados y que la optimización de batería no limite la ejecución en segundo plano.</p>
+    </div>
+
+    <div class="page-foot">
+      <span>I.E. Santa Sofía · Dosquebradas</span>
+      <span>Pág. 10</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 11: CIERRE ==================== -->
+  <div class="page closing">
+    <img src="assets/logo_swiftyring_sin_texto.svg" alt="Logo SwiftyRing" style="width:100px; height:100px; margin-bottom:24px; filter:brightness(0) invert(1);">
+    <div class="big">"Apps hechas con intención, diseño riguroso y tecnología al servicio de la educación."</div>
+    <div class="line"></div>
+    <div class="sig">Swifty Devs<span class="dot">.</span></div>
+    <div class="meta">Proyecto de Grado SENA CDITI · I.E. Santa Sofía · 2026</div>
+  </div>
+
+</div>
+
+</body>
+</html>

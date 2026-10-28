@@ -10,6 +10,9 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "actualizador_ota.h"
+#include "almacen_config.h"
+#include "aprovisionamiento.h"
 #include "cJSON.h"
 #include "comun.h"
 #include "config.h"
@@ -72,6 +75,8 @@ static void manejar_evento(void *arg, esp_event_base_t base, int32_t id, void *d
         ESP_LOGI(TAG, "conectado, IP " IPSTR, IP2STR(&evento->ip_info.ip));
         s_en_linea = true;
         s_conectando = false;
+        // Si este arranque proviene de una actualización OTA, confirmamos éxito al bootloader
+        actualizador_ota_confirmar_arranque();
     }
 }
 
@@ -80,6 +85,14 @@ void red_iniciar(void) {
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    // Si el módulo no tiene credenciales en NVS, entrar en modo Aprovisionamiento (SoftAP)
+    if (!almacen_config_esta_configurado()) {
+        ESP_LOGW(TAG, "Módulo sin configurar. Iniciando Setup Wizard local (SoftAP)...");
+        aprovisionamiento_iniciar();
+        return;
+    }
+
     esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
@@ -90,10 +103,11 @@ void red_iniciar(void) {
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
                                                         manejar_evento, NULL, NULL));
 
+    const char *ssid = almacen_config_wifi_ssid();
+    const char *pass = almacen_config_wifi_pass();
+
     wifi_config_t cfg = {
         .sta = {
-            .ssid = WIFI_SSID,
-            .password = WIFI_PASSWORD,
             .scan_method = WIFI_ALL_CHANNEL_SCAN,
             .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
             .ft_enabled = 1,
@@ -101,6 +115,9 @@ void red_iniciar(void) {
             .rm_enabled = 1,
         },
     };
+    strlcpy((char *)cfg.sta.ssid, ssid, sizeof(cfg.sta.ssid));
+    strlcpy((char *)cfg.sta.password, pass, sizeof(cfg.sta.password));
+
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
@@ -110,7 +127,7 @@ void red_iniciar(void) {
     // el esclavo (enlace.c). Gasta un poco más, pero el módulo está enchufado.
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 
-    ESP_LOGI(TAG, "conectando a %s...", WIFI_SSID);
+    ESP_LOGI(TAG, "conectando a %s...", ssid);
 }
 
 bool red_en_linea(void) { return s_en_linea; }
@@ -169,8 +186,8 @@ static esp_err_t recibir_pedazo(esp_http_client_event_t *evt) {
 // Devuelve el código HTTP (200, 404...) o -1 si ni siquiera se pudo hablar
 // con el servidor.
 static int http_get(const char *ruta, char *destino, int capacidad) {
-    char url[192];
-    snprintf(url, sizeof(url), "%s%s", API_BASE, ruta);
+    char url[256];
+    snprintf(url, sizeof(url), "%s%s", almacen_config_api_base(), ruta);
 
     destino[0] = '\0';
     respuesta_t respuesta = {.buf = destino, .capacidad = capacidad, .largo = 0};
@@ -185,7 +202,7 @@ static int http_get(const char *ruta, char *destino, int capacidad) {
     esp_http_client_handle_t cliente = esp_http_client_init(&cfg);
     if (cliente == NULL) return -1;
 
-    esp_http_client_set_header(cliente, "X-Device-Key", DEVICE_API_KEY);
+    esp_http_client_set_header(cliente, "X-Device-Key", almacen_config_device_key());
     esp_err_t err = esp_http_client_perform(cliente);
     int codigo = (err == ESP_OK) ? esp_http_client_get_status_code(cliente) : -1;
     esp_http_client_cleanup(cliente);
@@ -193,8 +210,8 @@ static int http_get(const char *ruta, char *destino, int capacidad) {
 }
 
 static int http_post(const char *ruta, const char *cuerpo) {
-    char url[192];
-    snprintf(url, sizeof(url), "%s%s", API_BASE, ruta);
+    char url[256];
+    snprintf(url, sizeof(url), "%s%s", almacen_config_api_base(), ruta);
 
     esp_http_client_config_t cfg = {
         .url = url,
@@ -205,7 +222,7 @@ static int http_post(const char *ruta, const char *cuerpo) {
     esp_http_client_handle_t cliente = esp_http_client_init(&cfg);
     if (cliente == NULL) return -1;
 
-    esp_http_client_set_header(cliente, "X-Device-Key", DEVICE_API_KEY);
+    esp_http_client_set_header(cliente, "X-Device-Key", almacen_config_device_key());
     esp_http_client_set_header(cliente, "Content-Type", "application/json");
     esp_http_client_set_post_field(cliente, cuerpo, strlen(cuerpo));
 
@@ -257,8 +274,8 @@ uint32_t red_tiempo_desde_sync(void) {
 static esp_http_client_handle_t s_cliente_comandos = NULL;
 
 static void consultar_comandos(void) {
-    char url[192];
-    snprintf(url, sizeof(url), "%s/dispositivo/comandos", API_BASE);
+    char url[256];
+    snprintf(url, sizeof(url), "%s/dispositivo/comandos", almacen_config_api_base());
     char cuerpo[512] = {0};
     respuesta_t respuesta = {.buf = cuerpo, .capacidad = sizeof(cuerpo), .largo = 0};
 
@@ -273,7 +290,7 @@ static void consultar_comandos(void) {
         };
         s_cliente_comandos = esp_http_client_init(&cfg);
         if (s_cliente_comandos == NULL) return;
-        esp_http_client_set_header(s_cliente_comandos, "X-Device-Key", DEVICE_API_KEY);
+        esp_http_client_set_header(s_cliente_comandos, "X-Device-Key", almacen_config_device_key());
     } else {
         esp_http_client_set_url(s_cliente_comandos, url);
         esp_http_client_set_user_data(s_cliente_comandos, &respuesta);
@@ -334,6 +351,20 @@ static void consultar_comandos(void) {
     if (cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(doc, "sincronizar"))) {
         pantalla_notificar_cambio("HORARIOS", "ACTUALIZANDO...");
         red_pedir_sincronizacion_motivo("horario");
+    }
+
+    if (cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(doc, "reset"))) {
+        ESP_LOGW(TAG, "Orden de restablecimiento de fábrica recibida desde el backend");
+        pantalla_mensaje("RESTABLECIENDO", "DE FABRICA...");
+        almacen_config_restablecer_fabrica();
+        vTaskDelay(pdMS_TO_TICKS(1500));
+        esp_restart();
+    }
+
+    const cJSON *j_ota = cJSON_GetObjectItemCaseSensitive(doc, "otaUrl");
+    if (cJSON_IsString(j_ota) && strlen(j_ota->valuestring) > 0) {
+        ESP_LOGW(TAG, "Orden de actualización OTA recibida: %s", j_ota->valuestring);
+        actualizador_ota_iniciar(j_ota->valuestring);
     }
 
     cJSON_Delete(doc);
@@ -527,6 +558,12 @@ void red_tarea(void *argumento) {
     bool sincronizado_alguna_vez = false;
 
     while (true) {
+        // Si el módulo está en Modo Setup (SoftAP) o actualizando por OTA, no intentar conexiones
+        if (aprovisionamiento_activo() || actualizador_ota_en_curso()) {
+            vTaskDelay(pdMS_TO_TICKS(500));
+            continue;
+        }
+
         uint32_t ahora = millis();
 
         if (!s_en_linea) {

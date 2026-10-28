@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pitch de Proyecto · SwiftyRing (Swifty Devs)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SWIFTY DEVS · SISTEMA DE PITCH PARA SUSTENTACIÓN SENA
+   Diapositivas 16:9 (1920px x 1080px)
+   Reglas Estrictas:
+   - Fuente Mínima: 30px
+   - Títulos: 40px o superior (56px - 96px)
+   - Logos limpios en encabezado (Swifty Devs, SwiftyRing, Conexión Vocacional)
+   ============================================================ */
+:root {
+  --carbon: #0A0A0A;
+  --obsidian: #141518;
+  --panel-bg: rgba(28, 29, 34, 0.78);
+  --swift-orange: #FF6B35;
+  --glow: #FF8C5A;
+  --sr-yellow: #F5B301;
+  --sr-orange: #DB712F;
+  --white: #FFFFFF;
+  --text-muted: #A1A7B3;
+  --border-light: rgba(255, 255, 255, 0.14);
+  --hairline-gold: rgba(245, 179, 1, 0.35);
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+html, body {
+  background-color: #070708;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 30px; /* REQUISITO: mínimo 30px */
+  font-weight: 400;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* EN PANTALLA: ESCENARIO OSCURO CON DIAPOSITIVAS FLOTANTES */
+@media screen {
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 0 100px;
+    background: #050506;
+  }
+  .slide {
+    margin-bottom: 40px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* EN IMPRESIÓN (PDF 16:9 EXACTO Y ULTRA-NÍTIDO) */
+@page {
+  size: 1920px 1080px;
+  margin: 0;
+}
+
+@media print {
+  /* Eliminar artefactos de rasterización de Skia (cajas negras en box-shadow y drop-shadow) */
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    width: 1920px !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #090A0C !important;
+  }
+
+  .slide-deck {
+    width: 1920px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .slide {
+    width: 1920px !important;
+    height: 1080px !important;
+    min-height: 1080px !important;
+    max-height: 1080px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 48px 80px 42px !important;
+    page-break-before: auto !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border-radius: 0 !important;
+    border: none !important;
+    background: #090A0C !important;
+  }
+
+  .slide::before {
+    display: block !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 14px !important;
+    height: 100% !important;
+  }
+
+  .pitch-card {
+    background: #131417 !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  }
+
+  .pitch-card.highlight {
+    background: rgba(245, 179, 1, 0.08) !important;
+    border: 1.5px solid var(--sr-yellow) !important;
+  }
+
+  .image-frame {
+    border: 2px solid rgba(255, 255, 255, 0.18) !important;
+    background: #000000 !important;
+  }
+
+  .duo-mockups img {
+    border: 2px solid rgba(255, 255, 255, 0.18) !important;
+  }
+
+  .ios-squircle-large {
+    background: #FFFFFF !important;
+    border: 2px solid rgba(255, 255, 255, 0.95) !important;
+  }
+
+  .slide-header {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.18) !important;
+  }
+
+  .slide-footer, .cover-footer {
+    border-top: 1.5px solid rgba(255, 255, 255, 0.18) !important;
+  }
+
+  .apple-brand-capsule, .cover-brand-capsule {
+    background: #FFFFFF !important;
+    border: 1.5px solid #FFFFFF !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .capsule-divider, .cover-capsule-divider {
+    background: #E5E5EA !important;
+  }
+
+  .footer-logo-vocacional, .cover-footer-vocacional {
+    filter: none !important;
+  }
+
+  .presentation-toolbar {
+    display: none !important;
+  }
+}
+
+.slide-deck {
+  width: 1920px;
+}
+
+/* DIAPOSITIVA INDIVIDUAL 16:9 */
+.slide {
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 85% 15%, #221C14 0%, #0D0E10 50%, #070708 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 48px 80px 42px;
+}
+
+/* FRANJA LATERAL DE IDENTIDAD */
+.slide::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--swift-orange) 0%, var(--sr-yellow) 100%);
+}
+
+/* ENCABEZADO SUPERIOR: LIMPIO Y JERÁRQUICO */
+.slide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--border-light);
+  padding-bottom: 16px;
+  margin-bottom: 26px;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.header-project-name {
+  color: var(--swift-orange);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.header-dot {
+  color: var(--sr-yellow);
+}
+
+.header-context {
+  color: var(--text-muted);
+}
+
+.header-badge {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--sr-yellow);
+  background: rgba(245, 179, 1, 0.12);
+  border: 1px solid var(--hairline-gold);
+  padding: 8px 24px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* TÍTULOS Y SUBTÍTULOS (>= 40px) */
+.slide-title-wrap {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--swift-orange);
+  margin-bottom: 6px;
+}
+
+.slide-title {
+  font-family: var(--font-display);
+  font-size: 56px; /* REQUISITO: >= 40px */
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--white);
+  letter-spacing: -1px;
+}
+
+.slide-title span {
+  color: var(--sr-yellow);
+}
+
+/* CUERPO DE LA DIAPOSITIVA */
+.slide-body {
+  flex: 1;
+  display: grid;
+  align-items: center;
+}
+
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 60px;
+  height: 100%;
+  align-items: center;
+}
+
+.grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  height: 100%;
+  align-items: stretch;
+}
+
+.grid-4cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  height: 100%;
+}
+
+/* TARJETAS DE CONTENIDO (MÍNIMO 30px) */
+.pitch-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 24px;
+  padding: 34px 38px;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pitch-card.highlight {
+  border-color: var(--sr-yellow);
+  background: rgba(245, 179, 1, 0.08);
+}
+
+.card-icon {
+  font-size: 46px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 40px; /* REQUISITO: >= 40px */
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+
+.card-text {
+  font-size: 30px; /* REQUISITO: >= 30px */
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.card-text strong {
+  color: var(--white);
+  font-weight: 600;
+}
+
+/* LISTAS DE ALTO IMPACTO */
+.impact-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.impact-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  font-size: 32px; /* REQUISITO: >= 30px */
+  line-height: 1.4;
+  color: var(--white);
+}
+
+.impact-list li .bullet-icon {
+  color: var(--sr-yellow);
+  font-size: 34px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+.impact-list li strong {
+  color: var(--sr-yellow);
+  font-weight: 600;
+}
+
+/* MOCKUP FRAME PARA IMÁGENES */
+.visual-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.image-frame {
+  max-height: 640px;
+  border-radius: 26px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  border: 4px solid var(--border-light);
+  overflow: hidden;
+  background: #000;
+}
+
+.image-frame img {
+  height: 630px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.duo-mockups {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.duo-mockups img {
+  height: 620px;
+  border-radius: 22px;
+  border: 4px solid var(--border-light);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+}
+
+/* ÍCONO DE APP ESTILO IOS FLOTANTE LIMPIO */
+.ios-icon-showcase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.ios-squircle-large {
+  width: 240px;
+  height: 240px;
+  background: #FFFFFF; /* FONDO BLANCO ESTILO APP DE IOS */
+  border-radius: 54px; /* Squircle de iOS */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(255, 255, 255, 0.15);
+  margin-bottom: 26px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.ios-squircle-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ios-app-title {
+  font-family: var(--font-display);
+  font-size: 52px; /* REQUISITO: >= 40px */
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+
+.ios-app-title span {
+  color: var(--sr-orange);
+}
+
+.ios-app-sub {
+  font-size: 30px; /* REQUISITO: >= 30px */
+  color: var(--sr-yellow);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* PIE DE DIAPOSITIVA: LOGOS INFERIORES */
+.slide-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1.5px solid var(--border-light);
+  padding-top: 16px;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 30px; /* REQUISITO: >= 30px */
+  color: var(--text-muted);
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.footer-logo-vocacional {
+  height: 80px;
+  width: auto;
+  display: block;
+}
+
+.footer-text {
+  font-size: 30px;
+  color: var(--text-muted);
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+/* DOCK RECTANGULAR ESTILO APPLE (BLANCO) */
+.apple-brand-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 8px 22px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.capsule-divider {
+  width: 2px;
+  height: 48px;
+  background: #E5E5EA; /* Separador sutil Apple en dock blanco */
+  border-radius: 1px;
+}
+
+.capsule-logo-sr {
+  height: 76px;
+  width: auto;
+  display: block;
+}
+
+.capsule-logo-devs {
+  height: 68px;
+  width: auto;
+  display: block;
+}
+
+/* PORTADA */
+.cover-layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+.cover-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.cover-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1.5px solid var(--border-light);
+  padding-top: 18px;
+}
+
+.cover-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.cover-footer-vocacional {
+  height: 95px;
+  width: auto;
+  display: block;
+}
+
+.cover-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.cover-brand-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 22px;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
+  padding: 10px 26px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+.cover-capsule-divider {
+  width: 2px;
+  height: 56px;
+  background: #E5E5EA;
+  border-radius: 1px;
+}
+
+.cover-capsule-logo-sr {
+  height: 88px;
+  width: auto;
+  display: block;
+}
+
+.cover-capsule-logo-devs {
+  height: 80px;
+  width: auto;
+  display: block;
+}
+
+.cover-title-hero {
+  font-family: var(--font-display);
+  font-size: 96px; /* REQUISITO: >= 40px */
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -2px;
+  margin-bottom: 14px;
+}
+
+.cover-title-hero span {
+  color: var(--sr-orange);
+}
+
+.cover-subtitle-hero {
+  font-size: 42px; /* REQUISITO: >= 40px */
+  color: var(--sr-yellow);
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.cover-quote-hero {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 36px;
+  color: var(--text-muted);
+  max-width: 1200px;
+  margin-bottom: 36px;
+}
+
+.cover-details-box {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-light);
+  padding: 16px 36px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 30px; /* REQUISITO: >= 30px */
+  font-family: var(--font-mono);
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.cover-details-box span {
+  color: var(--swift-orange);
+}
+
+/* BARRA FLOTANTE DE PRESENTACIÓN EN NAVEGADOR */
+.presentation-toolbar {
+  position: fixed;
+  bottom: 24px;
+  right: 32px;
+  background: rgba(18, 19, 23, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  z-index: 9999;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--white);
+}
+
+.btn-nav {
+  background: transparent;
+  border: none;
+  color: var(--white);
+  font-size: 26px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-nav:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--sr-yellow);
+}
+
+.counter-badge {
+  color: var(--sr-yellow);
+  font-weight: 700;
+  font-size: 20px;
+}
+</style>
+</head>
+<body>
+
+<div class="slide-deck">
+
+  <!-- ==================== DIAPOSITIVA 1: PORTADA ==================== -->
+  <section class="slide" id="slide-1">
+    <div class="cover-layout">
+      
+      <div class="cover-center">
+        <span class="eyebrow">SUSTENTACIÓN ETAPA PRODUCTIVA SENA 2026</span>
+        <h1 class="cover-title-hero">Swifty<span>Ring</span></h1>
+        <div class="cover-subtitle-hero">Sistema de Timbre Escolar Inteligente y Alerta Sísmica</div>
+        <p class="cover-quote-hero">"El timbre inteligente de tu colegio. Suena a tiempo. Protege cuando importa."</p>
+
+        <div class="cover-details-box">
+          <div><strong>Desarrollador:</strong> Miguel Ángel Salazar G.</div>
+          <div><span>•</span></div>
+          <div><strong>I.E. Santa Sofía</strong></div>
+          <div><span>•</span></div>
+          <div><strong>SENA CDITI</strong> · Conexión Vocacional</div>
+        </div>
+      </div>
+
+      <div class="cover-footer">
+        <div class="cover-footer-left">
+          <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="cover-footer-vocacional">
+          <div style="font-family:var(--font-mono); font-size:30px; color:var(--text-muted);">
+            <div>Conexión Vocacional</div>
+            <div style="font-size:24px; color:rgba(255,255,255,0.45);">Alianza SENA CDITI 2026</div>
+          </div>
+        </div>
+        <div class="cover-footer-right">
+          <div style="font-family:var(--font-mono); font-size:30px; color:var(--text-muted); text-align:right;">
+            <div style="color:var(--white); font-weight:700;">SwiftyRing</div>
+            <div style="font-size:24px; color:var(--sr-yellow);">Swifty Devs.</div>
+          </div>
+          <div class="cover-brand-capsule">
+            <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="cover-capsule-logo-sr">
+            <div class="cover-capsule-divider"></div>
+            <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="cover-capsule-logo-devs">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 2: EL PROBLEMA ==================== -->
+  <section class="slide" id="slide-2">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">02 · DIAGNÓSTICO INSTITUCIONAL</div>
+    </div>
+
+    <div class="slide-title-wrap">
+      <span class="eyebrow">CONTEXTO ACTUAL</span>
+      <h2 class="slide-title">La Problemática en las <span>Aulas</span></h2>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-4cards">
+        <div class="pitch-card">
+          <div class="card-icon">⏱️</div>
+          <div class="card-title">Desfase y Retrasos</div>
+          <div class="card-text">Pérdida diaria de hasta <strong>10 minutos por clase</strong> debido a timbres operados a deshoras o con relojes desalineados.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">🚨</div>
+          <div class="card-title">Riesgo en Emergencias</div>
+          <div class="card-text"><strong>Cero alerta temprana ante sismos.</strong> La institución no cuenta con activación automática de campana para evacuación.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">📵</div>
+          <div class="card-title">Desconexión Docente</div>
+          <div class="card-text">Los profesores <strong>no tienen aviso anticipado</strong> de su próxima aula, generando congestión en cambios de bloque.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">📝</div>
+          <div class="card-title">Cero Trazabilidad</div>
+          <div class="card-text">Sin registro de auditoría: <strong>imposible verificar</strong> quién activó el timbre o si la rutina programada se cumplió.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">I.E. Santa Sofía · Dosquebradas</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">SwiftyRing</strong> · Swifty Devs</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 3: LA SOLUCIÓN ==================== -->
+  <section class="slide" id="slide-3">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">03 · PROPUESTA DE VALOR</div>
+    </div>
+
+    <div class="slide-title-wrap">
+      <span class="eyebrow">INNOVACIÓN TECNOLÓGICA</span>
+      <h2 class="slide-title">La Solución: <span>SwiftyRing</span></h2>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-2col">
+        <div>
+          <ul class="impact-list">
+            <li>
+              <span class="bullet-icon">⚡</span>
+              <div><strong>Automatización Absoluta:</strong> Horarios precisos sincronizados por microcontrolador y reloj atómico.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">🌍</span>
+              <div><strong>Detección Sísmica Inercial:</strong> Sensor MPU-6050 que dispara la evacuación escolar en milisegundos.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">📱</span>
+              <div><strong>Ecosistema Móvil Docente:</strong> Notificaciones push preventivas y cuenta regresiva al próximo timbre.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">🛡️</span>
+              <div><strong>Operación Autónoma:</strong> El timbre suena con puntualidad <strong>aún sin conexión a internet</strong>.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="visual-container">
+          <!-- ÍCONO FLOTANTE ELEGANTE ESTILO IOS SIN CONTENEDOR PESADO -->
+          <div class="ios-icon-showcase">
+            <div class="ios-squircle-large">
+              <img src="assets/logo_swiftyring_sin_texto.svg" alt="Ícono de SwiftyRing en iOS">
+            </div>
+            <div class="ios-app-title">Swifty<span>Ring</span></div>
+            <div class="ios-app-sub">App Institucional · iOS & Android</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">SENA CDITI Risaralda</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">SwiftyRing</strong> · Swifty Devs</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 4: PILARES Y DIFERENCIALES ==================== -->
+  <section class="slide" id="slide-4">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">04 · VENTAJAS TÉCNICAS</div>
+    </div>
+
+    <div class="slide-title-wrap">
+      <span class="eyebrow">FACTOR DIFERENCIAL</span>
+      <h2 class="slide-title">Pilares de <span>Ingeniería</span></h2>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-3col">
+        <div class="pitch-card">
+          <div class="card-icon">🔋</div>
+          <div class="card-title">100% Offline</div>
+          <div class="card-text">Memoria flash interna y reloj RTC DS3231 con batería de litio. <strong>Nunca se descalibra</strong> ante caídas de luz o red.</div>
+        </div>
+
+        <div class="pitch-card highlight">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">&lt; 2 Segundos</div>
+          <div class="card-text">Comando de toque manual instantáneo desde el celular mediante comunicación reactiva de alta velocidad.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">🔐</div>
+          <div class="card-title">Seguridad RS256</div>
+          <div class="card-text">Firma asimétrica de tokens JWT con estándar bancario. Protección estricta de las órdenes hacia el timbre físico.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">Conexión Vocacional 2026</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">SwiftyRing</strong> · Swifty Devs</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 5: EXPERIENCIA DEL DOCENTE ==================== -->
+  <section class="slide" id="slide-5">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">05 · DEMOSTRACIÓN APP</div>
+    </div>
+
+    <div class="slide-title-wrap">
+      <span class="eyebrow">VISTA DEL PROFESOR</span>
+      <h2 class="slide-title">Acompañamiento en el <span>Aula</span></h2>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-2col">
+        <div>
+          <ul class="impact-list">
+            <li>
+              <span class="bullet-icon">⏳</span>
+              <div><strong>Cuenta Regresiva en Vivo:</strong> Cronómetro exacto al próximo cambio de clase.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">📍</span>
+              <div><strong>Materia y Aula Asignada:</strong> Indica salón actual y hacia dónde debe desplazarse el docente.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">🔔</span>
+              <div><strong>Avisos Push (FCM):</strong> Notificaciones a los 10 y 5 minutos antes para cerrar la clase con calma.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">📅</span>
+              <div><strong>Matriz Semanal:</strong> Horario completo consolidado de lunes a viernes en un solo toque.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="visual-container">
+          <div class="image-frame">
+            <img src="assets/01_lanzador_aplicaciones.png" alt="App Docente">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">App Flutter · iOS & Android</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">SwiftyRing</strong> · Swifty Devs</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 6: CONTROL Y ADMINISTRACIÓN ==================== -->
+  <section class="slide" id="slide-6">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">06 · GESTIÓN OPERATIVA</div>
+    </div>
+
+    <div class="slide-title-wrap">
+      <span class="eyebrow">CONTROL ADMINISTRATIVO</span>
+      <h2 class="slide-title">Mando Central e Inmediato</h2>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-2col">
+        <div>
+          <ul class="impact-list">
+            <li>
+              <span class="bullet-icon">🔔</span>
+              <div><strong>Toque Inmediato:</strong> Botón central de emergencia con retroalimentación sonora y visual.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">⚠️</span>
+              <div><strong>Ventana ¡Timbre Activo!:</strong> Confirmación en tiempo real mientras el relé acciona la campana.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">🗓️</span>
+              <div><strong>Horarios Especiales:</strong> Creación ágil de jornadas culturales, cívicas y horarios reducidos.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">👥</span>
+              <div><strong>Distribución Académica:</strong> Asignación horaria bidireccional por docente y por aula.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="visual-container">
+          <div class="duo-mockups">
+            <img src="assets/02_control_timbres_principal.png" alt="Control de Timbres">
+            <img src="assets/05_aviso_timbre_activo.png" alt="Aviso Timbre Activo">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">Gestión Directiva</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">SwiftyRing</strong> · Swifty Devs</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 7: HARDWARE E IOT ==================== -->
+  <section class="slide" id="slide-7">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">07 · HARDWARE EMBEBIDO</div>
+    </div>
+
+    <div class="slide-title-wrap">
+      <span class="eyebrow">CIRCUITOS, RELÉ & MONTAJE</span>
+      <h2 class="slide-title">El Módulo Físico <span>IoT</span></h2>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-2col">
+        <div>
+          <ul class="impact-list">
+            <li>
+              <span class="bullet-icon">🧠</span>
+              <div><strong>Cerebro ESP32 Dual-Core:</strong> Firmware industrial programado en <strong>ESP-IDF v6 nativo</strong>.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">🔌</span>
+              <div><strong>Relé de Estado Sólido (SSR):</strong> Conmutación óptica limpia para la campana de 110V AC del colegio.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">🕒</span>
+              <div><strong>RTC DS3231 + Pila de Litio:</strong> Mantiene la hora atómica aún ante cortes de luz y sin red.</div>
+            </li>
+            <li>
+              <span class="bullet-icon">🧱</span>
+              <div><strong>Sensor Sísmico MPU-6050:</strong> Acelerómetro inercial para evacuación de emergencia automática.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="visual-container">
+          <div class="image-frame" style="max-height:580px;">
+            <img src="assets/modulo_fisico_real_foto.png" alt="Módulo Físico IoT SwiftyRing" style="height:580px; width:auto; object-fit:contain;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">Hardware IoT · Circuito & Relé 110V AC</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">SwiftyRing</strong> · Swifty Devs</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 8: ARQUITECTURA TECNOLÓGICA ==================== -->
+  <section class="slide" id="slide-8">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">08 · INGENIERÍA DE SOFTWARE</div>
+    </div>
+
+    <div class="slide-title-wrap">
+      <span class="eyebrow">TECNOLOGÍAS UTILIZADAS</span>
+      <h2 class="slide-title">Arquitectura y <span>Seguridad</span></h2>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-4cards">
+        <div class="pitch-card">
+          <div class="card-icon">📱</div>
+          <div class="card-title">Frontend Flutter</div>
+          <div class="card-text">Arquitectura limpia, gestión de estado con <strong>Riverpod</strong> y diseño adaptable para iOS y Android.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">💧</div>
+          <div class="card-title">Backend Vapor 4</div>
+          <div class="card-text">Servidor API nativo en <strong>Swift 6</strong>. Alta concurrencia, bajo consumo de memoria y WebSockets.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">🗄️</div>
+          <div class="card-title">PostgreSQL 17</div>
+          <div class="card-text">Esquema <code>public</code> con <strong>17 tablas relacionales</strong> optimizadas para auditoría e integridad horaria.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">🐳</div>
+          <div class="card-title">Docker & Nginx</div>
+          <div class="card-text">Despliegue blindado en contenedores con <strong>cifrado TLS/HTTPS</strong> mediante Certbot Let's Encrypt.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">Clean Architecture & Cloud</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">SwiftyRing</strong> · Swifty Devs</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 9: IMPACTO Y RESULTADOS ==================== -->
+  <section class="slide" id="slide-9">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">09 · BENEFICIOS CLAVE</div>
+    </div>
+
+    <div class="slide-title-wrap">
+      <span class="eyebrow">IMPACTO INSTITUCIONAL</span>
+      <h2 class="slide-title">Resultados en la <span>I.E. Santa Sofía</span></h2>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-3col">
+        <div class="pitch-card highlight">
+          <div class="card-icon">🎯</div>
+          <div class="card-title">100% Puntualidad</div>
+          <div class="card-text">Recuperación de hasta <strong>50 minutos semanales</strong> de tiempo pedagógico por cada grado escolar.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">🚨</div>
+          <div class="card-title">Evacuación Segura</div>
+          <div class="card-text">Detección inmediata de ondas telúricas protegiendo a más de <strong>1.200 estudiantes y profesores</strong>.</div>
+        </div>
+
+        <div class="pitch-card">
+          <div class="card-icon">🌱</div>
+          <div class="card-title">Cero Papel</div>
+          <div class="card-text">Digitalización integral de la bitácora escolar con <strong>auditoría permanente</strong> de cada evento del timbre.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">Comunidad I.E. Santa Sofía</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">SwiftyRing</strong> · Swifty Devs</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==================== DIAPOSITIVA 10: EQUIPO Y CIERRE ==================== -->
+  <section class="slide" id="slide-10">
+    <div class="slide-header">
+      <div class="header-meta">
+        <span class="header-project-name">SWIFTYRING</span>
+        <span class="header-dot">•</span>
+        <span class="header-context">SISTEMA INTELIGENTE DE TIMBRE ESCOLAR</span>
+      </div>
+      <div class="header-badge">10 · CONTACTO Y SUSTENTACIÓN</div>
+    </div>
+
+    <div class="slide-body">
+      <div class="grid-2col" style="align-items:center;">
+        <div>
+          <span class="eyebrow">EQUIPO DESARROLLADOR</span>
+          <h2 class="slide-title" style="margin-bottom:16px;">Miguel Ángel <span>Salazar G.</span></h2>
+          <div class="card-text" style="font-size:32px; color:var(--white); margin-bottom:20px;">
+            Desarrollador Full-Stack · Diseñador UI/UX & Firmware
+          </div>
+          
+          <ul class="impact-list">
+            <li>
+              <span class="bullet-icon">📍</span>
+              <div>I.E. Santa Sofía · Dosquebradas, Risaralda</div>
+            </li>
+            <li>
+              <span class="bullet-icon">🏛️</span>
+              <div>SENA CDITI · Técnico en Programación de Software</div>
+            </li>
+            <li>
+              <span class="bullet-icon">✉️</span>
+              <div><code>miguelsalazar2801@icloud.com</code></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="visual-container">
+          <div class="pitch-card highlight" style="text-align:center; padding:40px 36px;">
+            <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" style="height:125px; margin:0 auto 20px; display:block;">
+            <div class="card-title" style="color:var(--sr-yellow); font-size:38px;">Swifty Devs.</div>
+            <div class="card-text" style="font-size:32px; line-height:1.4;">
+              <strong>"Suena a tiempo.<br>Protege cuando importa."</strong>
+            </div>
+            <div style="margin-top:20px; font-family:var(--font-mono); font-size:30px; color:var(--swift-orange);">
+              Listo para Demostración en Vivo
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <div class="footer-left">
+        <img src="assets/logo_conexion_vocacional.png" alt="Conexión Vocacional" class="footer-logo-vocacional">
+        <span class="footer-text">Conexión Vocacional 2026 · Risaralda</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text"><strong style="color:var(--white);">Swifty Devs</strong> · SwiftyRing</span>
+        <div class="apple-brand-capsule">
+          <img src="assets/logo_swiftyring_sin_texto.svg" alt="SwiftyRing" class="capsule-logo-sr">
+          <div class="capsule-divider"></div>
+          <img src="assets/logo_swiftydevs_crop.png" alt="Swifty Devs" class="capsule-logo-devs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- BARRA FLOTANTE INTERACTIVA PARA PRESENTAR EN NAVEGADOR -->
+<nav class="presentation-toolbar">
+  <button class="btn-nav" id="btn-prev" title="Diapositiva Anterior (Flecha Izq / Arriba)">‹ Ant</button>
+  <span class="counter-badge" id="slide-counter">01 / 10</span>
+  <button class="btn-nav" id="btn-next" title="Siguiente Diapositiva (Flecha Der / Abajo / Espacio)">Sig ›</button>
+  <span style="color:rgba(255,255,255,0.2);">|</span>
+  <button class="btn-nav" id="btn-fullscreen" title="Pantalla Completa (F)">⛶ Pantalla Completa</button>
+</nav>
+
+<script>
+  let currentSlide = 1;
+  const totalSlides = 10;
+  const counter = document.getElementById('slide-counter');
+
+  function updateSlide(n) {
+    if (n < 1) n = 1;
+    if (n > totalSlides) n = totalSlides;
+    currentSlide = n;
+    counter.textContent = `${String(currentSlide).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}`;
+    const target = document.getElementById(`slide-${currentSlide}`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  document.getElementById('btn-prev').addEventListener('click', () => updateSlide(currentSlide - 1));
+  document.getElementById('btn-next').addEventListener('click', () => updateSlide(currentSlide + 1));
+
+  document.getElementById('btn-fullscreen').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  });
+
+  // NAVEGACIÓN POR TECLADO PARA SUSTENTACIÓN EN VIVO
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      updateSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      updateSlide(currentSlide - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      updateSlide(1);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      updateSlide(totalSlides);
+    } else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

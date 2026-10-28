@@ -28,3 +28,6 @@ CONFIG_LWIP_SNTP_UPDATE_DELAY=600000
 # Aumentar timeout del Task Watchdog a 15 s para permitir el handshake criptográfico TLS
 # sin falsas alarmas en el IDLE task del núcleo único (ESP32-C3).
 CONFIG_ESP_TASK_WDT_TIMEOUT_S=15
+
+# Rollback automático del bootloader ante fallos de firmware en OTA
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y

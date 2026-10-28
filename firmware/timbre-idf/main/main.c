@@ -40,6 +40,8 @@
 
 #include <stdio.h>
 
+#include "almacen_config.h"
+#include "aprovisionamiento.h"
 #include "comun.h"
 #include "config.h"
 #include "driver/i2c_master.h"
@@ -113,6 +115,7 @@ void app_main(void) {
     ESP_LOGI(TAG, "SwiftyRing · módulo de timbre (%s)", ROL_ESCLAVO ? "esclavo" : "maestro");
 
     iniciar_nvs();
+    almacen_config_iniciar();
     iniciar_flash();
 
     // Bus I2C 0 (I2C_NUM_0): dedicado a la pantalla OLED SH1106
@@ -188,7 +191,7 @@ void app_main(void) {
             }
         }
 
-        if (timbre_activo() || sismo_estado() >= 1 || sismo_grabando() || pantalla_tiene_aviso()) {
+        if (timbre_activo() || sismo_estado() >= 1 || sismo_grabando() || pantalla_tiene_aviso() || aprovisionamiento_activo()) {
             if (ahora - t_pantalla >= 200) {
                 debe_dibujar = true;
             }

@@ -238,6 +238,9 @@ class TimbreApi {
   /// teléfono deja de recibir avisos.
   Future<void> desvincularDispositivo(String id) => _delete('/dispositivos/$id');
 
+  /// Envía la orden de restablecimiento de fábrica al módulo físico ESP32
+  Future<void> restablecerModuloFisico() async => _post('/dispositivo/reset', {});
+
   // ---- Vista del profesor (RF-40..42, F-09) ----
 
   Future<MiHorario> miHorario() async =>

@@ -22,3 +22,9 @@ void pantalla_dibujar(void);
 // Muestra una tarjeta temporal emergente durante 3 segundos.
 void pantalla_notificar_cambio(const char *titulo, const char *detalle);
 bool pantalla_tiene_aviso(void);
+
+// Muestra la pantalla de cuenta regresiva para el restablecimiento de fábrica.
+void pantalla_cuenta_regresiva_reset(int segundos_restantes);
+
+// Limpia el estado de cuenta regresiva cuando se suelta el botón antes de tiempo.
+void pantalla_cancelar_cuenta_regresiva(void);

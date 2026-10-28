@@ -74,6 +74,17 @@ struct ComandosResponse: Content {
     let sincronizar: Bool
     let modoUps: Bool
     let duracionTimbreManualSeg: Int
+    let reset: Bool?
+    let otaUrl: String?
+}
+
+struct OrdenOtaRequest: Content {
+    let url: String
+}
+
+struct FirmwareInfoResponse: Content {
+    let version: String
+    let url: String
 }
 
 struct ReporteActivacionRequest: Content {
@@ -114,6 +125,18 @@ struct DispositivoController: RouteCollection {
         dispositivo.post("activaciones", use: reportarActivacion)
         dispositivo.post("sismos", use: reportarSismo)
         dispositivo.webSocket("canal", onUpgrade: canal)
+
+        // Endpoints administrativos para la App Flutter
+        let adminDispositivo = routes.grouped("api", "dispositivo")
+            .grouped(SwiftyRingAuthMiddleware())
+
+        adminDispositivo.post("reset", use: ordenarResetDispositivo)
+        adminDispositivo.post("ota", use: ordenarOtaDispositivo)
+        adminDispositivo.get("firmware", "info", use: firmwareInfo)
+
+        // Descarga de binario OTA para el ESP32
+        routes.grouped("api", "dispositivo")
+            .get("firmware", "download", use: descargarFirmware)
     }
 
     /// RF-28: el paquete completo que el módulo guarda en LittleFS. También
@@ -189,14 +212,54 @@ struct DispositivoController: RouteCollection {
         await EstadoModulo.compartido.registrarContacto()
         let duracion = await EstadoModulo.compartido.retirarOrden()
         let sincronizar = await EstadoModulo.compartido.retirarOrdenSincronizacion()
+        let reset = await EstadoModulo.compartido.retirarOrdenReset()
+        let otaUrl = await EstadoModulo.compartido.retirarOrdenOta()
         let config = try await ConfiguracionSistema.actual(on: req.db)
         return ComandosResponse(
             timbrar: duracion != nil,
             duracionSeg: duracion,
             sincronizar: sincronizar,
             modoUps: config.modoUps,
-            duracionTimbreManualSeg: config.duracionTimbreManualSeg
+            duracionTimbreManualSeg: config.duracionTimbreManualSeg,
+            reset: reset ? true : nil,
+            otaUrl: otaUrl
         )
+    }
+
+    func ordenarResetDispositivo(req: Request) async throws -> HTTPStatus {
+        try req.exigirRol(.admin)
+        await EstadoModulo.compartido.ordenarReset()
+        return .ok
+    }
+
+    func ordenarOtaDispositivo(req: Request) async throws -> HTTPStatus {
+        try req.exigirRol(.admin)
+        let datos = try req.content.decode(OrdenOtaRequest.self)
+        await EstadoModulo.compartido.ordenarOta(url: datos.url)
+        return .ok
+    }
+
+    func firmwareInfo(req: Request) async throws -> FirmwareInfoResponse {
+        try req.exigirRol(.admin)
+        return FirmwareInfoResponse(
+            version: "1.3.0",
+            url: "/api/dispositivo/firmware/download"
+        )
+    }
+
+    func descargarFirmware(req: Request) async throws -> Response {
+        let posiblesRutas = [
+            Environment.get("FIRMWARE_BIN_PATH"),
+            req.application.directory.publicDirectory + "firmware/swiftyring_timbre.bin",
+            req.application.directory.workingDirectory + "firmware/swiftyring_timbre.bin",
+            req.application.directory.workingDirectory + "../firmware/timbre-idf/build/swiftyring_timbre.bin"
+        ].compactMap { $0 }
+
+        guard let rutaValida = posiblesRutas.first(where: { FileManager.default.fileExists(atPath: $0) }) else {
+            throw Abort(.notFound, reason: "No hay binario de firmware compilado disponible en el servidor")
+        }
+
+        return req.fileio.streamFile(at: rutaValida)
     }
 
     /// RF-17: bitácora de lo que sonó en el colegio, venga del horario

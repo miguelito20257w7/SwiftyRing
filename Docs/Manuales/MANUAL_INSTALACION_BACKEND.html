@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftyRing — Manual de Despliegue · Backend API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Tokens de Marca Oficial Swifty Devs */
+:root {
+  --carbon: #0A0A0A;
+  --obsidian: #1C1C1E;
+  --swift-orange: #FF6B35;
+  --glow: #FF8C5A;
+  --ivory: #F2F2F7;
+  --white: #FFFFFF;
+  --gray-1: #3A3A3C;
+  --gray-2: #6E6E73;
+  --gray-3: #A1A1A6;
+  --hairline: #E5E5EA;
+
+  --sr-yellow: #F5B301;
+  --sr-orange: #DB712F;
+  --sr-graphite: #3B3B30;
+  --sr-ivory: #FAF8F2;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  --radius-card: 16px;
+  --radius-sm: 10px;
+  --shadow-xs: 0 2px 8px rgba(0,0,0,0.05);
+
+  --page-w: 210mm;
+  --page-pad: 18mm;
+}
+
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body {
+  margin: 0;
+  background: #D8D8DC;
+  color: var(--carbon);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 10pt;
+  line-height: 1.6;
+}
+
+.doc { max-width: calc(var(--page-w) + 40px); margin: 0 auto; padding: 24px 0 60px; }
+.page {
+  background: var(--white);
+  width: var(--page-w);
+  min-height: 297mm;
+  margin: 0 auto 22px;
+  padding: var(--page-pad);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.16);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; color: var(--carbon); margin: 0; }
+p { margin: 0 0 12px; }
+strong { font-weight: 500; color: var(--carbon); }
+em { font-style: italic; }
+a { color: var(--swift-orange); text-decoration: none; }
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 8.5pt;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--swift-orange);
+  margin: 0 0 8px;
+  display: block;
+}
+
+.runhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 8px;
+  margin-bottom: 22px;
+}
+.runhead .rh-brand { font-family: var(--font-display); font-size: 14pt; letter-spacing: -0.3px; }
+.runhead .rh-brand .dot { color: var(--swift-orange); }
+.runhead .rh-brand .ring { color: var(--sr-orange); }
+.runhead .rh-meta {
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  color: var(--gray-3);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.page-foot {
+  margin-top: auto;
+  border-top: 1px solid var(--hairline);
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  color: var(--gray-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sec-head { margin: 0 0 18px; }
+.sec-head .num {
+  font-family: var(--font-mono);
+  font-size: 9.5pt;
+  color: var(--swift-orange);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+.sec-head h2 { font-size: 24pt; line-height: 1.1; letter-spacing: -0.6px; margin-top: 3px; }
+.sec-head .sub { color: var(--gray-2); font-size: 10.5pt; margin-top: 6px; }
+
+/* PORTADA */
+.cover-page {
+  min-height: 297mm;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  padding: var(--page-pad);
+  position: relative;
+  overflow: hidden;
+}
+.cover-page::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 12px; height: 100%;
+  background: linear-gradient(180deg, var(--swift-orange), var(--sr-yellow));
+}
+.cover-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.cover-studio { font-family: var(--font-display); font-size: 15pt; letter-spacing: -0.3px; }
+.cover-studio .dot { color: var(--swift-orange); }
+.cover-studio .tag {
+  display: block; font-family: var(--font-mono);
+  font-size: 7.5pt; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--gray-3); margin-top: 2px;
+}
+.cover-badge {
+  text-align: right; font-family: var(--font-mono); font-size: 8pt;
+  color: var(--gray-2); letter-spacing: 0.06em; line-height: 1.6; text-transform: uppercase;
+}
+.cover-hero {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+}
+.cover-logo-img { width: 140px; height: 140px; margin-bottom: 20px; }
+.cover-eyebrow {
+  font-family: var(--font-body); font-weight: 500; font-size: 9.5pt;
+  letter-spacing: 0.32em; text-transform: uppercase; color: var(--swift-orange); margin-bottom: 10px;
+}
+.cover-title {
+  font-family: var(--font-display); font-weight: 600; font-size: 42pt;
+  line-height: 0.98; letter-spacing: -1.5px;
+}
+.cover-title .ring { color: var(--sr-orange); }
+.cover-sub {
+  font-family: var(--font-display); font-style: italic; font-weight: 400;
+  font-size: 15pt; color: var(--gray-1); margin-top: 10px;
+}
+.cover-line {
+  width: 56px; height: 3px; background: var(--swift-orange);
+  border-radius: 2px; margin: 18px auto 14px;
+}
+.cover-desc { max-width: 52ch; color: var(--gray-2); font-size: 10pt; line-height: 1.6; }
+.cover-meta { border-top: 1px solid var(--hairline); padding-top: 16px; margin-top: auto; }
+.cover-meta .mrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 24px; }
+.meta-item .k { font-family: var(--font-mono); font-size: 7.2pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gray-3); }
+.meta-item .v { font-size: 10pt; margin-top: 2px; }
+.cover-foot {
+  display: flex; justify-content: space-between; align-items: center; margin-top: 16px;
+  font-family: var(--font-mono); font-size: 7.5pt; color: var(--gray-3); letter-spacing: 0.06em; text-transform: uppercase;
+}
+.endorse { font-family: var(--font-display); font-size: 10.5pt; letter-spacing: -0.2px; }
+.endorse .dot { color: var(--swift-orange); }
+
+/* TARJETAS Y CÓDIGO */
+.card {
+  background: var(--white);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-xs);
+  margin: 12px 0;
+}
+.card.tint { background: var(--ivory); border-color: transparent; }
+.card.dark { background: var(--obsidian); border-color: transparent; color: var(--ivory); }
+.card.dark h3, .card.dark strong { color: var(--white); }
+
+pre {
+  background: #181A1F;
+  color: #E2E4E8;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 8.5pt;
+  line-height: 1.5;
+  overflow-x: auto;
+  border: 1px solid #2B2F38;
+  margin: 10px 0 14px;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 8.5pt;
+  background: var(--ivory);
+  color: var(--swift-orange);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+pre code { background: transparent; color: inherit; padding: 0; }
+
+.callout {
+  border-left: 3px solid var(--swift-orange);
+  background: linear-gradient(90deg, rgba(255,107,53,0.06), rgba(255,107,53,0));
+  padding: 12px 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 14px 0;
+  font-size: 9.5pt;
+}
+.callout .lbl {
+  font-weight: 600;
+  color: var(--swift-orange);
+  font-size: 8.5pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 3px;
+}
+
+table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 9.5pt; }
+thead th {
+  background: var(--carbon);
+  color: var(--white);
+  text-align: left;
+  font-weight: 500;
+  padding: 8px 12px;
+  font-size: 8.5pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+tbody td { padding: 8px 12px; border-bottom: 1px solid var(--hairline); color: var(--gray-1); }
+
+@media print {
+  body { background: #FFF; }
+  .doc { padding: 0; margin: 0; }
+  .page { box-shadow: none; margin: 0; page-break-after: always; break-after: page; }
+}
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <!-- ==================== PÁGINA 1: PORTADA ==================== -->
+  <div class="page cover-page">
+    <div class="cover-top">
+      <div class="cover-studio">
+        Swifty Devs<span class="dot">.</span>
+        <span class="tag">Estudio de Software</span>
+      </div>
+      <div class="cover-badge">
+        Manual de Despliegue · Backend v1.0<br>
+        SENA CDITI · Risaralda · 2026
+      </div>
+    </div>
+
+    <div class="cover-hero">
+      <img src="assets/logo_swiftyring_sin_texto.svg" alt="Logo SwiftyRing" class="cover-logo-img">
+      <span class="cover-eyebrow">Manual de Infraestructura & Servicios</span>
+      <h1 class="cover-title">Backend <span class="ring">Vapor</span></h1>
+      <div class="cover-sub">Arquitectura de Servidor, Contenedores Docker y Seguridad Asimétrica</div>
+      <div class="cover-line"></div>
+      <p class="cover-desc">Guía para el despliegue con Docker Compose, generación de firmas RS256, autenticación con llave de dispositivo, migraciones relacionales y proxy seguro Nginx.</p>
+    </div>
+
+    <div class="cover-meta">
+      <div class="mrow">
+        <div class="meta-item">
+          <div class="k">Framework Central</div>
+          <div class="v">Vapor 4 (Swift 6.0)</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Motor de Datos</div>
+          <div class="v">PostgreSQL 17 Alpine</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Orquestador</div>
+          <div class="v">Docker & Docker Compose v2</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Servidor Web / SSL</div>
+          <div class="v">Nginx + Certbot Let's Encrypt</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Criptografía</div>
+          <div class="v">RSA 2048 (RS256) + X-Device-Key</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Desarrollador</div>
+          <div class="v">Miguel Ángel Salazar García</div>
+        </div>
+      </div>
+      <div class="cover-foot">
+        <div class="endorse">Swifty Devs<span class="dot">.</span> Apps hechas con intención.</div>
+        <div>I.E. Santa Sofía · 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 2: ARQUITECTURA Y SECRETOS ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">01 · Arquitectura y Generación de Llaves</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">01</span>
+      <h2>Arquitectura y Secretos</h2>
+      <div class="sub">Generación de firmas RS256 para JWT y clave del microcontrolador</div>
+    </div>
+
+    <p>El backend de SwiftyRing funciona como servidor de identidad y reloj central. Antes de encender los contenedores Docker, es obligatorio preparar el par de claves RSA:</p>
+
+    <pre><code>cd backend/SwiftyRing
+mkdir -p keys
+
+# 1. Generar el par de llaves asimétricas RS256 para JWT (RF-44)
+openssl genrsa -out keys/jwt_private.pem 2048
+openssl rsa -in keys/jwt_private.pem -pubout -out keys/jwt_public.pem
+chmod 600 keys/jwt_private.pem
+
+# 2. Generar llave criptográfica compartida para el ESP32 (cabecera X-Device-Key)
+openssl rand -hex 24</code></pre>
+
+    <div class="callout">
+      <span class="lbl">Permisos de Usuario Docker (Vapor UID 999)</span>
+      La imagen Docker corre como el usuario <code>vapor</code> (UID 999). Para que pueda leer la clave privada montada como solo lectura, ejecute:
+      <br><code>echo "SWIFTYRING_GID=$(id -g)" &gt;&gt; .env.production</code> y asigne <code>chmod 640 keys/jwt_private.pem</code>.
+    </div>
+
+    <h3>Variables de Entorno (`.env.production`)</h3>
+    <pre><code>DATABASE_HOST=db
+DATABASE_PORT=5432
+DATABASE_NAME=swiftyring
+DATABASE_USERNAME=swiftyring
+DATABASE_PASSWORD=clave_postgresql_2026
+
+POSTGRES_DB=swiftyring
+POSTGRES_USER=swiftyring
+POSTGRES_PASSWORD=clave_postgresql_2026
+
+JWT_PRIVATE_KEY_PATH=/app/keys/jwt_private.pem
+JWT_PUBLIC_KEY_PATH=/app/keys/jwt_public.pem
+JWT_EXPIRATION_HOURS=720
+
+ADMIN_EMAIL=coordinacion@santasofia.edu.co
+ADMIN_PASSWORD=ContrasenaSuperSegura2026*
+DEVICE_API_KEY=tu_cadena_hexadecimal_generada
+FCM_CREDENTIALS_PATH=/app/keys/fcm-cuenta-servicio.json
+LOG_LEVEL=info</code></pre>
+
+    <div class="page-foot">
+      <span>SwiftyRing Backend · Infraestructura</span>
+      <span>Pág. 02</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 3: DESPLIEGUE DOCKER Y NGINX ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">02 · Despliegue con Docker y Proxy Nginx</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">02</span>
+      <h2>Despliegue y Puesta en Producción</h2>
+      <div class="sub">Compilación multi-stage, migraciones relacionales y proxy inverso seguro</div>
+    </div>
+
+    <h3>Comandos de Despliegue Paso a Paso</h3>
+    <pre><code># 1. Compilar imagen de producción en Swift optimizado
+docker compose -f docker-compose.prod.yml build
+
+# 2. Levantar el contenedor de base de datos con healthcheck
+docker compose -f docker-compose.prod.yml up -d db
+
+# 3. Aplicar migraciones del esquema relacional (crea tablas y superadmin)
+docker compose -f docker-compose.prod.yml --profile tools run --rm migrate
+
+# 4. Levantar la API en segundo plano y revisar logs
+docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml logs -f app</code></pre>
+
+    <h3>Configuración de Proxy Inverso Nginx (`swiftyring.conf`)</h3>
+    <pre><code>server {
+    listen 80;
+    server_name swiftyring.santasofia.edu.co;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name swiftyring.santasofia.edu.co;
+
+    ssl_certificate /etc/letsencrypt/live/swiftyring.santasofia.edu.co/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/swiftyring.santasofia.edu.co/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8020;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}</code></pre>
+
+    <div class="card tint">
+      <h4>Respaldos de Base de Datos</h4>
+      <pre><code>docker compose -f docker-compose.prod.yml exec -T db pg_dump -U swiftyring swiftyring > backup.sql</code></pre>
+    </div>
+
+    <div class="page-foot">
+      <span>SwiftyRing Backend · Infraestructura</span>
+      <span>Pág. 03</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

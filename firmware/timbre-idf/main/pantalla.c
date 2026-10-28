@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "aprovisionamiento.h"
 #include "canal.h"
 #include "comun.h"
 #include "config.h"
@@ -38,11 +39,24 @@ static bool hay_conexion(void) {
 static char s_aviso_titulo[24] = "";
 static char s_aviso_detalle[32] = "";
 static uint32_t s_aviso_hasta = 0;
+static int s_cuenta_regresiva_reset = -1;
 static int s_ultimo_minuto_prox = -1;
 static timbre_programado_t s_proximo_cache;
 static bool s_hay_proximo_cache = false;
 static bool s_especial_vigente_cache = false;
 static char s_especial_nombre_cache[25] = "";
+
+void pantalla_cuenta_regresiva_reset(int segundos_restantes) {
+    s_cuenta_regresiva_reset = segundos_restantes;
+    pantalla_dibujar();
+}
+
+void pantalla_cancelar_cuenta_regresiva(void) {
+    if (s_cuenta_regresiva_reset >= 0) {
+        s_cuenta_regresiva_reset = -1;
+        pantalla_dibujar();
+    }
+}
 
 void pantalla_notificar_cambio(const char *titulo, const char *detalle) {
     strlcpy(s_aviso_titulo, titulo ? titulo : "", sizeof(s_aviso_titulo));
@@ -65,6 +79,52 @@ void pantalla_mensaje(const char *linea1, const char *linea2) {
 
 void pantalla_dibujar(void) {
     if (!sh1106_presente()) return;
+
+    // ============================================================
+    // -1. CUENTA REGRESIVA DE RESTABLECIMIENTO DE FÁBRICA (BOTÓN)
+    // ============================================================
+    if (s_cuenta_regresiva_reset >= 0) {
+        sh1106_limpiar();
+        sh1106_linea(0, 0, 127, 0);
+        sh1106_linea(0, 63, 127, 63);
+        sh1106_linea(0, 0, 0, 63);
+        sh1106_linea(127, 0, 127, 63);
+        sh1106_linea(0, 16, 127, 16);
+
+        const char *hdr = "! RESTABLECIMIENTO !";
+        int x_hdr = (128 - sh1106_ancho_texto(hdr)) / 2;
+        sh1106_texto(x_hdr, 4, hdr);
+
+        char txt_seg[24];
+        snprintf(txt_seg, sizeof(txt_seg), "EN %d SEGUNDOS...", s_cuenta_regresiva_reset);
+        int x_seg = (128 - sh1106_ancho_texto(txt_seg)) / 2;
+        sh1106_texto(x_seg, 26, txt_seg);
+
+        const char *sub = "SUELTA PARA CANCELAR";
+        int x_sub = (128 - sh1106_ancho_texto(sub)) / 2;
+        sh1106_texto(x_sub, 46, sub);
+
+        sh1106_mostrar();
+        return;
+    }
+
+    // ============================================================
+    // -0.5. MODO APROVISIONAMIENTO (SETUP WIZARD)
+    // ============================================================
+    if (aprovisionamiento_activo()) {
+        sh1106_limpiar();
+        sh1106_linea(0, 16, 127, 16);
+        const char *hdr = "[ MODO CONFIG ]";
+        sh1106_texto((128 - sh1106_ancho_texto(hdr)) / 2, 4, hdr);
+
+        sh1106_texto(4, 20, "Conecta al WiFi:");
+        char ssid_ap[32] = "";
+        aprovisionamiento_obtener_ssid_ap(ssid_ap, sizeof(ssid_ap));
+        sh1106_texto_grande(4, 32, ssid_ap);
+        sh1106_texto(4, 52, "Abre app SwiftyRing");
+        sh1106_mostrar();
+        return;
+    }
 
     // ============================================================
     // 0. AVISO VISUAL DE CAMBIO (Popup temporal de 3 segundos)

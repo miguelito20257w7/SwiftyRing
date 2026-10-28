@@ -17,6 +17,7 @@ import 'package:swiftyring/modules/timbre_escolar/presentation/pages/especiales_
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/historial_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/horario_completo_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/pages/mi_horario_page.dart';
+import 'package:swiftyring/modules/timbre_escolar/presentation/pages/setup_wizard_page.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/widgets/enganche_push.dart';
 
 /// Rutas del módulo Sistema de Timbre Escolar.
@@ -31,6 +32,7 @@ abstract class RutasTimbre {
   static const miHorarioCompleto = '/timbre/mi-horario/completo';
   static const historial = '/timbre/historial';
   static const ajustes = '/timbre/ajustes';
+  static const setupWizard = '/timbre/setup-wizard';
 
   /// Los ajustes de solo lectura del profesor (F-09). Ruta aparte de
   /// [ajustes] porque son otra pantalla, no la misma con secciones ocultas:
@@ -114,6 +116,10 @@ final ModuloApp timbreEscolarModulo = ModuloApp(
     GoRoute(
       path: RutasTimbre.ajustes,
       builder: (context, state) => const AjustesPage(),
+    ),
+    GoRoute(
+      path: RutasTimbre.setupWizard,
+      builder: (context, state) => const SetupWizardPage(),
     ),
     GoRoute(
       path: RutasTimbre.misAjustes,

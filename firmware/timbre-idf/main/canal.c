@@ -14,10 +14,13 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "actualizador_ota.h"
+#include "almacen_config.h"
 #include "cJSON.h"
 #include "comun.h"
 #include "esp_crt_bundle.h"
 #include "esp_log.h"
+#include "esp_system.h"
 #include "esp_websocket_client.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -49,7 +52,7 @@ static volatile bool s_iniciado = false;
 // pero con esquema ws:// o wss:// y ruta /api/dispositivo/canal.
 
 static void construir_url(char *destino, size_t tam) {
-    const char *base = API_BASE;
+    const char *base = almacen_config_api_base();
     const char *esquema_ws;
     const char *resto;  // lo que queda después de http:// o https://
 
@@ -156,7 +159,7 @@ void canal_conectar(void) {
 
     // La cabecera de autenticación, igual que en las peticiones HTTP de red.c.
     static char cabecera[128];
-    snprintf(cabecera, sizeof(cabecera), "X-Device-Key: %s\r\n", DEVICE_API_KEY);
+    snprintf(cabecera, sizeof(cabecera), "X-Device-Key: %s\r\n", almacen_config_device_key());
 
     esp_websocket_client_config_t cfg = {
         .uri = url,
@@ -308,6 +311,18 @@ void canal_atender(void) {
                 red_pedir_sincronizacion_motivo(motivo ? motivo : "horario");
             }
             ESP_LOGI(TAG, "sincronización solicitada por el servidor (motivo: %s)", motivo ? motivo : "general");
+        } else if (strcmp(tipo, "ota") == 0) {
+            const cJSON *j_url = cJSON_GetObjectItemCaseSensitive(doc, "url");
+            if (cJSON_IsString(j_url) && strlen(j_url->valuestring) > 0) {
+                ESP_LOGW(TAG, "orden de actualización OTA recibida por WebSocket: %s", j_url->valuestring);
+                actualizador_ota_iniciar(j_url->valuestring);
+            }
+        } else if (strcmp(tipo, "reset") == 0 || strcmp(tipo, "factory_reset") == 0) {
+            ESP_LOGW(TAG, "orden de restablecimiento de fábrica recibida por WebSocket");
+            pantalla_mensaje("RESTABLECIENDO", "DE FABRICA...");
+            almacen_config_restablecer_fabrica();
+            vTaskDelay(pdMS_TO_TICKS(1500));
+            esp_restart();
         } else {
             ESP_LOGD(TAG, "tipo desconocido: %s", tipo);
         }

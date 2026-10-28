@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftyRing — Manual de Conexión · Módulo Físico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Tokens de Marca Oficial Swifty Devs */
+:root {
+  --carbon: #0A0A0A;
+  --obsidian: #1C1C1E;
+  --swift-orange: #FF6B35;
+  --glow: #FF8C5A;
+  --ivory: #F2F2F7;
+  --white: #FFFFFF;
+  --gray-1: #3A3A3C;
+  --gray-2: #6E6E73;
+  --gray-3: #A1A1A6;
+  --hairline: #E5E5EA;
+
+  --sr-yellow: #F5B301;
+  --sr-orange: #DB712F;
+  --sr-graphite: #3B3B30;
+  --sr-ivory: #FAF8F2;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  --radius-card: 16px;
+  --radius-sm: 10px;
+  --shadow-xs: 0 2px 8px rgba(0,0,0,0.05);
+
+  --page-w: 210mm;
+  --page-pad: 18mm;
+}
+
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body {
+  margin: 0;
+  background: #D8D8DC;
+  color: var(--carbon);
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: 10pt;
+  line-height: 1.6;
+}
+
+.doc { max-width: calc(var(--page-w) + 40px); margin: 0 auto; padding: 24px 0 60px; }
+.page {
+  background: var(--white);
+  width: var(--page-w);
+  min-height: 297mm;
+  margin: 0 auto 22px;
+  padding: var(--page-pad);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.16);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; color: var(--carbon); margin: 0; }
+p { margin: 0 0 12px; }
+strong { font-weight: 500; color: var(--carbon); }
+em { font-style: italic; }
+a { color: var(--swift-orange); text-decoration: none; }
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 8.5pt;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--swift-orange);
+  margin: 0 0 8px;
+  display: block;
+}
+
+.runhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 8px;
+  margin-bottom: 22px;
+}
+.runhead .rh-brand { font-family: var(--font-display); font-size: 14pt; letter-spacing: -0.3px; }
+.runhead .rh-brand .dot { color: var(--swift-orange); }
+.runhead .rh-brand .ring { color: var(--sr-orange); }
+.runhead .rh-meta {
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  color: var(--gray-3);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.page-foot {
+  margin-top: auto;
+  border-top: 1px solid var(--hairline);
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 7.5pt;
+  color: var(--gray-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sec-head { margin: 0 0 18px; }
+.sec-head .num {
+  font-family: var(--font-mono);
+  font-size: 9.5pt;
+  color: var(--swift-orange);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+.sec-head h2 { font-size: 24pt; line-height: 1.1; letter-spacing: -0.6px; margin-top: 3px; }
+.sec-head .sub { color: var(--gray-2); font-size: 10.5pt; margin-top: 6px; }
+
+/* PORTADA */
+.cover-page {
+  min-height: 297mm;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  padding: var(--page-pad);
+  position: relative;
+  overflow: hidden;
+}
+.cover-page::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 12px; height: 100%;
+  background: linear-gradient(180deg, var(--sr-orange), var(--sr-yellow));
+}
+.cover-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.cover-studio { font-family: var(--font-display); font-size: 15pt; letter-spacing: -0.3px; }
+.cover-studio .dot { color: var(--swift-orange); }
+.cover-studio .tag {
+  display: block; font-family: var(--font-mono);
+  font-size: 7.5pt; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--gray-3); margin-top: 2px;
+}
+.cover-badge {
+  text-align: right; font-family: var(--font-mono); font-size: 8pt;
+  color: var(--gray-2); letter-spacing: 0.06em; line-height: 1.6; text-transform: uppercase;
+}
+.cover-hero {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+}
+.cover-logo-img { width: 140px; height: 140px; margin-bottom: 20px; }
+.cover-eyebrow {
+  font-family: var(--font-body); font-weight: 500; font-size: 9.5pt;
+  letter-spacing: 0.32em; text-transform: uppercase; color: var(--sr-orange); margin-bottom: 10px;
+}
+.cover-title {
+  font-family: var(--font-display); font-weight: 600; font-size: 42pt;
+  line-height: 0.98; letter-spacing: -1.5px;
+}
+.cover-title .ring { color: var(--sr-orange); }
+.cover-sub {
+  font-family: var(--font-display); font-style: italic; font-weight: 400;
+  font-size: 15pt; color: var(--gray-1); margin-top: 10px;
+}
+.cover-line {
+  width: 56px; height: 3px; background: var(--sr-orange);
+  border-radius: 2px; margin: 18px auto 14px;
+}
+.cover-desc { max-width: 52ch; color: var(--gray-2); font-size: 10pt; line-height: 1.6; }
+.cover-meta { border-top: 1px solid var(--hairline); padding-top: 16px; margin-top: auto; }
+.cover-meta .mrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 24px; }
+.meta-item .k { font-family: var(--font-mono); font-size: 7.2pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gray-3); }
+.meta-item .v { font-size: 10pt; margin-top: 2px; }
+.cover-foot {
+  display: flex; justify-content: space-between; align-items: center; margin-top: 16px;
+  font-family: var(--font-mono); font-size: 7.5pt; color: var(--gray-3); letter-spacing: 0.06em; text-transform: uppercase;
+}
+.endorse { font-family: var(--font-display); font-size: 10.5pt; letter-spacing: -0.2px; }
+.endorse .dot { color: var(--swift-orange); }
+
+/* TARJETAS Y DIAGRAMAS */
+.card {
+  background: var(--white);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-xs);
+  margin: 12px 0;
+}
+.card.tint { background: var(--ivory); border-color: transparent; }
+.card.dark { background: var(--obsidian); border-color: transparent; color: var(--ivory); }
+.card.dark h3, .card.dark strong { color: var(--white); }
+
+pre {
+  background: #181A1F;
+  color: #E2E4E8;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 8.5pt;
+  line-height: 1.5;
+  overflow-x: auto;
+  border: 1px solid #2B2F38;
+  margin: 10px 0 14px;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 8.5pt;
+  background: var(--ivory);
+  color: var(--swift-orange);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+pre code { background: transparent; color: inherit; padding: 0; }
+
+.callout {
+  border-left: 3px solid var(--sr-orange);
+  background: linear-gradient(90deg, rgba(219,113,47,0.07), rgba(219,113,47,0));
+  padding: 12px 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 14px 0;
+  font-size: 9.5pt;
+}
+.callout .lbl {
+  font-weight: 600;
+  color: var(--sr-orange);
+  font-size: 8.5pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.ascii-box {
+  background: #181A1F;
+  color: #E2E4E8;
+  border: 1px solid #2B2F38;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin: 12px 0 16px;
+  font-family: var(--font-mono);
+  font-size: 8.2pt;
+  line-height: 1.45;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+@media print {
+  body { background: #FFF; }
+  .doc { padding: 0; margin: 0; }
+  .page { box-shadow: none; margin: 0; page-break-after: always; break-after: page; }
+}
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <!-- ==================== PÁGINA 1: PORTADA ==================== -->
+  <div class="page cover-page">
+    <div class="cover-top">
+      <div class="cover-studio">
+        Swifty Devs<span class="dot">.</span>
+        <span class="tag">Estudio de Software</span>
+      </div>
+      <div class="cover-badge">
+        Manual de Conexión · Módulo Físico v1.0<br>
+        SENA CDITI · Risaralda · 2026
+      </div>
+    </div>
+
+    <div class="cover-hero">
+      <img src="assets/logo_swiftyring_sin_texto.svg" alt="Logo SwiftyRing" class="cover-logo-img">
+      <span class="cover-eyebrow">Manual de Hardware & Firmware</span>
+      <h1 class="cover-title">Módulo <span class="ring">Físico</span></h1>
+      <div class="cover-sub">Conexión de Caja Preensamblada, Conmutación 110V y Firmware ESP-IDF</div>
+      <div class="cover-line"></div>
+      <p class="cover-desc">Guía para la conexión exterior de la caja protegida, cableado del circuito eléctrico de campanas escolares, montaje inercial del acelerómetro y flasheo.</p>
+    </div>
+
+    <div class="cover-meta">
+      <div class="mrow">
+        <div class="meta-item">
+          <div class="k">Microcontrolador</div>
+          <div class="v">ESP32-S3 / ESP32-WROOM</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Reloj Autónomo</div>
+          <div class="v">RTC DS3231 + Pila Litio</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Detección Telúrica</div>
+          <div class="v">Acelerómetro MPU-6050</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Actuador de Potencia</div>
+          <div class="v">Relé de Estado Sólido (110V AC)</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Framework Firmware</div>
+          <div class="v">ESP-IDF v6.0.2 Oficial</div>
+        </div>
+        <div class="meta-item">
+          <div class="k">Desarrollador</div>
+          <div class="v">Miguel Ángel Salazar García</div>
+        </div>
+      </div>
+      <div class="cover-foot">
+        <div class="endorse">Swifty Devs<span class="dot">.</span> Apps hechas con intención.</div>
+        <div>I.E. Santa Sofía · 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 2: CONEXIONES EXTERNAS ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">01 · Conexiones Externas y Seguridad Eléctrica</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">01</span>
+      <h2>Conexiones de la Caja</h2>
+      <div class="sub">Salidas del chasis preensamblado y cableado a la campana existente</div>
+    </div>
+
+    <p>El hardware se entrega totalmente montado en una caja protectora. El instalador solo debe intervenir las conexiones externas hacia el circuito eléctrico del colegio:</p>
+
+    <div class="ascii-box">                  DISPOSICIÓN DE SALIDAS DE LA CAJA
+        ┌─────────────────────────────────────────────────────────┐
+        │       SwiftyRing · Timbre Escolar y Alerta Sísmica      │
+        │  ┌───────────────────────────────────────────────────┐  │
+        │  │ 10:14:32 AM                   Wi-Fi: OK (192.168) │  │  ← Pantalla OLED
+        │  │ PRÓXIMO TIMBRE: 10:15:00 AM                       │  │    SH1106 1.3"
+        │  │ RESTANTE: 00 min 28 s                             │  │
+        │  └───────────────────────────────────────────────────┘  │
+        │                                                         │
+        │      (🔴) LED Alerta                     [ BOTÓN FÍSICO ]│
+        └─────────────────────────────────────────────────────────┘
+           │                        │                    │
+    [ USB-C / DC 5V ]      [ BORNERA RELÉ (110V) ] [ BOTÓN EXT ]
+      Alimentación          Línea Campana Escolar    (Opcional)</div>
+
+    <h3>1. Bornera de Salida del Relé (110V / 220V AC)</h3>
+    <p>La bornera actúa como interruptor normalmente abierto (NO) en serie con la fase de la campana:</p>
+
+    <div class="ascii-box">Fase 110V AC ──────> [ Bornera COM ]
+                     [ Bornera NO  ] ──────> [ Campana Institucional ] ───> Neutro</div>
+
+    <div class="callout">
+      <span class="lbl">¡PRECAUCIÓN ELÉCTRICA!</span>
+      Antes de apretar los cables en la bornera de la campana, baje el breaker o disyuntor de timbres en el tablero general del colegio.
+    </div>
+
+    <h3>2. Anclaje Estructural para Sensor Sísmico</h3>
+    <p>El sensor MPU-6050 detecta aceleración telúrica en tres ejes. Para evitar falsos positivos provocados por portazos o vibraciones de escritorios:</p>
+    <ul>
+      <li>Fije la caja firmemente con chazos y tornillos a una <strong>columna o pared de concreto/ladrillo</strong>.</li>
+      <li>Nunca la instale sobre divisiones de yeso (drywall) ni muebles móviles.</li>
+    </ul>
+
+    <div class="page-foot">
+      <span>Módulo Físico SwiftyRing · Hardware</span>
+      <span>Pág. 02</span>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 3: FIRMWARE Y CONFIGURACIÓN ==================== -->
+  <div class="page">
+    <div class="runhead">
+      <div class="rh-brand">Swifty<span class="ring">Ring</span></div>
+      <div class="rh-meta">02 · Flasheo de Firmware y Setup Wizard</div>
+    </div>
+
+    <div class="sec-head">
+      <span class="num">02</span>
+      <h2>Flasheo y Configuración</h2>
+      <div class="sub">Compilación con ESP-IDF v6, configuración de red y modo multi-módulo</div>
+    </div>
+
+    <h3>1. Configurar Parámetros (`config.h`)</h3>
+    <pre><code>. ~/.espressif/tools/activate_idf_v6.0.2.sh
+cp firmware/timbre-idf/main/config.example.h firmware/timbre-idf/main/config.h
+
+# Configurar valores en config.h:
+#define WIFI_SSID       "SantaSofia_Red"
+#define WIFI_PASSWORD   "ClaveWifiColegio2026"
+#define API_BASE        "https://swiftyring.santasofia.edu.co/api"
+#define DEVICE_API_KEY  "misma-llave-que-en-env-production"
+#define ROL_ESCLAVO     0 // 0 = Maestro, 1 = Esclavo (edificio secundario)</code></pre>
+
+    <h3>2. Compilar y Flashear con idf.py</h3>
+    <pre><code>cd firmware/timbre-idf
+idf.py set-target esp32s3
+idf.py build
+idf.py -p /dev/cu.usbserial-0001 erase-flash
+idf.py -p /dev/cu.usbserial-0001 flash monitor</code></pre>
+
+    <h3>3. Futuro Asistente de Configuración (Setup Wizard Web)</h3>
+    <div class="card tint">
+      <h4>Puesta en Marcha Sin Computador:</h4>
+      <p>1. Encender la caja manteniendo pulsado el botón frontal durante 5 segundos.<br>
+      2. Conectarse desde un teléfono a la red Wi-Fi: <code>SwiftyRing-Config</code>.<br>
+      3. El navegador abrirá el asistente en <code>http://192.168.4.1</code> para guardar la red escolar y la clave API de forma inalámbrica.</p>
+    </div>
+
+    <div class="page-foot">
+      <span>Módulo Físico SwiftyRing · Hardware</span>
+      <span>Pág. 03</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

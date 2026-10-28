@@ -4,6 +4,9 @@
 idf_component_register(
     SRCS
         "main.c"
+        "almacen_config.c"
+        "aprovisionamiento.c"
+        "actualizador_ota.c"
         "reloj.c"
         "rtc.c"
         "horario.c"
@@ -24,8 +27,11 @@ idf_component_register(
         esp_netif
         esp_event
         esp_http_client
+        esp_https_ota   # Actualizaciones OTA seguras
+        app_update      # Control de particiones y rollback
+        esp_http_server # Servidor web para el Setup Wizard
         mbedtls         # verificar el certificado del servidor (esp_crt_bundle)
-        nvs_flash       # el WiFi guarda ahí su configuración
+        nvs_flash       # configuración y WiFi guardados en flash
         spiffs          # horario y cola de reportes en la flash
         esp_timer       # millis()
         esp_hw_support  # esp_random(), para el número de sesión del enlace

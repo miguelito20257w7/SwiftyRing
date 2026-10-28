@@ -111,14 +111,111 @@ class _AccesoAjustesRed extends ConsumerWidget {
 class _TarjetaModuloAdmin extends ConsumerWidget {
   const _TarjetaModuloAdmin();
 
+  Future<void> _confirmarReset(BuildContext context, WidgetRef ref) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Restablecer Módulo Físico',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Esta acción borrará las credenciales WiFi y la configuración guardada en el ESP32.\n\n'
+          'El módulo volverá a su estado de fábrica y levantará la red "SwiftyRing-XXXX" para que se vuelva a configurar con el Setup Wizard.\n\n'
+          '¿Deseas restablecer el timbre físico ahora?',
+          style: GoogleFonts.workSans(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Restablecer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true && context.mounted) {
+      try {
+        await ref.read(timbreApiProvider).restablecerModuloFisico();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Orden de restablecimiento enviada al módulo físico.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al enviar orden: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(configuracionProvider).value;
 
-    return TarjetaModulo(
-      // El latido real del ESP32: sus consultas de comandos al servidor.
-      enLinea: config?.moduloEnLinea ?? false,
-      ultimaSync: config?.ultimaSync,
+    return Column(
+      children: [
+        TarjetaModulo(
+          // El latido real del ESP32: sus consultas de comandos al servidor.
+          enLinea: config?.moduloEnLinea ?? false,
+          ultimaSync: config?.ultimaSync,
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.dorado,
+                  side: const BorderSide(color: AppColors.dorado),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () => context.push(RutasTimbre.setupWizard),
+                icon: const Icon(Icons.settings_suggest_rounded, size: 20),
+                label: Text(
+                  'Setup Wizard',
+                  style: GoogleFonts.workSans(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                  side: BorderSide(color: Colors.red.shade300),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () => _confirmarReset(context, ref),
+                icon: const Icon(Icons.restart_alt_rounded, size: 20),
+                label: Text(
+                  'Reset Fábrica',
+                  style: GoogleFonts.workSans(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

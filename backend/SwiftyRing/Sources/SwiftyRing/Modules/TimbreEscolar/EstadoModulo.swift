@@ -20,6 +20,8 @@ actor EstadoModulo {
     private var ultimoContacto: Date?
     private var ordenPendiente: Int?
     private var ordenSincronizar: Bool = false
+    private var ordenReset: Bool = false
+    private var ordenOtaUrl: String?
     private var conexionWS: WebSocket?
 
     func registrarContacto() {
@@ -98,5 +100,31 @@ actor EstadoModulo {
     func retirarOrden() -> Int? {
         defer { ordenPendiente = nil }
         return ordenPendiente
+    }
+
+    func ordenarReset() {
+        if let ws = conexionWS, !ws.isClosed {
+            ws.send("{\"tipo\":\"reset\"}")
+        } else {
+            ordenReset = true
+        }
+    }
+
+    func retirarOrdenReset() -> Bool {
+        defer { ordenReset = false }
+        return ordenReset
+    }
+
+    func ordenarOta(url: String) {
+        if let ws = conexionWS, !ws.isClosed {
+            ws.send("{\"tipo\":\"ota\",\"url\":\"\(url)\"}")
+        } else {
+            ordenOtaUrl = url
+        }
+    }
+
+    func retirarOrdenOta() -> String? {
+        defer { ordenOtaUrl = nil }
+        return ordenOtaUrl
     }
 }

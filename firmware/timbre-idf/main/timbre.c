@@ -7,11 +7,15 @@
 
 #include <string.h>
 
+#include "almacen_config.h"
 #include "comun.h"
 #include "config.h"
 #include "driver/gpio.h"
 #include "enlace.h"
 #include "esp_log.h"
+#include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "pantalla.h"
 #include "red.h"
 
@@ -99,6 +103,8 @@ static void atender_boton(void) {
     static int estado_anterior = 1;
     static uint32_t t_presionado = 0;
     static bool accion_larga_disparada = false;
+    static bool modo_reset_disparado = false;
+    static int ultimo_seg_notificado = -1;
 
     int estado = gpio_get_level(PIN_BOTON);
 
@@ -106,11 +112,14 @@ static void atender_boton(void) {
     if (estado_anterior == 1 && estado == 0) {
         t_presionado = millis();
         accion_larga_disparada = false;
+        modo_reset_disparado = false;
+        ultimo_seg_notificado = -1;
     }
     // Mientras permanece presionado:
     else if (estado == 0) {
         uint32_t tiempo_mantenido = millis() - t_presionado;
-        // Si se mantiene presionado por 5 segundos (5000 ms), conmuta Modo UPS
+
+        // 1. A los 5 segundos conmuta Modo UPS
         if (!accion_larga_disparada && tiempo_mantenido >= 5000) {
             accion_larga_disparada = true;
             bool nuevo_ups = !timbre_modo_ups();
@@ -118,10 +127,36 @@ static void atender_boton(void) {
             ESP_LOGW(TAG, "¡Botón presionado por 5 s! Modo UPS: %s", nuevo_ups ? "ACTIVADO" : "DESACTIVADO");
             pantalla_notificar_cambio("MODO UPS", nuevo_ups ? "ACTIVADO" : "DESACTIVADO");
         }
+
+        // 2. Si se mantiene presionado más allá de los 5 s (de 5 s a 8 s):
+        // Muestra cuenta regresiva para el restablecimiento de fábrica (3s, 2s, 1s)
+        if (accion_larga_disparada && tiempo_mantenido < 8000) {
+            int seg_restantes = 3 - ((tiempo_mantenido - 5000) / 1000);
+            if (seg_restantes < 1) seg_restantes = 1;
+            if (seg_restantes != ultimo_seg_notificado) {
+                ultimo_seg_notificado = seg_restantes;
+                pantalla_cuenta_regresiva_reset(seg_restantes);
+            }
+        }
+        // 3. Si se mantiene 8 segundos completos (5 s + 3 s adicionales):
+        // Disparar Restablecimiento de Fábrica
+        else if (accion_larga_disparada && tiempo_mantenido >= 8000 && !modo_reset_disparado) {
+            modo_reset_disparado = true;
+            pantalla_mensaje("RESTABLECIENDO", "DE FABRICA...");
+            ESP_LOGE(TAG, "¡Restablecimiento de fábrica confirmado por botón físico!");
+            almacen_config_restablecer_fabrica();
+            vTaskDelay(pdMS_TO_TICKS(1500));
+            esp_restart();
+        }
     }
     // Flanco de subida: se soltó el botón
     else if (estado_anterior == 0 && estado == 1) {
         uint32_t tiempo_mantenido = millis() - t_presionado;
+
+        // Si se soltó durante la cuenta regresiva de reseteo, cancelarla
+        pantalla_cancelar_cuenta_regresiva();
+        ultimo_seg_notificado = -1;
+
         // Si no fue pulsación larga de 5 s y superó el antirrebote (mínimo 50 ms):
         if (!accion_larga_disparada && tiempo_mantenido >= 50) {
             uint8_t dur = s_duracion_manual_seg;
