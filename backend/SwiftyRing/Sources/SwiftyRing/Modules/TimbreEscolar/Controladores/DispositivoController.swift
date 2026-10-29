@@ -626,9 +626,15 @@ struct DispositivoController: RouteCollection {
         }
 
         let dirFirmware = req.application.directory.publicDirectory + "firmware"
-        try FileManager.default.createDirectory(atPath: dirFirmware, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(atPath: dirFirmware, withIntermediateDirectories: true)
         let rutaDestino = dirFirmware + "/swiftyring_timbre.bin"
-        try datos.write(to: URL(fileURLWithPath: rutaDestino))
+        try? FileManager.default.removeItem(atPath: rutaDestino)
+        do {
+            try datos.write(to: URL(fileURLWithPath: rutaDestino))
+        } catch {
+            req.logger.error("Error al escribir archivo de firmware: \(error)")
+            throw Abort(.internalServerError, reason: "No se pudo guardar el archivo en el servidor: \(error.localizedDescription)")
+        }
 
         var otaNotificada = false
         if dto.notificarOta == "true" || dto.notificarOta == "on" || dto.notificarOta == "1" {
