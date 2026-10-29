@@ -45,6 +45,21 @@ const char *almacen_config_wifi_pass(void) {
     return s_cached_cfg.wifi_password;
 }
 
+const char *almacen_config_auth_code(void) {
+    asegurar_cache();
+    return s_cached_cfg.auth_code;
+}
+
+bool almacen_config_tiene_auth_code(void) {
+    asegurar_cache();
+    return strlen(s_cached_cfg.auth_code) > 0;
+}
+
+bool almacen_config_tiene_device_key(void) {
+    asegurar_cache();
+    return strlen(s_cached_cfg.device_api_key) > 0;
+}
+
 esp_err_t almacen_config_iniciar(void) {
     // nvs_flash_init() ya se invoca en main.c, pero verificamos que el namespace abra bien
     nvs_handle_t handle;
@@ -101,6 +116,9 @@ esp_err_t almacen_config_leer(modulo_config_t *cfg) {
     size = sizeof(cfg->device_api_key);
     nvs_get_str(handle, "api_key", cfg->device_api_key, &size);
 
+    size = sizeof(cfg->auth_code);
+    nvs_get_str(handle, "auth_code", cfg->auth_code, &size);
+
     nvs_close(handle);
 
     // Si api_base quedó vacío, asignar default institucional
@@ -111,7 +129,7 @@ esp_err_t almacen_config_leer(modulo_config_t *cfg) {
     return (strlen(cfg->wifi_ssid) > 0) ? ESP_OK : ESP_ERR_NOT_FOUND;
 }
 
-esp_err_t almacen_config_guardar(const char *ssid, const char *pass, const char *api_base, const char *api_key) {
+esp_err_t almacen_config_guardar(const char *ssid, const char *pass, const char *api_base, const char *api_key, const char *auth_code) {
     if (!ssid || strlen(ssid) == 0) return ESP_ERR_INVALID_ARG;
 
     nvs_handle_t handle;
@@ -128,13 +146,41 @@ esp_err_t almacen_config_guardar(const char *ssid, const char *pass, const char 
     if (err == ESP_OK && api_base) {
         err = nvs_set_str(handle, "api_base", api_base);
     }
-    if (err == ESP_OK && api_key) {
+    if (err == ESP_OK && api_key && strlen(api_key) > 0) {
         err = nvs_set_str(handle, "api_key", api_key);
+    }
+    if (err == ESP_OK && auth_code && strlen(auth_code) > 0) {
+        err = nvs_set_str(handle, "auth_code", auth_code);
     }
 
     if (err == ESP_OK) {
         err = nvs_commit(handle);
+        s_cached_cargada = false; // Invalidar caché
         ESP_LOGI(TAG, "configuración guardada exitosamente en NVS");
+    }
+
+    nvs_close(handle);
+    return err;
+}
+
+esp_err_t almacen_config_guardar_device_key(const char *device_key) {
+    if (!device_key || strlen(device_key) == 0) return ESP_ERR_INVALID_ARG;
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "error al abrir NVS para guardar device_key: %s", esp_err_to_name(err));
+        return err;
+    }
+
+    err = nvs_set_str(handle, "api_key", device_key);
+    nvs_erase_key(handle, "auth_code"); // Borrar código de autorización ya canjeado
+    if (err == ESP_OK) {
+        err = nvs_commit(handle);
+        asegurar_cache();
+        strlcpy(s_cached_cfg.device_api_key, device_key, sizeof(s_cached_cfg.device_api_key));
+        s_cached_cfg.auth_code[0] = '\0';
+        ESP_LOGI(TAG, "clave de dispositivo guardada y código temporal eliminado");
     }
 
     nvs_close(handle);

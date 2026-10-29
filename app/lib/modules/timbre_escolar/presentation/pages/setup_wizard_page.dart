@@ -58,41 +58,42 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
   final _passwordCtrl = TextEditingController();
   final _apiBaseCtrl = TextEditingController();
   final _apiKeyCtrl = TextEditingController();
+  final _codigoManualCtrl = TextEditingController();
+  String? _codigoAutorizacion;
   bool _mostrarPassword = false;
-  bool _apiKeyObtenida = false;
-  bool _cargandoApiKey = false;
-  bool _mostrarCampoClaveManual = false;
+  bool _codigoObtenido = false;
+  bool _cargandoCodigo = false;
+  bool _mostrarCampoManual = false;
 
   @override
   void initState() {
     super.initState();
     final servidor = ref.read(servidorProvider);
     _apiBaseCtrl.text = '$servidor/api';
-    _obtenerApiKeyDelServidor();
+    _solicitarCodigoAlServidor();
   }
 
-  Future<void> _obtenerApiKeyDelServidor() async {
-    setState(() => _cargandoApiKey = true);
+  Future<void> _solicitarCodigoAlServidor() async {
+    setState(() => _cargandoCodigo = true);
     try {
-      final info = await ref.read(timbreApiProvider).obtenerClaveAprovisionamiento();
-      final key = info['deviceApiKey'] ?? '';
-      final apiBase = info['apiBase'] ?? '';
-      if (mounted) {
+      final res = await ref.read(timbreApiProvider).solicitarCodigoSetup();
+      final codigo = res['codigo'] as String?;
+      final apiBase = res['apiBase'] as String?;
+      if (mounted && codigo != null && codigo.isNotEmpty) {
         setState(() {
-          if (key.isNotEmpty) {
-            _apiKeyCtrl.text = key;
-            _apiKeyObtenida = true;
-          }
-          if (apiBase.isNotEmpty && _apiBaseCtrl.text.isEmpty) {
+          _codigoAutorizacion = codigo;
+          _codigoManualCtrl.text = codigo;
+          _codigoObtenido = true;
+          if (apiBase != null && apiBase.isNotEmpty && _apiBaseCtrl.text.isEmpty) {
             _apiBaseCtrl.text = apiBase;
           }
         });
       }
     } catch (_) {
-      // Si falla (por ejemplo el usuario ya está conectado al SoftAP del módulo sin salida a Internet),
-      // mantiene lo que tenga o permite reintentar.
+      // Si el teléfono ya está conectado al SoftAP sin internet, el usuario puede
+      // escribir el código generado desde la web o reintentar cuando tenga red.
     } finally {
-      if (mounted) setState(() => _cargandoApiKey = false);
+      if (mounted) setState(() => _cargandoCodigo = false);
     }
   }
 
@@ -102,6 +103,7 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
     _passwordCtrl.dispose();
     _apiBaseCtrl.dispose();
     _apiKeyCtrl.dispose();
+    _codigoManualCtrl.dispose();
     super.dispose();
   }
 
@@ -175,8 +177,12 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
       return;
     }
 
-    if (_apiKeyCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'La clave del dispositivo está vacía. Conéctate a Internet o ingrésala manualmente.');
+    final codigoParaEnviar = (_codigoAutorizacion != null && _codigoAutorizacion!.isNotEmpty)
+        ? _codigoAutorizacion!
+        : _codigoManualCtrl.text.trim();
+
+    if (codigoParaEnviar.isEmpty && _apiKeyCtrl.text.trim().isEmpty) {
+      setState(() => _error = 'Debes tener un código de autorización o clave para vincular el módulo.');
       return;
     }
 
@@ -190,7 +196,8 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
         'ssid': ssid,
         'password': _passwordCtrl.text.trim(),
         'api_base': _apiBaseCtrl.text.trim(),
-        'device_api_key': _apiKeyCtrl.text.trim(),
+        if (codigoParaEnviar.isNotEmpty) 'codigo_autorizacion': codigoParaEnviar,
+        if (_apiKeyCtrl.text.trim().isNotEmpty) 'device_api_key': _apiKeyCtrl.text.trim(),
       };
 
       final res = await _dioLocal.post('/api/setup', data: cuerpo);
@@ -314,7 +321,65 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
           'verás en su pantalla OLED el mensaje "[ MODO CONFIG ]".',
           style: AppTextStyles.cuerpo,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+
+        if (_codigoObtenido && _codigoAutorizacion != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFA5D6A7)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_user_rounded, color: Color(0xFF2E7D32), size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Código de vinculación listo:',
+                        style: GoogleFonts.workSans(fontSize: 12, color: const Color(0xFF2E7D32)),
+                      ),
+                      Text(
+                        _codigoAutorizacion!,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1B5E20),
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      Text(
+                        'El módulo lo canjeará por su clave al conectarse.',
+                        style: GoogleFonts.workSans(fontSize: 11, color: const Color(0xFF388E3C)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ] else if (_cargandoCodigo) ...[
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                  SizedBox(width: 10),
+                  Text('Generando código con el servidor...'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -543,66 +608,81 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
           ),
         ),
         const SizedBox(height: 16),
-        if (_apiKeyObtenida) ...[
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFA5D6A7)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 28),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Clave asignada automáticamente',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1B5E20),
-                          fontSize: 14,
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F5E9),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFA5D6A7)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.security_rounded, color: Color(0xFF2E7D32), size: 28),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Vinculación Automática por Servidor',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1B5E20),
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'El backend autorizó automáticamente la DEVICE_API_KEY para este timbre.',
-                        style: GoogleFonts.workSans(
-                          color: const Color(0xFF2E7D32),
-                          fontSize: 12,
+                        const SizedBox(height: 2),
+                        Text(
+                          'Código: ${_codigoAutorizacion ?? (_codigoManualCtrl.text.isNotEmpty ? _codigoManualCtrl.text : "Pendiente")}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF2E7D32),
+                            letterSpacing: 1.2,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Tu teléfono no requiere internet durante la configuración del módulo. '
+                'Una vez configurado, el timbre físico se conectará a la red del colegio y canjeará '
+                'este código de autorización con el backend para obtener su clave de dispositivo.',
+                style: GoogleFonts.workSans(
+                  color: const Color(0xFF2E7D32),
+                  fontSize: 12,
+                  height: 1.4,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => setState(() => _mostrarCampoManual = !_mostrarCampoManual),
+            icon: Icon(_mostrarCampoManual ? Icons.expand_less : Icons.expand_more, size: 18),
+            label: Text(_mostrarCampoManual ? 'Ocultar opciones manuales' : 'Opciones manuales de código / clave'),
+          ),
+        ),
+        if (_mostrarCampoManual) ...[
           const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () => setState(() => _mostrarCampoClaveManual = !_mostrarCampoClaveManual),
-              icon: Icon(_mostrarCampoClaveManual ? Icons.expand_less : Icons.expand_more, size: 18),
-              label: Text(_mostrarCampoClaveManual ? 'Ocultar clave manual' : 'Ver / Editar clave manualmente'),
-            ),
-          ),
-        ],
-        if (!_apiKeyObtenida || _mostrarCampoClaveManual) ...[
           TextField(
-            controller: _apiKeyCtrl,
+            controller: _codigoManualCtrl,
             decoration: InputDecoration(
-              labelText: 'Clave de Dispositivo (Device API Key)',
-              helperText: _apiKeyObtenida
-                  ? 'Asignada automáticamente por el servidor'
-                  : 'Debe coincidir con DEVICE_API_KEY en el servidor',
+              labelText: 'Código de Autorización',
+              helperText: 'Código temporal de un solo uso generado por el servidor',
               filled: true,
               fillColor: AppColors.blanco,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-              suffixIcon: _cargandoApiKey
+              suffixIcon: _cargandoCodigo
                   ? const Padding(
                       padding: EdgeInsets.all(12),
                       child: SizedBox(
@@ -612,10 +692,21 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
                       ),
                     )
                   : IconButton(
-                      icon: const Icon(Icons.cloud_download_outlined),
-                      tooltip: 'Obtener del servidor',
-                      onPressed: _obtenerApiKeyDelServidor,
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Generar nuevo código en el servidor',
+                      onPressed: _solicitarCodigoAlServidor,
                     ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _apiKeyCtrl,
+            decoration: InputDecoration(
+              labelText: 'Clave Directa (Opcional si usas código)',
+              helperText: 'Solo para configuración manual directa con DEVICE_API_KEY',
+              filled: true,
+              fillColor: AppColors.blanco,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             ),
           ),
         ],

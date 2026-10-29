@@ -127,4 +127,35 @@ actor EstadoModulo {
         defer { ordenOtaUrl = nil }
         return ordenOtaUrl
     }
+
+    // MARK: - Códigos de vinculación temporal para aprovisionamiento seguro
+
+    private var codigosSetup: [String: Date] = [:]
+
+    func generarCodigoSetup(duracionSeg: TimeInterval = 1800) -> String {
+        let ahora = Date()
+        // Limpiar expirados
+        codigosSetup = codigosSetup.filter { $0.value > ahora }
+
+        let pin = String(format: "%06d", Int.random(in: 100000...999999))
+        let codigo = "SR-\(pin)"
+        codigosSetup[codigo] = ahora.addingTimeInterval(duracionSeg)
+        return codigo
+    }
+
+    func validarYCanjearCodigoSetup(_ codigo: String) -> Bool {
+        let ahora = Date()
+        let codigoNormalizado = codigo.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard let expira = codigosSetup[codigoNormalizado], expira > ahora else {
+            return false
+        }
+        codigosSetup.removeValue(forKey: codigoNormalizado)
+        return true
+    }
+
+    func codigoSetupActivo() -> String? {
+        let ahora = Date()
+        codigosSetup = codigosSetup.filter { $0.value > ahora }
+        return codigosSetup.first?.key
+    }
 }

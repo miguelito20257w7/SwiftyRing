@@ -121,6 +121,7 @@ static esp_err_t manejador_setup(httpd_req_t *req) {
     cJSON *j_pass = cJSON_GetObjectItem(raiz, "password");
     cJSON *j_api = cJSON_GetObjectItem(raiz, "api_base");
     cJSON *j_key = cJSON_GetObjectItem(raiz, "device_api_key");
+    cJSON *j_code = cJSON_GetObjectItem(raiz, "codigo_autorizacion");
 
     if (!cJSON_IsString(j_ssid) || strlen(j_ssid->valuestring) == 0) {
         cJSON_Delete(raiz);
@@ -131,10 +132,11 @@ static esp_err_t manejador_setup(httpd_req_t *req) {
     const char *ssid = j_ssid->valuestring;
     const char *pass = (cJSON_IsString(j_pass)) ? j_pass->valuestring : "";
     const char *api = (cJSON_IsString(j_api) && strlen(j_api->valuestring) > 0) ? j_api->valuestring : "https://swiftyring.swiftydevs.dev/api";
-    const char *key = (cJSON_IsString(j_key)) ? j_key->valuestring : "dev-esp32-timbre-2026";
+    const char *key = (cJSON_IsString(j_key)) ? j_key->valuestring : "";
+    const char *code = (cJSON_IsString(j_code)) ? j_code->valuestring : "";
 
-    ESP_LOGI(TAG, "Guardando configuración: SSID='%s', API='%s'", ssid, api);
-    esp_err_t err = almacen_config_guardar(ssid, pass, api, key);
+    ESP_LOGI(TAG, "Guardando configuración: SSID='%s', API='%s', Code='%s'", ssid, api, code);
+    esp_err_t err = almacen_config_guardar(ssid, pass, api, key, code);
     cJSON_Delete(raiz);
 
     if (err != ESP_OK) {

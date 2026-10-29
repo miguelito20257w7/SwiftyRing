@@ -241,6 +241,11 @@ class TimbreApi {
   /// Envía la orden de restablecimiento de fábrica al módulo físico ESP32
   Future<void> restablecerModuloFisico() async => _post('/dispositivo/reset', {});
 
+  /// Genera un código de autorización temporal para vincular el módulo físico ESP32
+  Future<Map<String, dynamic>> solicitarCodigoSetup() async {
+    return _post('/dispositivo/setup-code', {});
+  }
+
   /// Obtiene la clave de aprovisionamiento (DEVICE_API_KEY) configurada en el servidor (solo admin)
   Future<Map<String, String>> obtenerClaveAprovisionamiento() async {
     final mapa = await _get('/dispositivo/provision-key');

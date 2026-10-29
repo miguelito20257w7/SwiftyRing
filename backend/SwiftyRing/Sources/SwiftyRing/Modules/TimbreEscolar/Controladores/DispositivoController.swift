@@ -92,6 +92,22 @@ struct ProvisionKeyResponse: Content {
     let apiBase: String
 }
 
+struct SetupCodeResponse: Content {
+    let codigo: String
+    let expiraEnSegundos: Int
+    let apiBase: String
+}
+
+struct CanjearCodigoDTO: Content {
+    let codigo_autorizacion: String
+    let mac: String?
+}
+
+struct CanjearCodigoResponse: Content {
+    let status: String
+    let device_api_key: String
+}
+
 struct FirmwareUploadDTO: Content {
     var firmware: File
     var notificarOta: String?
@@ -142,9 +158,15 @@ struct DispositivoController: RouteCollection {
             .grouped(SwiftyRingAuthMiddleware())
 
         adminDispositivo.get("provision-key", use: obtenerClaveAprovisionamiento)
+        adminDispositivo.post("setup-code", use: generarCodigoSetup)
+        adminDispositivo.get("setup-code", use: obtenerCodigoSetupActivo)
         adminDispositivo.post("reset", use: ordenarResetDispositivo)
         adminDispositivo.post("ota", use: ordenarOtaDispositivo)
         adminDispositivo.get("firmware", "info", use: firmwareInfo)
+
+        // Canje de código de autorización por el módulo físico tras conectarse a internet
+        routes.grouped("api", "dispositivo")
+            .post("canjear-codigo", use: canjearCodigoSetup)
 
         // Descarga de binario OTA para el ESP32
         routes.grouped("api", "dispositivo")
@@ -276,8 +298,62 @@ struct DispositivoController: RouteCollection {
         )
     }
 
+    func generarCodigoSetup(req: Request) async throws -> SetupCodeResponse {
+        try req.exigirRol(.admin)
+        let codigo = await EstadoModulo.compartido.generarCodigoSetup(duracionSeg: 1800)
+        let esquema = req.headers.first(name: "X-Forwarded-Proto") ?? (req.url.scheme ?? "https")
+        let host = req.headers.first(name: "X-Forwarded-Host") ?? (req.headers.first(name: "Host") ?? "swiftyring.swiftydevs.dev")
+        let apiBase = "\(esquema)://\(host)/api"
+
+        req.logger.info("Nuevo código de setup generado: \(codigo)")
+        return SetupCodeResponse(
+            codigo: codigo,
+            expiraEnSegundos: 1800,
+            apiBase: apiBase
+        )
+    }
+
+    func obtenerCodigoSetupActivo(req: Request) async throws -> SetupCodeResponse {
+        try req.exigirRol(.admin)
+        var codigo = await EstadoModulo.compartido.codigoSetupActivo()
+        if codigo == nil {
+            codigo = await EstadoModulo.compartido.generarCodigoSetup(duracionSeg: 1800)
+        }
+        let codigoFinal = codigo ?? "SR-000000"
+        let esquema = req.headers.first(name: "X-Forwarded-Proto") ?? (req.url.scheme ?? "https")
+        let host = req.headers.first(name: "X-Forwarded-Host") ?? (req.headers.first(name: "Host") ?? "swiftyring.swiftydevs.dev")
+        let apiBase = "\(esquema)://\(host)/api"
+
+        return SetupCodeResponse(
+            codigo: codigoFinal,
+            expiraEnSegundos: 1800,
+            apiBase: apiBase
+        )
+    }
+
+    func canjearCodigoSetup(req: Request) async throws -> CanjearCodigoResponse {
+        let dto = try req.content.decode(CanjearCodigoDTO.self)
+        let esValido = await EstadoModulo.compartido.validarYCanjearCodigoSetup(dto.codigo_autorizacion)
+        guard esValido else {
+            req.logger.warning("Intento de canje de código de setup inválido o expirado: '\(dto.codigo_autorizacion)' desde MAC \(dto.mac ?? "desconocida")")
+            throw Abort(.unauthorized, reason: "Código de autorización inválido o expirado")
+        }
+
+        let clave = Environment.get("DEVICE_API_KEY") ?? "dev-esp32-timbre-2026"
+        req.logger.notice("Código de autorización \(dto.codigo_autorizacion) canjeado exitosamente por módulo físico MAC \(dto.mac ?? "desconocida")")
+        return CanjearCodigoResponse(
+            status: "ok",
+            device_api_key: clave
+        )
+    }
+
     func vistaUpdateFirmware(req: Request) async throws -> Response {
         let moduloOnline = await EstadoModulo.compartido.enLinea()
+        var codigo = await EstadoModulo.compartido.codigoSetupActivo()
+        if codigo == nil {
+            codigo = await EstadoModulo.compartido.generarCodigoSetup(duracionSeg: 1800)
+        }
+        let codigoActivo = codigo ?? "SR-000000"
         let rutaBin = req.application.directory.publicDirectory + "firmware/swiftyring_timbre.bin"
 
         var infoArchivo = "No hay firmware cargado todavía"
@@ -375,6 +451,16 @@ struct DispositivoController: RouteCollection {
                 <div class="info-box">
                     <strong>Firmware actual en el servidor:</strong><br>
                     \(infoArchivo)
+                </div>
+
+                <div class="info-box" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>Código de Vinculación Setup Wizard:</strong><br>
+                        <span style="font-size: 11px; color: var(--muted);">Usa este código en la app Flutter para autorizar el módulo físico.</span>
+                    </div>
+                    <span style="font-family: monospace; font-size: 16px; font-weight: 700; color: var(--accent); background: rgba(229, 169, 60, 0.12); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(229, 169, 60, 0.3);">
+                        \(codigoActivo)
+                    </span>
                 </div>
 
                 <form id="uploadForm" action="/update_firmware" method="POST" enctype="multipart/form-data">

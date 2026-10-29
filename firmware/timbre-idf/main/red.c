@@ -20,6 +20,7 @@
 #include "esp_event.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "esp_netif.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
@@ -230,6 +231,70 @@ static int http_post(const char *ruta, const char *cuerpo) {
     int codigo = (err == ESP_OK) ? esp_http_client_get_status_code(cliente) : -1;
     esp_http_client_cleanup(cliente);
     return codigo;
+}
+
+// Canjea un código de autorización temporal (provisto por la app Flutter)
+// con el backend para que este le asigne su DEVICE_API_KEY definitiva.
+static bool canjear_codigo_con_servidor(void) {
+    char url[256];
+    snprintf(url, sizeof(url), "%s/dispositivo/canjear-codigo", almacen_config_api_base());
+
+    cJSON *solicitud = cJSON_CreateObject();
+    cJSON_AddStringToObject(solicitud, "codigo_autorizacion", almacen_config_auth_code());
+
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    char mac_str[18];
+    snprintf(mac_str, sizeof(mac_str), "%02X:%02X:%02X:%02X:%02X:%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    cJSON_AddStringToObject(solicitud, "mac", mac_str);
+
+    char *cuerpo_post = cJSON_PrintUnformatted(solicitud);
+    cJSON_Delete(solicitud);
+    if (!cuerpo_post) return false;
+
+    char respuesta_buf[512] = {0};
+    respuesta_t respuesta = {.buf = respuesta_buf, .capacidad = sizeof(respuesta_buf) - 1, .largo = 0};
+
+    esp_http_client_config_t cfg = {
+        .url = url,
+        .timeout_ms = TIEMPO_MAXIMO_MS,
+        .method = HTTP_METHOD_POST,
+        .event_handler = recibir_pedazo,
+        .user_data = &respuesta,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+    };
+    esp_http_client_handle_t cliente = esp_http_client_init(&cfg);
+    if (cliente == NULL) {
+        free(cuerpo_post);
+        return false;
+    }
+
+    esp_http_client_set_header(cliente, "Content-Type", "application/json");
+    esp_http_client_set_post_field(cliente, cuerpo_post, strlen(cuerpo_post));
+
+    esp_err_t err = esp_http_client_perform(cliente);
+    int codigo = (err == ESP_OK) ? esp_http_client_get_status_code(cliente) : -1;
+    esp_http_client_cleanup(cliente);
+    free(cuerpo_post);
+
+    if (codigo != 200) {
+        ESP_LOGE(TAG, "Canje de código falló con código HTTP %d. Resp: %s", codigo, respuesta_buf);
+        return false;
+    }
+
+    cJSON *resp_json = cJSON_Parse(respuesta_buf);
+    if (!resp_json) return false;
+
+    cJSON *j_key = cJSON_GetObjectItem(resp_json, "device_api_key");
+    if (!cJSON_IsString(j_key) || strlen(j_key->valuestring) == 0) {
+        cJSON_Delete(resp_json);
+        return false;
+    }
+
+    almacen_config_guardar_device_key(j_key->valuestring);
+    cJSON_Delete(resp_json);
+    return true;
 }
 
 // ============================================================
@@ -578,6 +643,22 @@ void red_tarea(void *argumento) {
             }
         } else {
             if (!sincronizado_alguna_vez) {
+                // Si el módulo físico tiene un código de autorización pendiente para obtener su clave
+                if (almacen_config_tiene_auth_code() && !almacen_config_tiene_device_key()) {
+                    ESP_LOGI(TAG, "Canjeando código de autorización con el backend...");
+                    pantalla_mensaje("AUTORIZANDO", "PIDIENDO CLAVE...");
+                    if (!canjear_codigo_con_servidor()) {
+                        ESP_LOGE(TAG, "Código de autorización inválido o rechazado");
+                        pantalla_mensaje("ERROR CODIGO", "RESTAURANDO SETUP");
+                        vTaskDelay(pdMS_TO_TICKS(4000));
+                        almacen_config_restablecer_fabrica();
+                        esp_restart();
+                        return;
+                    }
+                    pantalla_mensaje("AUTORIZADO", "CLAVE ASIGNADA");
+                    vTaskDelay(pdMS_TO_TICKS(1500));
+                }
+
                 // Al conectar WiFi, primero sincronizamos el horario por HTTP de forma secuencial.
                 // Luego damos un respiro a la CPU (FreeRTOS IDLE task resetea el watchdog)
                 // y conectamos el WebSocket. Nunca ambos a la vez para no colapsar la CPU con
