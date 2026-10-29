@@ -23,6 +23,7 @@ static bool s_activo = false;
 static char s_ssid_ap[32] = "SwiftyRing-Setup";
 static httpd_handle_t s_servidor = NULL;
 static esp_netif_t *s_netif_ap = NULL;
+static esp_netif_t *s_netif_sta = NULL;
 
 void aprovisionamiento_obtener_ssid_ap(char *buf, size_t max_len) {
     if (buf && max_len > 0) {
@@ -75,7 +76,7 @@ static esp_err_t manejador_scan(httpd_req_t *req) {
     esp_wifi_scan_get_ap_num(&num_redes);
     if (num_redes > 20) num_redes = 20;
 
-    wifi_ap_record_t *ap_records = malloc(sizeof(wifi_ap_record_t) * num_redes);
+    wifi_ap_record_t *ap_records = (num_redes > 0) ? malloc(sizeof(wifi_ap_record_t) * num_redes) : NULL;
     cJSON *raiz = cJSON_CreateArray();
 
     if (ap_records && esp_wifi_scan_get_ap_records(&num_redes, ap_records) == ESP_OK) {
@@ -210,6 +211,13 @@ esp_err_t aprovisionamiento_iniciar(void) {
     if (!s_netif_ap) {
         s_netif_ap = esp_netif_create_default_wifi_ap();
     }
+    if (!s_netif_sta) {
+        s_netif_sta = esp_netif_create_default_wifi_sta();
+    }
+
+    wifi_init_config_t init = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&init));
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 
     wifi_config_t wifi_config = {
         .ap = {
@@ -225,6 +233,7 @@ esp_err_t aprovisionamiento_iniciar(void) {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 
     iniciar_servidor_web();
     s_activo = true;

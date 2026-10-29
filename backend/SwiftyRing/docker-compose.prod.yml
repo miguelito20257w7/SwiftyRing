@@ -62,7 +62,7 @@ services:
     env_file: .env.production
     volumes:
       - ./keys:/app/keys:ro
-      - ./Public/firmware:/app/Public/firmware:ro
+      - ./Public/firmware:/app/Public/firmware
     ports:
       - "127.0.0.1:8020:8080"
     depends_on:
@@ -78,7 +78,7 @@ services:
     env_file: .env.production
     volumes:
       - ./keys:/app/keys:ro
-      - ./Public/firmware:/app/Public/firmware:ro
+      - ./Public/firmware:/app/Public/firmware
     depends_on:
       db:
         condition: service_healthy
@@ -92,7 +92,7 @@ services:
     env_file: .env.production
     volumes:
       - ./keys:/app/keys:ro
-      - ./Public/firmware:/app/Public/firmware:ro
+      - ./Public/firmware:/app/Public/firmware
     depends_on:
       db:
         condition: service_healthy

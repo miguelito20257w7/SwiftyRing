@@ -87,6 +87,17 @@ struct FirmwareInfoResponse: Content {
     let url: String
 }
 
+struct ProvisionKeyResponse: Content {
+    let deviceApiKey: String
+    let apiBase: String
+}
+
+struct FirmwareUploadDTO: Content {
+    var firmware: File
+    var notificarOta: String?
+    var claveAdmin: String?
+}
+
 struct ReporteActivacionRequest: Content {
     /// `automatico` o `manual_fisico`; los otros orígenes no salen del módulo.
     let tipo: String
@@ -130,6 +141,7 @@ struct DispositivoController: RouteCollection {
         let adminDispositivo = routes.grouped("api", "dispositivo")
             .grouped(SwiftyRingAuthMiddleware())
 
+        adminDispositivo.get("provision-key", use: obtenerClaveAprovisionamiento)
         adminDispositivo.post("reset", use: ordenarResetDispositivo)
         adminDispositivo.post("ota", use: ordenarOtaDispositivo)
         adminDispositivo.get("firmware", "info", use: firmwareInfo)
@@ -137,6 +149,10 @@ struct DispositivoController: RouteCollection {
         // Descarga de binario OTA para el ESP32
         routes.grouped("api", "dispositivo")
             .get("firmware", "download", use: descargarFirmware)
+
+        // Web UI y endpoint para subir firmware por navegador (/update_firmware)
+        routes.get("update_firmware", use: vistaUpdateFirmware)
+        routes.on(.POST, "update_firmware", body: .collect(maxSize: "16mb"), use: procesarUploadFirmware)
     }
 
     /// RF-28: el paquete completo que el módulo guarda en LittleFS. También
@@ -245,6 +261,320 @@ struct DispositivoController: RouteCollection {
             version: "1.3.0",
             url: "/api/dispositivo/firmware/download"
         )
+    }
+
+    func obtenerClaveAprovisionamiento(req: Request) async throws -> ProvisionKeyResponse {
+        try req.exigirRol(.admin)
+        let key = Environment.get("DEVICE_API_KEY") ?? "dev-esp32-timbre-2026"
+        let esquema = req.headers.first(name: "X-Forwarded-Proto") ?? (req.url.scheme ?? "https")
+        let host = req.headers.first(name: "X-Forwarded-Host") ?? (req.headers.first(name: "Host") ?? "swiftyring.swiftydevs.dev")
+        let apiBase = "\(esquema)://\(host)/api"
+
+        return ProvisionKeyResponse(
+            deviceApiKey: key,
+            apiBase: apiBase
+        )
+    }
+
+    func vistaUpdateFirmware(req: Request) async throws -> Response {
+        let moduloOnline = await EstadoModulo.compartido.enLinea()
+        let rutaBin = req.application.directory.publicDirectory + "firmware/swiftyring_timbre.bin"
+
+        var infoArchivo = "No hay firmware cargado todavía"
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: rutaBin),
+           let tamano = attrs[.size] as? Int64 {
+            let df = DateFormatter()
+            df.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            df.timeZone = FormatoTiempo.zonaColombia
+            let fecha = (attrs[.modificationDate] as? Date).map { df.string(from: $0) } ?? "Desconocida"
+            let mb = Double(tamano) / (1024.0 * 1024.0)
+            infoArchivo = String(format: "swiftyring_timbre.bin (%.2f MB · %d bytes)<br>Última actualización: %@", mb, tamano, fecha)
+        }
+
+        let exito = req.query[String.self, at: "exito"] == "1"
+        let otaDisparada = req.query[String.self, at: "ota"] == "1"
+        let bytesSubidos = req.query[Int.self, at: "bytes"] ?? 0
+
+        var bannerHtml = ""
+        if exito {
+            let kb = bytesSubidos / 1024
+            let msgOta = otaDisparada ? " · Orden de actualización OTA enviada al módulo físico." : ""
+            bannerHtml = "<div class=\"alert success\" style=\"display:block;\">✓ Firmware subido correctamente (\(kb) KB)\(msgOta)</div>"
+        }
+
+        let html = """
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>SwiftyRing · Actualizador de Firmware</title>
+            <style>
+                :root {
+                    --bg: #0C0E12;
+                    --card: #151921;
+                    --card-border: #222936;
+                    --accent: #E5A93C;
+                    --text: #F3F4F6;
+                    --muted: #9CA3AF;
+                    --success: #10B981;
+                    --danger: #EF4444;
+                }
+                * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+                body { background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+                .container { width: 100%; max-width: 540px; background: var(--card); border: 1px solid var(--card-border); border-radius: 20px; padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+                .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+                .logo-area { display: flex; align-items: center; gap: 10px; }
+                .logo-dot { width: 14px; height: 14px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 12px var(--accent); }
+                .title { font-size: 20px; font-weight: 700; color: #fff; }
+                .badge { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+                .badge.online { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+                .badge.offline { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+                .info-box { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+                .info-box strong { color: var(--text); }
+                .dropzone { border: 2px dashed var(--card-border); border-radius: 14px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; margin-bottom: 20px; position: relative; }
+                .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: rgba(229, 169, 60, 0.05); }
+                .dropzone input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+                .upload-icon { font-size: 36px; color: var(--accent); margin-bottom: 10px; display: block; }
+                .dropzone p { font-size: 14px; color: var(--muted); }
+                .file-selected { margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--accent); word-break: break-all; }
+                .form-group { margin-bottom: 16px; }
+                label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--muted); }
+                input[type="password"], input[type="text"] { width: 100%; background: #0E1116; border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 14px; color: #fff; font-size: 14px; outline: none; }
+                input[type="password"]:focus, input[type="text"]:focus { border-color: var(--accent); }
+                .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; font-size: 14px; cursor: pointer; color: var(--text); }
+                .checkbox-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+                .btn { width: 100%; background: var(--accent); color: #0C0E12; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+                .btn:hover { opacity: 0.92; }
+                .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+                .progress-wrap { display: none; margin-top: 20px; }
+                .progress-bar-bg { width: 100%; height: 8px; background: #222936; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+                .progress-bar-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear; }
+                .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; line-height: 1.4; }
+                .alert.success { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+                .alert.error { background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+                .footer-links { margin-top: 20px; text-align: center; font-size: 12px; color: var(--muted); }
+                .footer-links a { color: var(--accent); text-decoration: none; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo-area">
+                        <div class="logo-dot"></div>
+                        <h1 class="title">SwiftyRing OTA</h1>
+                    </div>
+                    <span class="badge \(moduloOnline ? "online" : "offline")">
+                        ● \(moduloOnline ? "MÓDULO ONLINE" : "MÓDULO OFFLINE")
+                    </span>
+                </div>
+
+                \(bannerHtml)
+                <div id="dynamicAlert" class="alert" style="display:none;"></div>
+
+                <div class="info-box">
+                    <strong>Firmware actual en el servidor:</strong><br>
+                    \(infoArchivo)
+                </div>
+
+                <form id="uploadForm" action="/update_firmware" method="POST" enctype="multipart/form-data">
+                    <div class="dropzone" id="dropzone">
+                        <input type="file" id="firmwareInput" name="firmware" accept=".bin" required>
+                        <span class="upload-icon">⚡</span>
+                        <p><strong>Haz clic o arrastra aquí tu archivo .bin</strong></p>
+                        <p style="font-size: 12px; margin-top: 4px;">swiftyring_timbre.bin (ESP32-C3)</p>
+                        <div id="fileSelected" class="file-selected" style="display:none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="claveAdmin">Clave de Autorización (DEVICE_API_KEY)</label>
+                        <input type="password" id="claveAdmin" name="claveAdmin" placeholder="Opcional si ya está configurada en .env">
+                    </div>
+
+                    <label class="checkbox-row">
+                        <input type="checkbox" name="notificarOta" value="true" checked>
+                        <span>Notificar y flashear módulo físico inmediatamente por OTA</span>
+                    </label>
+
+                    <button type="submit" id="btnSubmit" class="btn">Subir Firmware y Ejecutar OTA</button>
+
+                    <div id="progressWrap" class="progress-wrap">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--muted);">
+                            <span>Subiendo firmware al servidor...</span>
+                            <span id="progressText">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="progressBar" class="progress-bar-fill"></div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="footer-links">
+                    <a href="/api/dispositivo/firmware/download" download>Descargar firmware actual (.bin)</a>
+                </div>
+            </div>
+
+            <script>
+                const input = document.getElementById('firmwareInput');
+                const fileSelected = document.getElementById('fileSelected');
+                const dropzone = document.getElementById('dropzone');
+                const form = document.getElementById('uploadForm');
+                const btn = document.getElementById('btnSubmit');
+                const progressWrap = document.getElementById('progressWrap');
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                const alertBox = document.getElementById('dynamicAlert');
+
+                input.addEventListener('change', (e) => {
+                    if (input.files.length > 0) {
+                        const file = input.files[0];
+                        const mb = (file.size / (1024 * 1024)).toFixed(2);
+                        fileSelected.textContent = `Archivo: ${file.name} (${mb} MB)`;
+                        fileSelected.style.display = 'block';
+                    }
+                });
+
+                ['dragenter', 'dragover'].forEach(name => {
+                    dropzone.addEventListener(name, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+                });
+                ['dragleave', 'drop'].forEach(name => {
+                    dropzone.addEventListener(name, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); });
+                });
+
+                form.addEventListener('submit', (e) => {
+                    if (!window.fetch || !window.FormData) return;
+                    e.preventDefault();
+
+                    if (!input.files || input.files.length === 0) {
+                        alert('Selecciona un archivo .bin primero');
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.textContent = 'Procesando...';
+                    progressWrap.style.display = 'block';
+                    alertBox.style.display = 'none';
+
+                    const formData = new FormData(form);
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/update_firmware', true);
+                    xhr.setRequestHeader('Accept', 'application/json');
+
+                    xhr.upload.onprogress = (evt) => {
+                        if (evt.lengthComputable) {
+                            const pct = Math.round((evt.loaded / evt.total) * 100);
+                            progressBar.style.width = pct + '%';
+                            progressText.textContent = pct + '%';
+                        }
+                    };
+
+                    xhr.onload = () => {
+                        btn.disabled = false;
+                        btn.textContent = 'Subir Firmware y Ejecutar OTA';
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                const data = JSON.parse(xhr.responseText);
+                                alertBox.className = 'alert success';
+                                alertBox.innerHTML = `✓ ${data.mensaje || 'Firmware cargado exitosamente.'}`;
+                                alertBox.style.display = 'block';
+                            } catch (_) {
+                                alertBox.className = 'alert success';
+                                alertBox.textContent = '✓ Firmware actualizado correctamente.';
+                                alertBox.style.display = 'block';
+                            }
+                        } else {
+                            try {
+                                const err = JSON.parse(xhr.responseText);
+                                alertBox.className = 'alert error';
+                                alertBox.textContent = `Error: ${err.reason || err.mensaje || xhr.statusText}`;
+                                alertBox.style.display = 'block';
+                            } catch (_) {
+                                alertBox.className = 'alert error';
+                                alertBox.textContent = `Error del servidor (${xhr.status})`;
+                                alertBox.style.display = 'block';
+                            }
+                        }
+                    };
+
+                    xhr.onerror = () => {
+                        btn.disabled = false;
+                        btn.textContent = 'Subir Firmware y Ejecutar OTA';
+                        alertBox.className = 'alert error';
+                        alertBox.textContent = 'Error de red al subir el archivo.';
+                        alertBox.style.display = 'block';
+                    };
+
+                    xhr.send(formData);
+                });
+            </script>
+        </body>
+        </html>
+        """
+
+        return Response(
+            status: .ok,
+            headers: ["Content-Type": "text/html; charset=utf-8"],
+            body: .init(string: html)
+        )
+    }
+
+    func procesarUploadFirmware(req: Request) async throws -> Response {
+        let dto = try req.content.decode(FirmwareUploadDTO.self)
+
+        if let esperada = Environment.get("DEVICE_API_KEY"), !esperada.isEmpty {
+            if let recibida = dto.claveAdmin, !recibida.isEmpty {
+                guard recibida == esperada else {
+                    throw Abort(.unauthorized, reason: "Clave de autorización incorrecta")
+                }
+            }
+        }
+
+        let nombre = dto.firmware.filename.lowercased()
+        guard nombre.hasSuffix(".bin") else {
+            throw Abort(.badRequest, reason: "El archivo debe tener extensión .bin")
+        }
+
+        let datos = Data(dto.firmware.data.readableBytesView)
+        guard !datos.isEmpty else {
+            throw Abort(.badRequest, reason: "El archivo recibido está vacío")
+        }
+
+        let dirFirmware = req.application.directory.publicDirectory + "firmware"
+        try FileManager.default.createDirectory(atPath: dirFirmware, withIntermediateDirectories: true)
+        let rutaDestino = dirFirmware + "/swiftyring_timbre.bin"
+        try datos.write(to: URL(fileURLWithPath: rutaDestino))
+
+        var otaNotificada = false
+        if dto.notificarOta == "true" || dto.notificarOta == "on" || dto.notificarOta == "1" {
+            let esquema = req.headers.first(name: "X-Forwarded-Proto") ?? (req.url.scheme ?? "https")
+            let host = req.headers.first(name: "X-Forwarded-Host") ?? (req.headers.first(name: "Host") ?? "swiftyring.swiftydevs.dev")
+            let urlDescarga = "\(esquema)://\(host)/api/dispositivo/firmware/download"
+            await EstadoModulo.compartido.ordenarOta(url: urlDescarga)
+            otaNotificada = true
+        }
+
+        struct UploadResult: Content {
+            let status: String
+            let mensaje: String
+            let bytes: Int
+            let otaNotificada: Bool
+        }
+
+        let resultado = UploadResult(
+            status: "ok",
+            mensaje: otaNotificada
+                ? "Firmware guardado exitosamente (\(datos.count / 1024) KB). Orden OTA enviada al módulo físico."
+                : "Firmware guardado exitosamente (\(datos.count / 1024) KB).",
+            bytes: datos.count,
+            otaNotificada: otaNotificada
+        )
+
+        if req.headers.first(name: "Accept")?.contains("application/json") == true ||
+           req.headers.first(name: "X-Requested-With") == "XMLHttpRequest" {
+            return try await resultado.encodeResponse(for: req)
+        }
+
+        return req.redirect(to: "/update_firmware?exito=1&bytes=\(datos.count)&ota=\(otaNotificada ? 1 : 0)")
     }
 
     func descargarFirmware(req: Request) async throws -> Response {

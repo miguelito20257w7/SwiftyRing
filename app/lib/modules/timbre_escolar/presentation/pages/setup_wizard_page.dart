@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:swiftyring/core/red/servidor.dart';
 import 'package:swiftyring/core/theme/app_theme.dart';
 import 'package:swiftyring/modules/timbre_escolar/presentation/widgets/timbre_ui.dart';
+import 'package:swiftyring/modules/timbre_escolar/providers.dart';
 import 'package:swiftyring/modules/timbre_escolar/timbre_escolar_routes.dart';
 
 /// Modelo de red WiFi detectada por el ESP32
@@ -56,14 +57,43 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
   final _ssidPersonalizadoCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _apiBaseCtrl = TextEditingController();
-  final _apiKeyCtrl = TextEditingController(text: 'dev-esp32-timbre-2026');
+  final _apiKeyCtrl = TextEditingController();
   bool _mostrarPassword = false;
+  bool _apiKeyObtenida = false;
+  bool _cargandoApiKey = false;
+  bool _mostrarCampoClaveManual = false;
 
   @override
   void initState() {
     super.initState();
     final servidor = ref.read(servidorProvider);
     _apiBaseCtrl.text = '$servidor/api';
+    _obtenerApiKeyDelServidor();
+  }
+
+  Future<void> _obtenerApiKeyDelServidor() async {
+    setState(() => _cargandoApiKey = true);
+    try {
+      final info = await ref.read(timbreApiProvider).obtenerClaveAprovisionamiento();
+      final key = info['deviceApiKey'] ?? '';
+      final apiBase = info['apiBase'] ?? '';
+      if (mounted) {
+        setState(() {
+          if (key.isNotEmpty) {
+            _apiKeyCtrl.text = key;
+            _apiKeyObtenida = true;
+          }
+          if (apiBase.isNotEmpty && _apiBaseCtrl.text.isEmpty) {
+            _apiBaseCtrl.text = apiBase;
+          }
+        });
+      }
+    } catch (_) {
+      // Si falla (por ejemplo el usuario ya está conectado al SoftAP del módulo sin salida a Internet),
+      // mantiene lo que tenga o permite reintentar.
+    } finally {
+      if (mounted) setState(() => _cargandoApiKey = false);
+    }
   }
 
   @override
@@ -142,6 +172,11 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
 
     if (ssid.isEmpty) {
       setState(() => _error = 'Por favor selecciona o ingresa el nombre de la red WiFi.');
+      return;
+    }
+
+    if (_apiKeyCtrl.text.trim().isEmpty) {
+      setState(() => _error = 'La clave del dispositivo está vacía. Conéctate a Internet o ingrésala manualmente.');
       return;
     }
 
@@ -508,16 +543,82 @@ class _SetupWizardPageState extends ConsumerState<SetupWizardPage> {
           ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _apiKeyCtrl,
-          decoration: InputDecoration(
-            labelText: 'Clave de Dispositivo (Device API Key)',
-            helperText: 'Debe coincidir con DEVICE_API_KEY en el servidor',
-            filled: true,
-            fillColor: AppColors.blanco,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        if (_apiKeyObtenida) ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFA5D6A7)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 28),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Clave asignada automáticamente',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1B5E20),
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'El backend autorizó automáticamente la DEVICE_API_KEY para este timbre.',
+                        style: GoogleFonts.workSans(
+                          color: const Color(0xFF2E7D32),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => setState(() => _mostrarCampoClaveManual = !_mostrarCampoClaveManual),
+              icon: Icon(_mostrarCampoClaveManual ? Icons.expand_less : Icons.expand_more, size: 18),
+              label: Text(_mostrarCampoClaveManual ? 'Ocultar clave manual' : 'Ver / Editar clave manualmente'),
+            ),
+          ),
+        ],
+        if (!_apiKeyObtenida || _mostrarCampoClaveManual) ...[
+          TextField(
+            controller: _apiKeyCtrl,
+            decoration: InputDecoration(
+              labelText: 'Clave de Dispositivo (Device API Key)',
+              helperText: _apiKeyObtenida
+                  ? 'Asignada automáticamente por el servidor'
+                  : 'Debe coincidir con DEVICE_API_KEY en el servidor',
+              filled: true,
+              fillColor: AppColors.blanco,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              suffixIcon: _cargandoApiKey
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.cloud_download_outlined),
+                      tooltip: 'Obtener del servidor',
+                      onPressed: _obtenerApiKeyDelServidor,
+                    ),
+            ),
+          ),
+        ],
         const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
